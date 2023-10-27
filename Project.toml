@@ -12,6 +12,7 @@ PaddedViews = "5432bcbf-9aad-5242-b902-cca2824c8663"
 Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
 
 [compat]
+Dierckx = "0.5"
 julia = "1"
 
 [extras]
