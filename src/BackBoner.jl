@@ -1,7 +1,5 @@
 module BackBoner
 
-export ResidueArray, Backbone, BackboneAndOxygen
-
 using LinearAlgebra
 
 include("AssigningSecondaryStructure/AssigningSecondaryStructure.jl")

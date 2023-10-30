@@ -1,20 +1,43 @@
-include("utils.jl")
-include("residue_array.jl")
+"""
+    Backbone{A, T}
 
-const Backbone = ResidueArray{3}
-const BackboneAndOxygen = ResidueArray{4}
+A wrapper for a 3xAxN matrix of coordinates of atoms in a backbone chain.
+"""
+struct Backbone{A, T <: Real} <: AbstractArray{T, 3}
+    coords::AbstractArray{T, 3}
 
-nitrogen_coord_matrix(ra::ResidueArray)    = _ith_column_coords(ra, 1)
-alphacarbon_coord_matrix(ra::ResidueArray) = _ith_column_coords(ra, 2)
-carbon_coord_matrix(ra::ResidueArray)      = _ith_column_coords(ra, 3)
-oxygen_coord_matrix(ra::ResidueArray)      = _ith_column_coords(ra, 4)
+    function Backbone(coords::AbstractArray{T, 3}) where T <: Real
+        A = size(coords, 2)
+        @assert size(coords, 1) == 3 "coords must have 3 coordinates per atom"
+        return new{A, T}(coords)
+    end
+end
 
-nitrogens(ra::ResidueArray)    = eachcol(_ith_column_coords(ra, 1))
-alphacarbons(ra::ResidueArray) = eachcol(_ith_column_coords(ra, 2))
-carbons(ra::ResidueArray)      = eachcol(_ith_column_coords(ra, 3))
-oxygens(ra::ResidueArray)      = eachcol(_ith_column_coords(ra, 4))
+@inline Base.size(bb::Backbone) = size(bb.coords)
+@inline Base.length(bb::Backbone) = size(bb, 3)
+@inline Base.getindex(bb::Backbone, i, j, k) = bb.coords[i,j,k]
+@inline Base.getindex(bb::Backbone, r::UnitRange{<:Integer}) = Backbone(view(bb.coords, :, :, r))
+@inline Base.getindex(bb::Backbone, i::Integer) = view(bb.coords, :, :, i)
 
-unroll_coords(ra::ResidueArray{A}) where A = reshape(permutedims(ra.coords, (2, 1, 3)), :, A)
+"""
+    atom_coord_matrix(bb, i)
+
+Returns the coordinates of specific columns of atoms in a backbone.
+"""
+function atom_coord_matrix(bb::Backbone{A}, i) where A
+    return view(bb.coords, :, i, :)
+end
+
+"""
+    unroll_atoms(bb, i)
+
+Returns the coordinates of specific columns of atoms in a backbone,
+but unrolled into a 3xN matrix where N is the number of residues times
+the number of columns selected (atoms selected per residue).
+"""
+function unroll_atoms(bb::Backbone{A}, i=Colon()) where A
+    return reshape(atom_coord_matrix(bb, i), 3, :)
+end
 
 include("oxygen.jl")
-include("residue.jl")
+include("ncaco.jl")
