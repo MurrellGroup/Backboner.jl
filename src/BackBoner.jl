@@ -2,8 +2,7 @@ module BackBoner
 
 using LinearAlgebra
 
-import AssigningSecondaryStructure as ASS
-export ASS
+export BackBone
 
 include("backbone.jl")
 include("oxygen.jl")

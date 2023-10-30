@@ -1,3 +1,5 @@
+export BackBone, atom_coord_matrix
+
 """
     Backbone{A, T}
 
