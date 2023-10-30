@@ -1,4 +1,4 @@
-export BackBone, atom_coord_matrix
+export Backbone, atom_coord_matrix
 
 """
     Backbone{A, T}
