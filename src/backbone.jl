@@ -38,6 +38,3 @@ the number of columns selected (atoms selected per residue).
 function unroll_atoms(bb::Backbone{A}, i=Colon()) where A
     return reshape(atom_coord_matrix(bb, i), 3, :)
 end
-
-include("oxygen.jl")
-include("ncaco.jl")

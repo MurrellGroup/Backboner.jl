@@ -2,11 +2,11 @@ module BackBoner
 
 using LinearAlgebra
 
-include("AssigningSecondaryStructure/AssigningSecondaryStructure.jl")
-import .AssigningSecondaryStructure as ASS
+import AssigningSecondaryStructure as ASS
 export ASS
 
-include("backbone/backbone.jl")
-include("visuals/visuals.jl")
+include("backbone.jl")
+include("oxygen.jl")
+include("ncaco.jl")
 
 end
