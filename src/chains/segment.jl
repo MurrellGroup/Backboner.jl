@@ -1,4 +1,4 @@
-export Segment, chain_segments
+export Segment, segments
 
 struct Segment{SS, A, T} <: AbstractChain{A, T}
     chain::Chain{A, T}
@@ -16,7 +16,7 @@ end
 
 Base.summary(segment::Segment{SS}) where SS = "$SS Segment of Chain $(segment.chain.id) with $(length(segment)) residues"
 
-function chain_segments(chain::Chain)
+function segments(chain::Chain)
     ssvector = chain.ssvector
     any(==(MiSSing), ssvector) && error("Chain $(chain.id) has missing secondary structure information")
     start_idx = 1
