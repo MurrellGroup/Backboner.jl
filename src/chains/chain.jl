@@ -18,6 +18,8 @@ struct Chain{A, T} <: AbstractChain{A, T}
     end
 end
 
+@inline Base.getindex(chain::Chain, r::UnitRange{Int}) = Chain("$(chain.id)[$r]", view(chain, :, :, r))
+
 function remove_column(chain::Chain{A, T}, i::Integer) where {A, T}
     @assert i <= A
     return Chain(chain.id, view(chain.coords, :, [1:i-1; i+1:A], :))
