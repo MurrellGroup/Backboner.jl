@@ -1,4 +1,4 @@
-export Backbone, remove_column
+export Backbone, remove_column, has_missing_ss
 
 struct Backbone{A, T <: Real} <: AbstractVector{Chain{A, T}}
     chains::Vector{Chain{A, T}}
@@ -21,4 +21,8 @@ function remove_column(backbone::Backbone{A, T}, i::Integer) where {A, T}
         push!(new_chains, remove_column(chain, i))
     end
     return Backbone(new_chains)
+end
+
+function has_missing_ss(backbone::Backbone)
+    return any(has_missing_ss, backbone)
 end

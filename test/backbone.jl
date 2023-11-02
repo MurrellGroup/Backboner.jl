@@ -8,6 +8,7 @@
         @test backbone[2] == B
         @test length(backbone) == 2
         @test length.(backbone) == [3, 4]
+        @test has_missing_ss(backbone)
     end
 
 end
