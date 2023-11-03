@@ -1,4 +1,4 @@
-module BackBoner
+module Backboner
 
 using LinearAlgebra
 

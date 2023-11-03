@@ -1,7 +1,7 @@
-using BackBoner
+using Backboner
 using Test
 
-@testset "BackBoner.jl" begin
+@testset "Backboner.jl" begin
 
     @testset "secondary_structure.jl" begin
         @test Loop == SecondaryStructure(1)
