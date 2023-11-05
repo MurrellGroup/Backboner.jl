@@ -1,9 +1,9 @@
 export Chain
 
 """
-    Chain{A, T}
+    Chain{A, T} <: AbstractChain{A, T}
 
-A wrapper for a 3xAxN matrix of coordinates of atoms in a backbone chain.
+A wrapper for a 3xAxL matrix of coordinates of atoms in a backbone chain.
 """
 struct Chain{A, T} <: AbstractChain{A, T}
     id::AbstractString
@@ -20,11 +20,9 @@ end
 
 @inline Base.getindex(chain::Chain, r::UnitRange{Int}) = Chain("$(chain.id)[$r]", view(chain.coords, :, :, r))
 
+has_missing_ss(chain::Chain) = any(==(MiSSing), chain.ssvector)
+
 function remove_column(chain::Chain{A, T}, i::Integer) where {A, T}
     @assert i <= A
     return Chain(chain.id, view(chain.coords, :, [1:i-1; i+1:A], :))
-end
-
-function has_missing_ss(chain::Chain)
-    return any(==(MiSSing), chain.ssvector)
 end

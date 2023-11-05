@@ -21,6 +21,11 @@ function estimate_oxygen_position(
     return R' \ magic_vector + C
 end
 
+"""
+    chain_with_oxygen(chain::Chain{3})
+
+Returns a chain with oxygen atoms added to the residues.
+"""
 function chain_with_oxygen(
     chain::Chain{3, T},
 ) where T <: Real
@@ -42,6 +47,11 @@ function chain_with_oxygen(
     return Chain(chain.id, coords)
 end
 
+"""
+    backbone_with_oxygen(backbone::Backbone{3})
+
+Returns a backbone with oxygen atoms added to the residues.
+"""
 function backbone_with_oxygen(backbone::Backbone{3, T}) where T
     new_chains = Vector{Chain{4,T}}()
     for chain in backbone
