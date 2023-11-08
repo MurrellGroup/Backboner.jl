@@ -16,6 +16,5 @@ abstract type AbstractChain{A, T <: Real} <: AbstractArray{T, 3} end
 Base.summary(chain::AbstractChain{A, T}) where {A, T} = "Chain $(chain.id) with $(length(chain)) residues"
 Base.show(io::IO, chain::AbstractChain{A, T}) where {A, T} = print(io, summary(chain))
 
-include("coordmatrix.jl")
 include("chain.jl")
 include("segment.jl")

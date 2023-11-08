@@ -18,8 +18,9 @@ function collect_ncaco(atoms::Vector{PDBTools.Atom})
     return residues
 end
 
-function Chain(id::AbstractString, atoms::Vector{PDBTools.Atom})
-    @assert all(==(id), PDBTools.chain.(atoms)) == 1 "atoms must be from the same chain"
+function Chain(atoms::Vector{PDBTools.Atom})
+    id = PDBTools.chain(atoms[1])
+    @assert length(Set(PDBTools.chain.(atoms))) == 1 "atoms must be from the same chain"
     residues = collect_ncaco(atoms)
     coords = zeros(Float32, (3, 4, length(residues)))
     for (i, residue) in enumerate(residues)
@@ -34,7 +35,7 @@ end
 function Backbone(atoms::Vector{PDBTools.Atom})
     filter!(a -> a.name in ["N", "CA", "C", "O"], atoms)
     ids = PDBTools.chain.(atoms)
-    chains = [Chain(id, atoms[ids .== id]) for id in unique(ids)]
+    chains = [Chain(atoms[ids .== id]) for id in unique(ids)]
     backbone = Backbone(chains)
     return backbone
 end
