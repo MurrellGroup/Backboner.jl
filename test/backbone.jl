@@ -1,14 +1,8 @@
 @testset "backbone.jl" begin
-
-    @testset "Backbone" begin
-        A = Chain("A", randn(3, 3, 3))
-        B = Chain("B", randn(3, 3, 4))
-        backbone = Backbone([A, B])
-        @test backbone[1] == backbone["A"] == A
-        @test backbone[2] == backbone["B"] == B
-        @test length(backbone) == 2
-        @test length.(backbone) == [3, 4]
-        @test has_missing_ss(backbone)
-    end
+    
+    backbone = Backbone(randn(3, 4, 5))
+    @test size(backbone) == (3, 4, 5)
+    @test length(backbone) == 5
+    @test remove_column(backbone, 4).coords == backbone.coords[:, 1:3, :]
 
 end

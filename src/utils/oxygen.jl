@@ -1,4 +1,4 @@
-export backbone_with_oxygen
+export add_oxygen_slice
 
 function get_rotation_matrix(
     point1::AbstractVector{T}, center::AbstractVector{T}, point3::AbstractVector{T}
@@ -24,18 +24,16 @@ function estimate_oxygen_position(
 end
 
 """
-    chain_with_oxygen(chain::Chain{3})
-
-Returns a chain with oxygen atoms added to the residues.
+    add_oxygen_slice(backbone::Backbone{3})
 """
-function chain_with_oxygen(
-    chain::Chain{3, T},
+function add_oxygen_slice(
+    backbone::Backbone{3,T},
 ) where T <: Real
-    L = length(chain)
+    L = length(backbone)
 
-    CAs = eachcol(alphacarbon_coord_matrix(chain))
-    Cs = eachcol(carbon_coord_matrix(chain))
-    next_Ns = view(eachcol(nitrogen_coord_matrix(chain)), 2:L)
+    CAs = eachcol(alphacarbon_coord_matrix(backbone))
+    Cs = eachcol(carbon_coord_matrix(backbone))
+    next_Ns = view(eachcol(nitrogen_coord_matrix(backbone)), 2:L)
 
     oxygen_coords = zeros(T, 3, L-1)
     for (i, (CA, C, next_N)) in enumerate(zip(CAs, Cs, next_Ns))
@@ -43,21 +41,8 @@ function chain_with_oxygen(
     end
 
     coords = zeros(T, 3, 4, L-1)
-    coords[:, 1:3, :] = chain.coords[:, :, 1:L-1]
+    coords[:, 1:3, :] = backbone.coords[:, :, 1:L-1]
     coords[:, 4, :] = oxygen_coords
 
-    return Chain(chain.id, coords)
-end
-
-"""
-    backbone_with_oxygen(backbone::Backbone{3})
-
-Returns a backbone with oxygen atoms added to the residues.
-"""
-function backbone_with_oxygen(backbone::Backbone{3, T}) where T
-    new_chains = Vector{Chain{4,T}}()
-    for chain in backbone
-        push!(new_chains, chain_with_oxygen(chain))
-    end
-    return Backbone(new_chains)
+    return Backbone(coords)
 end

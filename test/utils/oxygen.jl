@@ -1,8 +1,9 @@
 @testset "oxygen.jl" begin
 
-    backbone4 = load_pdb_backbone("data/1ASS.pdb")
+    protein = load_pdb("data/1ASS.pdb")
+    backbone4 = protein[1].backbone
     backbone3 = remove_column(backbone4, 4)
-    backbone4est = backbone_with_oxygen(backbone3)
+    backbone4est = add_oxygen_slice(backbone3)
     true_o_coords = backbone4[1][:, 4, 1:size(backbone4[1], 3)-1] # backbone 4 gets 1 residue shorter
     est_o_coords = backbone4est[1][:, 4, :]
     @test all(isapprox.(true_o_coords, est_o_coords, atol=0.2))

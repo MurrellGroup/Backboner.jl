@@ -1,6 +1,6 @@
 import PDBTools
 
-export load_pdb_backbone
+export load_pdb
 
 function collect_ncaco(atoms::Vector{PDBTools.Atom})
     residues = Vector{PDBTools.Atom}[]
@@ -20,7 +20,7 @@ end
 
 function Chain(atoms::Vector{PDBTools.Atom})
     id = PDBTools.chain(atoms[1])
-    @assert length(Set(PDBTools.chain.(atoms))) == 1 "atoms must be from the same chain"
+    @assert allequal(PDBTools.chain.(atoms)) "atoms must be from the same chain"
     residues = collect_ncaco(atoms)
     coords = zeros(Float32, (3, 4, length(residues)))
     for (i, residue) in enumerate(residues)
@@ -28,21 +28,21 @@ function Chain(atoms::Vector{PDBTools.Atom})
             coords[:, j, i] = [atom.x, atom.y, atom.z]
         end
     end
-    chain = Chain(id, coords)
+    chain = Chain(id, Backbone{4}(coords))
     return chain
 end
 
-function Backbone(atoms::Vector{PDBTools.Atom})
+function Protein(atoms::Vector{PDBTools.Atom})
     filter!(a -> a.name in ["N", "CA", "C", "O"], atoms)
     ids = PDBTools.chain.(atoms)
     chains = [Chain(atoms[ids .== id]) for id in unique(ids)]
-    backbone = Backbone(chains)
-    return backbone
+    protein = Protein(chains)
+    return protein
 end
 
 """
-    load_pdb_backbones(filename::String)
+    load_pdb(filename::String)
 
 Assumes that each residue starts with four atoms: N, CA, C, O.
 """
-load_pdb_backbone(filename::String) = Backbone(PDBTools.readPDB(filename))
+load_pdb(filename::String) = Protein(PDBTools.readPDB(filename))

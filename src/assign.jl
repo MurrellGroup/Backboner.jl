@@ -3,20 +3,13 @@ export assign_secondary_structure!
 import AssigningSecondaryStructure as ASS
 
 """
-    assign_secondary_structure!(backbone)
+    assign_secondary_structure!(protein)
 """
-function assign_secondary_structure!(backbone::Backbone{4})
-    ssvectors = ASS.assign_secondary_structure([chain.coords for chain in backbone])
-    for (chain, ssvector) in zip(backbone, ssvectors)
+function assign_secondary_structure!(protein::Protein)
+    ss_num_vectors = ASS.assign_secondary_structure([chain.backbone.coords for chain in protein])
+    for (chain, ss_num_vector) in zip(protein, ss_num_vectors)
+        ssvector = SecondaryStructure.(ss_num_vector)
         @assert length(chain.ssvector) == length(ssvector)
-        chain.ssvector .= SecondaryStructure.(ssvector)
-    end
-end
-
-function assign_secondary_structure!(backbone3::Backbone{3})
-    backbone4 = backbone_with_oxygen(backbone3)
-    assign_secondary_structure!(backbone4)
-    for (chain3, chain4) in zip(backbone3, backbone4)
-        chain3.ssvector .= chain4.ssvector
+        chain.ssvector .= ssvector
     end
 end
