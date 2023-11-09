@@ -1,4 +1,4 @@
-export Segment, segments
+export Segment, extend_segment, segments
 
 """
     Segment{SS, A, T} <: AbstractChain{A, T}
@@ -11,13 +11,30 @@ struct Segment{SS, A, T} <: AbstractChain{A, T}
     coords::AbstractArray{T, 3}
 
     function Segment{SS}(chain::Chain{A, T}, r::UnitRange{Int}) where {SS, A, T}
-        @assert all(==(SS), view(chain.ssvector, r)) "All residues in the segment must have the same secondary structure"
+        @assert SS == MiSSing || all(==(SS), view(chain.ssvector, r)) "All residues in the '$SS' segment must have the '$SS' secondary structure"
         coords = view(chain.coords, :, :, r)
         return new{SS, A, T}(chain, r, coords)
     end
 end
 
 @inline Base.getindex(segment::Segment{SS}, r::UnitRange{Int}) where SS = Segment{SS}(segment.chain, segment.range[r])
+
+"""
+    extend_segment(segment, range)
+
+Returns a segment of the parent chain, extended to the given range.
+If `segment` covers indices 3:4 of the parent chain, then `extend_segment(segment, 0:3)` will return a segment that covers indices 2:5, since 0 is one less than 1, and 3 is one more than 4.
+`extend_segment(segment, 1:2)` would therefore return the same segment as `segment`.
+This function is useful if one wishes to access the coordinates of the atoms of the parent chain that are adjacent to the segment.
+!!! note
+    The new segment will have missing secondary structure, since segments are defined by the secondary structure of the residues.
+"""
+@inline function extend_segment(segment::Segment{SS}, r::UnitRange{Int}) where SS
+    offset = segment.range.start - 1
+    parent_vec_range = r .+ offset
+    checkbounds(segment.chain, parent_vec_range)
+    return Segment{MiSSing}(segment.chain, parent_vec_range)
+end
 
 Base.summary(segment::Segment{SS}) where SS = "$SS Segment of Chain $(segment.chain.id) with $(length(segment)) residues"
 
@@ -29,8 +46,8 @@ The segments are defined by the secondary structure of the residues.
 A chain with missing secondary structure information will throw an error.
 """
 function segments(chain::Chain)
+    has_missing_ss(chain) && error("Chain $(chain.id) has missing secondary structure information")
     ssvector = chain.ssvector
-    any(==(MiSSing), ssvector) && error("Chain $(chain.id) has missing secondary structure information")
     start_idx = 1
     end_idx = 1
     segments = Segment[]

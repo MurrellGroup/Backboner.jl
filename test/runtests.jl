@@ -9,17 +9,10 @@ using Test
         @test Strand == SecondaryStructure(3)
     end
 
-    include("chains.jl")
+    include("chains/chains.jl")
+    include("utils/utils.jl")
     include("backbone.jl")
-    include("io.jl")
     include("assign.jl")
-
-    @testset "ncaco.jl" begin
-        chain = Chain("A", randn(3, 4, 3))
-        @test nitrogen_coord_matrix(chain) == chain.coords[:, 1, :]
-        @test alphacarbon_coord_matrix(chain) == chain.coords[:, 2, :]
-        @test carbon_coord_matrix(chain) == chain.coords[:, 3, :]
-        @test oxygen_coord_matrix(chain) == chain.coords[:, 4, :]
-    end
+    include("io.jl")
 
 end
