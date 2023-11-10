@@ -2,8 +2,11 @@ export Chain
 
 abstract type AbstractChain{T} end
 
+# could be made into a Vector{Residue} but that would overcomplicate things
 """
     Chain{T}
+
+A chain has an identifier (usually a single letter) and holds the backbone atom coordinates and secondary structure of a protein chain. 
 """
 struct Chain{T}
     id::AbstractString

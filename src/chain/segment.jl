@@ -3,7 +3,8 @@ export Segment, extend_segment, segments
 """
     Segment{SS}
 
-A segment of a chain with the same secondary structure.
+A segment of a chain with uniform secondary structure.
+The segment can have mixed secondary structure if the `SS` type parameter is `MiSSing`.
 """
 struct Segment{SS, T}
     chain::Chain{T}

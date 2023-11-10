@@ -3,7 +3,8 @@ export Backbone, remove_column
 """
     Backbone{N,T}
 
-A wrapper for a 3x4xL array of coordinates of atoms in a protein backbone.
+A wrapper for a 3xNxL array of coordinates of atoms.
+Backbone{4} is used to store 3-dimensional coordinates of the backbone atoms (N, CA, C, O) of a protein chain.
 """
 struct Backbone{N, T <: Real} <: AbstractArray{T,3}
     coords::AbstractArray{T,3}
