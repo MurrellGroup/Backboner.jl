@@ -1,9 +1,10 @@
 module Backboner
 
 using LinearAlgebra
+using Rotations
 
 include("secondarystructure.jl")
-include("backbone.jl")
+include("backbone/backbone.jl")
 include("chain/chain.jl")
 include("protein.jl")
 include("assign.jl")

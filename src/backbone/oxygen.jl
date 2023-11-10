@@ -33,7 +33,7 @@ function add_oxygen_slice(
 
     CAs = eachcol(alphacarbon_coord_matrix(backbone))
     Cs = eachcol(carbon_coord_matrix(backbone))
-    next_Ns = view(eachcol(nitrogen_coord_matrix(backbone)), 2:L)
+    next_Ns = eachcol(nitrogen_coord_matrix(backbone[2:end]))
 
     oxygen_coords = zeros(T, 3, L-1)
     for (i, (CA, C, next_N)) in enumerate(zip(CAs, Cs, next_Ns))
