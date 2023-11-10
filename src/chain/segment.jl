@@ -1,7 +1,7 @@
 export Segment, extend_segment, segments
 
 """
-    Segment{SS}
+    Segment{SS, T}
 
 A segment of a chain with uniform secondary structure.
 The segment can have mixed secondary structure if the `SS` type parameter is `MiSSing`.

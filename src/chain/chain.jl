@@ -27,7 +27,7 @@ end
 Base.length(chain::Chain) = length(chain.backbone)
 Base.size(chain::Chain) = (length(chain),)
 
-Base.summary(chain::Chain) = "Chain $(chain.id) with $(length(chain)) residues"
+Base.summary(chain::Chain) = "Chain $(chain.id) with $(length(chain)) residue$(length(chain) == 1 ? "" : "s")"
 Base.show(io::IO, chain::Chain) = print(io, summary(chain))
 
 has_missing_ss(chain::Chain) = has_missing_ss(chain.ssvector)

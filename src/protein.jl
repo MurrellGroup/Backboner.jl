@@ -22,6 +22,6 @@ end
 @inline Base.getindex(protein::Protein, i) = protein.chains[i]
 @inline Base.getindex(protein::Protein, id::AbstractString) = protein.id_dict[String(id)]
 
-Base.summary(protein::Protein{T}) where T = "Protein{$T} with $(length(protein)) chains"
+Base.summary(protein::Protein{T}) where T = "Protein{$T} with $(length(protein)) chain$(length(protein) == 1 ? "" : "s")"
 
 has_missing_ss(protein::Protein) = any(has_missing_ss, protein.chains)
