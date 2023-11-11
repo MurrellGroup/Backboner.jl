@@ -25,8 +25,8 @@
         @test chain_segments[1] isa Segment{Loop, Float64}
         @test chain_segments[1].chain == chain
         @test chain_segments[1].range == 1:1
-        @test chain_segments[1].coords == coords[:, :, 1:1]
-        @test chain_segments[2].coords == coords[:, :, 2:3]
+        @test chain_segments[1].backbone.coords == coords[:, :, 1:1]
+        @test chain_segments[2].backbone.coords == coords[:, :, 2:3]
     end
 
 end

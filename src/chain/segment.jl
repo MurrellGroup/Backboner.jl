@@ -9,22 +9,22 @@ The segment can have mixed secondary structure if the `SS` type parameter is `Mi
 struct Segment{SS, T}
     chain::Chain{T}
     range::UnitRange{Int}
-    coords::AbstractArray{T, 3}
+    backbone::Backbone{4,T}
 
     function Segment{SS}(chain::Chain{T}, range::UnitRange{Int}) where {SS, T}
         ssvector = view(chain.ssvector, range)
         @assert SS == MiSSing || all(==(SS), ssvector) "All residues in the '$SS' segment must have the '$SS' secondary structure"
-        coords = chain.backbone[range].coords
-        return new{SS, T}(chain, range, coords)
+        backbone = chain.backbone[range]
+        return new{SS, T}(chain, range, backbone)
     end
 
-    function Segment(chain::Chain{T}, r::UnitRange{Int}) where T
+    function Segment(chain::Chain{T}, range::UnitRange{Int}) where T
         SS = allequal(ssvector) ? ssvector[1] : MiSSing
-        return Segment{SS}(chain, r)
+        return Segment{SS}(chain, range)
     end
 end
 
-@inline Base.size(segment::Segment) = size(segment.coords)
+@inline Base.size(segment::Segment) = size(segment.backbone)
 @inline Base.length(segment::Segment) = size(segment, 3)
 
 Base.summary(segment::Segment{SS}) where SS = "$SS Segment of Chain $(segment.chain.id) with $(length(segment)) residues"
@@ -43,9 +43,9 @@ This function is useful if one wishes to access the coordinates of the atoms of 
 !!! note
     The new segment will have missing secondary structure, since segments are meant to describe uniform secondary structure of contiguous residues.
 """
-@inline function extend_segment(segment::Segment{SS}, r::UnitRange{Int}) where SS
+@inline function extend_segment(segment::Segment{SS}, range::UnitRange{Int}) where SS
     offset = segment.range.start - 1
-    parent_vec_range = r .+ offset
+    parent_vec_range = range .+ offset
     checkbounds(segment.chain.backbone, parent_vec_range)
     return Segment{MiSSing}(segment.chain, parent_vec_range)
 end
