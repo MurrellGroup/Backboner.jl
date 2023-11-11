@@ -11,7 +11,7 @@ const STANDARD_TRIANGLE_NM = STANDARD_TRIANGLE_ANGSTROM .* 0.1
 @inline standardtriangle(location::AbstractVector, quatrots::QuatRotation) = quatrots * STANDARD_TRIANGLE_ANGSTROM .+ location
 @inline standardtriangle(location::AbstractVector, rot_matrix::AbstractMatrix) = rot_matrix * STANDARD_TRIANGLE_ANGSTROM .+ location
 
-# 3x3xL matrix of rotation matrices
+# 3x3xL array of rotation matrices
 function Backbone(locations::AbstractMatrix{T}, rot_matrices::AbstractArray{T, 3}; unit::Symbol=:angstrom) where T
     unit == :nm && (locations *= 10.0)
     @assert size(locations, 1) == 3 "locations must be of size 3xL"
