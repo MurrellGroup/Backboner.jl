@@ -8,6 +8,7 @@
         @test protein[2] == protein["B"] == B
         @test length(protein) == 2
         @test length.(protein) == [5, 6]
+        @test summary(protein) == "Protein{Float64} with 2 chains"
         @test has_missing_ss(protein)
     end
 

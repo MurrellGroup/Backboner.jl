@@ -22,7 +22,7 @@ function Backbone(locations::AbstractMatrix{T}, rot_matrices::AbstractArray{T, 3
 end
 
 # length L vector of QuatRotation
-function Backbone(locations::AbstractMatrix{T}, quatrots::AbstractVector{QuatRotation}; unit::Symbol=:angstrom) where T
+function Backbone(locations::AbstractMatrix{T}, quatrots::AbstractVector{QuatRotation{T}}; unit::Symbol=:angstrom) where T
     unit == :nm && (locations *= 10.0)
     @assert size(locations, 1) == 3 "locations must be of size 3xL"
     @assert size(locations, 2) == length(quatrots) "The second dimension of locations must be the same as the length of quatrots"

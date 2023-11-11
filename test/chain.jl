@@ -11,8 +11,15 @@
         @test chain.ssvector == fill(MiSSing, length(chain))
         @test has_missing_ss(chain)
         @test length(chain) == 5
+        @test size(chain) == (5,)
         @test Chain(remove_column(backbone, 4)).backbone == add_oxygens(remove_column(backbone, 4))
         @test Chain(backbone).id == ""
+
+        @test summary(chain) == "Chain A with 5 residues"
+
+        io = IOBuffer()
+        show(io, chain)
+        @test String(take!(io)) == summary(chain)
 
     end
 

@@ -1,7 +1,7 @@
 name = "Backboner"
 uuid = "9ac9c2a2-1cfe-46d3-b3fd-6fa470ea56a7"
 authors = ["Anton Oresten"]
-version = "0.0.1"
+version = "0.1.0"
 
 [deps]
 AssigningSecondaryStructure = "8ed43e74-60fb-4e11-99b9-91deed37aef7"
