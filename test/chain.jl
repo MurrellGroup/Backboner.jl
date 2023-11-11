@@ -11,11 +11,9 @@
         @test chain.ssvector == fill(MiSSing, length(chain))
         @test has_missing_ss(chain)
         @test length(chain) == 5
-        @test Chain(remove_column(backbone, 4)).backbone == add_oxygen_slice(remove_column(backbone, 4))
+        @test Chain(remove_column(backbone, 4)).backbone == add_oxygens(remove_column(backbone, 4))
         @test Chain(backbone).id == ""
 
     end
-
-    include("segment.jl")
 
 end

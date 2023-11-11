@@ -21,7 +21,7 @@ struct Chain{T}
     end
 
     function Chain(id::AbstractString, backbone::Backbone{3})
-        return Chain(id, add_oxygen_slice(backbone))
+        return Chain(id, add_oxygens(backbone))
     end
 
     Chain(backbone::Backbone) = Chain("", backbone) 
@@ -35,5 +35,3 @@ Base.summary(chain::Chain) = "Chain $(chain.id) with $(length(chain)) residue$(l
 Base.show(io::IO, chain::Chain) = print(io, summary(chain))
 
 has_missing_ss(chain::Chain) = has_missing_ss(chain.ssvector)
-
-include("segment.jl")

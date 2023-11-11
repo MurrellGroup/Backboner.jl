@@ -1,4 +1,4 @@
-export add_oxygen_slice
+export add_oxygens
 
 function get_rotation_matrix(
     point1::AbstractVector{T}, center::AbstractVector{T}, point3::AbstractVector{T}
@@ -24,7 +24,7 @@ function estimate_oxygen_position(
 end
 
 """
-    add_oxygen_slice(backbone::Backbone{3})
+    add_oxygens(backbone::Backbone{3})
 
 Add oxygen atoms to the backbone of a protein, turning the coordinate array from size 3x3xL to 3x4xL-1,
 where L is the length of the backbone.
@@ -34,7 +34,7 @@ where L is the length of the backbone.
     We may consider adding a feature for creating a dummy oxygen atom at the end of the backbone with
     randomized orientation to preserve the length of the backbone.
 """
-function add_oxygen_slice(
+function add_oxygens(
     backbone::Backbone{3,T},
 ) where T <: Real
     L = length(backbone)
