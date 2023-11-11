@@ -3,6 +3,8 @@ module Backboner
 using LinearAlgebra
 using Rotations
 
+import PDBTools
+
 include("secondarystructure.jl")
 include("backbone/backbone.jl")
 include("chain/chain.jl")

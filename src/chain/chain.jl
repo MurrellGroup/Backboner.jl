@@ -1,8 +1,6 @@
 export Chain
 
-abstract type AbstractChain{T} end
-
-# could be made into a Vector{Residue} but that would overcomplicate things
+# could be a wrapper for Vector{Residue} but that would overcomplicate things
 """
     Chain{T}
 
@@ -13,19 +11,25 @@ struct Chain{T}
     backbone::Backbone{4,T}
     ssvector::Vector{SecondaryStructure}
 
-    function Chain(
-        id::AbstractString,
-        backbone::Backbone{4,T},
-        ssvector::Union{Nothing, Vector{SecondaryStructure}} = nothing,
-    ) where T
-        ssvector = isnothing(ssvector) ? fill(MiSSing, length(backbone)) : ssvector
+    function Chain(id::AbstractString, backbone::Backbone{4,T}, ssvector::Vector{SecondaryStructure}) where T
         @assert length(backbone) == length(ssvector) "backbone and ssvector must have the same length"
         return new{T}(id, backbone, ssvector)
     end
+
+    function Chain(id::AbstractString, backbone::Backbone{4,T}) where T
+        return Chain(id, backbone, fill(MiSSing, length(backbone)))
+    end
+
+    function Chain(id::AbstractString, backbone::Backbone{3})
+        return Chain(id, add_oxygen_slice(backbone))
+    end
+
+    Chain(backbone::Backbone) = Chain("", backbone) 
 end
 
-Base.length(chain::Chain) = length(chain.backbone)
-Base.size(chain::Chain) = (length(chain),)
+@inline Base.:(==)(chain1::Chain, chain2::Chain) = chain1.id == chain2.id && chain1.backbone == chain2.backbone && (all(==(MiSSing), chain1.ssvector) || all(==(MiSSing), chain2.ssvector) || chain1.ssvector == chain2.ssvector)
+@inline Base.length(chain::Chain) = length(chain.backbone)
+@inline Base.size(chain::Chain) = (length(chain),)
 
 Base.summary(chain::Chain) = "Chain $(chain.id) with $(length(chain)) residue$(length(chain) == 1 ? "" : "s")"
 Base.show(io::IO, chain::Chain) = print(io, summary(chain))

@@ -18,6 +18,7 @@ struct Backbone{N, T <: Real} <: AbstractArray{T,3}
     Backbone(coords::AbstractArray{T,3}) where T = Backbone{size(coords, 2)}(coords)
 end
 
+@inline Base.:(==)(backbone1::Backbone, backbone2::Backbone) = backbone1.coords == backbone2.coords
 @inline Base.size(backbone::Backbone) = size(backbone.coords)
 @inline Base.length(backbone::Backbone) = size(backbone, 3)
 @inline Base.getindex(backbone::Backbone, i, j, k) = backbone.coords[i,j,k]

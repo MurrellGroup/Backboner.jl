@@ -19,7 +19,7 @@ struct Segment{SS, T}
     end
 
     function Segment(chain::Chain{T}, r::UnitRange{Int}) where T
-        SS = unique(ssvector) == 1 ? ssvector[1] : MiSSing
+        SS = allequal(ssvector) ? ssvector[1] : MiSSing
         return Segment{SS}(chain, r)
     end
 end

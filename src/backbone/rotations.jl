@@ -1,3 +1,5 @@
+export locs_and_rots
+
 const STANDARD_TRIANGLE_ANGSTROM = Float32[
     -0.876  -0.248   1.124;
      0.656  -0.656   0.000;
@@ -31,10 +33,16 @@ end
 # 4xL matrix of quaternions
 function Backbone(locations::AbstractMatrix{T}, quatrot_matrix::AbstractMatrix{T}; unit::Symbol=:angstrom) where T
     @assert size(quatrot_matrix, 1) == 4 "quatrotations must be a 4xL array"
-    return Backbone(locations, QuatRotation.(eachcol(quatrot_matrix)), unit=unit)
+    quatrots = QuatRotation.(eachcol(quatrot_matrix))
+    return Backbone(locations, quatrots, unit=unit)
 end
 
-# backbone to rot_matrices
+"""
+    locs_and_rots(backbone, unit=:angstrom)
+
+Returns the locations and rotation matrices of residues in a backbone,
+according to a defined standard triangle.
+"""
 function locs_and_rots(backbone::Backbone{N,T}, unit::Symbol=:angstrom) where {N,T}
     @assert 3 <= N <= 4 "backbone must have 3 or 4 atoms per residue"
     L = length(backbone)

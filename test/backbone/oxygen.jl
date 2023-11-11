@@ -1,6 +1,6 @@
 @testset "oxygen.jl" begin
 
-    protein = load_pdb("data/1ASS.pdb")
+    protein = pdb_to_protein("data/1ASS.pdb")
     backbone4 = protein[1].backbone
     backbone3 = remove_column(backbone4, 4)
     backbone4est = add_oxygen_slice(backbone3)

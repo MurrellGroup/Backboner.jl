@@ -1,6 +1,6 @@
 @testset "coordmatrix.jl" begin
 
-    protein = load_pdb("data/1ASS.pdb")
+    protein = pdb_to_protein("data/1ASS.pdb")
     backbone = protein[1].backbone
     @test nitrogen_coord_matrix(backbone) == backbone[:, 1, :]
     @test alphacarbon_coord_matrix(backbone) == backbone[:, 2, :]

@@ -4,7 +4,7 @@ using Test
 @testset "Backboner.jl" begin
 
     include("secondarystructure.jl")
-    include("backbone.jl")
+    include("backbone/backbone.jl")
     include("chain/chain.jl")
     include("protein.jl")
     include("assign.jl")
