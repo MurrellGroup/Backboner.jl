@@ -7,7 +7,7 @@ Backboner is a Julia package for storing the atom positions of protein backbones
 
 ## Types & functions
 
-The `Protein` type is wraps a vector of `Chain`s, which in turn wrap the `Backbone{4}` type, since it stores the positions of 4 atoms per residue (N, CA, C, O). The `Backbone{N}` type has the `N` type parameter in order to remain flexible. It allows one pass only the N, CA, and C atoms of a backbone, such that the O atom positions can added in using the `add_oxygens` function.
+The `Protein` type wraps a vector of `Chain`s, which in turn wraps the `Backbone{4}` type (4, because it stores the positions of 4 atoms per residue: N, CA, C, O). The `Backbone{N}` type has the `N` type parameter in order to remain flexible. It allows one pass only the N, CA, and C atoms of a backbone, such that the O atom positions can added in using the `add_oxygens` function.
 
 The package includes a `SecondaryStructure` type, which describes the secondary structure of a single residue in a chain. The secondary structure of an entire chain is described by a `Vector{SecondaryStructure}`. For assignment of secondary structure, this package uses the [AssigningSecondaryStructure.jl](https://github.com/MurrellGroup/AssigningSecondaryStructure.jl) package, which implements a simplified version of the DSSP algorithm to assign three types of secondary structure to residues: loop, helix, and strand.
 
