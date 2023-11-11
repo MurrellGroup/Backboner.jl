@@ -7,14 +7,14 @@ Backboner is a Julia package for storing the atom positions of protein backbones
 
 The package includes a SecondaryStructure type, which describes the secondary structure of a single residue in a chain. The secondary structure of an entire chain is described by a vector of SecondaryStructures. For assignment of secondary structure, this package uses the [AssigningSecondaryStructures.jl](https://github.com/MurrellGroup/AssigningSecondaryStructure.jl) package, which implements a simplified version of the DSSP algorithm to assign three types of secondary structure to residues: loop, helix, and strand.
 
-Protein backbones can be loaded from a PDB file using the `load_pdb` function, which returns a `Protein` object.
+Protein backbones can be loaded from a PDB file using the `pdb_to_protein` function, which returns a `Protein` object. Inversely, a `Protein` object can be written to a PDB file using the `protein_to_pdb` function.
 
 ## Example
 
 ```julia
 julia> using Backboner
 
-julia> protein = load_pdb("test/data/1ZAK.pdb")
+julia> protein = pdb_to_protein("test/data/1ZAK.pdb")
 2-element Protein{Float32}:
  Chain A with 220 residues
  Chain B with 220 residues
