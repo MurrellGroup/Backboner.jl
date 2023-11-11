@@ -8,11 +8,15 @@
         end
 
         @testset "write" begin
-            protein = pdb_to_protein("data/1ASS.pdb")
-            protein_to_pdb(protein, "temp.pdb")
-            protein2 = pdb_to_protein("temp.pdb")
-            @test protein == protein2
-            rm("temp.pdb")
+            out = "temp.pdb"
+            try
+                protein = pdb_to_protein("data/1ASS.pdb")
+                protein_to_pdb(protein, out)
+                protein2 = pdb_to_protein(out)
+                @test protein == protein2
+            finally
+                rm(out, force=true)
+            end
         end
 
     end

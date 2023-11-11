@@ -48,7 +48,7 @@ Assumes that each residue starts with four atoms: N, CA, C, O.
 """
 pdb_to_protein(filename::String) = Protein(PDBTools.readPDB(filename))
 
-function protein_to_pdb(protein::Protein, filename::String)
+function protein_to_pdb(protein::Protein, filename, header=:auto, footer=:auto)
     atoms = PDBTools.Atom[]
     index = 0
     residue_index = 0
@@ -74,5 +74,5 @@ function protein_to_pdb(protein::Protein, filename::String)
             end
         end
     end
-    PDBTools.writePDB(atoms, filename)
+    PDBTools.writePDB(atoms, filename, header=header, footer=footer)
 end
