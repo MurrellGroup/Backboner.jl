@@ -17,7 +17,7 @@ struct Chain{T}
     end
 
     function Chain(id::AbstractString, backbone::Backbone{4,T}) where T
-        return Chain(id, backbone, fill(MiSSing, length(backbone)))
+        return Chain(id, backbone, fill(Unassigned, length(backbone)))
     end
 
     function Chain(id::AbstractString, backbone::Backbone{3})
@@ -27,7 +27,7 @@ struct Chain{T}
     Chain(backbone::Backbone) = Chain("", backbone) 
 end
 
-@inline Base.:(==)(chain1::Chain, chain2::Chain) = chain1.id == chain2.id && chain1.backbone == chain2.backbone && (all(==(MiSSing), chain1.ssvector) || all(==(MiSSing), chain2.ssvector) || chain1.ssvector == chain2.ssvector)
+@inline Base.:(==)(chain1::Chain, chain2::Chain) = chain1.id == chain2.id && chain1.backbone == chain2.backbone && (all(==(Unassigned), chain1.ssvector) || all(==(Unassigned), chain2.ssvector) || chain1.ssvector == chain2.ssvector)
 @inline Base.length(chain::Chain) = length(chain.backbone)
 @inline Base.size(chain::Chain) = (length(chain),)
 

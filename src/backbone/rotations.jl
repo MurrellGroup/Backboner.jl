@@ -32,7 +32,7 @@ end
 
 # 4xL matrix of quaternions
 function Backbone(locations::AbstractMatrix{T}, quatrot_matrix::AbstractMatrix{T}; unit::Symbol=:angstrom) where T
-    @assert size(quatrot_matrix, 1) == 4 "quatrotations must be a 4xL array"
+    @assert size(quatrot_matrix, 1) == 4 "quatrot_matrix must be a 4xL array"
     quatrots = QuatRotation.(eachcol(quatrot_matrix))
     return Backbone(locations, quatrots, unit=unit)
 end

@@ -8,7 +8,7 @@
         @test chain isa Chain{Float64}
         @test chain.id == "A"
         @test chain.backbone.coords == coords
-        @test chain.ssvector == fill(MiSSing, length(chain))
+        @test chain.ssvector == fill(Unassigned, length(chain))
         @test has_missing_ss(chain)
         @test length(chain) == 5
         @test size(chain) == (5,)
