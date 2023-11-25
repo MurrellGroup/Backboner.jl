@@ -6,6 +6,7 @@ DocMeta.setdocmeta!(Backboner, :DocTestSetup, :(using Backboner); recursive=true
 makedocs(;
     modules = [Backboner],
     sitename = "Backboner.jl",
+    format = Documenter.HTML(prettyurls = (get(ENV, "CI", "false") == "true")),
     doctest = false,
     pages = [
         "Home" => "index.md",
