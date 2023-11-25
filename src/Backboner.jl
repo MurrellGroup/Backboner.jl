@@ -1,8 +1,8 @@
 module Backboner
 
 using LinearAlgebra
-using Rotations
 
+import Rotations
 import PDBTools
 
 include("secondarystructure.jl")
