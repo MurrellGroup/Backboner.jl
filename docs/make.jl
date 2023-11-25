@@ -18,6 +18,7 @@ makedocs(;
 deploydocs(;
     repo = "github.com/MurrellGroup/Backboner.jl.git",
     push_preview = true,
+    devbranch = "main",
     deps = nothing,
     make = nothing,
 )
