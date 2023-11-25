@@ -23,6 +23,30 @@ function estimate_oxygen_position(
     return R' \ magic_vector + C # inverse of R' * (oxygen_pos - C)
 end
 
+function add_last_oxygen!(
+    coords::AbstractArray{T, 3},
+) where T
+    @assert size(coords, 1) == 3
+    @assert size(coords, 2) == 4
+    @assert size(coords, 3) > 1
+
+    L = size(coords, 3)
+
+    prev_N, prev_CA, prev_C, prev_O = eachcol(coords[:, :, L-1])
+    last_N, last_CA, last_C, last_O = eachcol(coords[:, :, L])
+
+    prev_rot_matrix = get_rotation_matrix(prev_N, prev_CA, prev_C)
+    last_rot_matrix = get_rotation_matrix(last_N, last_CA, last_C)
+
+    next_N_relative_to_triangle = prev_rot_matrix' * (last_N - prev_CA)
+
+    OXT = last_rot_matrix' \ next_N_relative_to_triangle + last_CA
+    last_O = estimate_oxygen_position(last_CA, last_C, OXT)
+    coords[:, 4, L] = last_O
+
+    return coords
+end
+
 """
     add_oxygens(backbone::Backbone{3})
 
@@ -48,9 +72,11 @@ function add_oxygens(
         oxygen_coords[:, i] = estimate_oxygen_position(CA, C, next_N)
     end
 
-    coords = zeros(T, 3, 4, L-1)
-    coords[:, 1:3, :] = backbone.coords[:, :, 1:L-1]
-    coords[:, 4, :] = oxygen_coords
+    coords = zeros(T, 3, 4, L)
+    coords[:, 1:3, 1:L] = backbone.coords[:, :, :]
+    coords[:, 4, 1:L-1] = oxygen_coords
+
+    add_last_oxygen!(coords)
 
     return Backbone(coords)
 end
