@@ -7,6 +7,7 @@ import PDBTools
 
 include("secondarystructure.jl")
 include("backbone/backbone.jl")
+include("residue.jl")
 include("chain.jl")
 include("protein.jl")
 include("assign.jl")

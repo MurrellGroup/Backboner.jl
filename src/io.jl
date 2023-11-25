@@ -8,6 +8,8 @@ const THREE_LETTER_AA_CODES = Dict(
     'T' => "THR", 'W' => "TRP", 'Y' => "TYR", 'V' => "VAL",
 )
 
+const ONE_LETTER_AA_CODES = Dict(v => k for (k, v) in THREE_LETTER_AA_CODES)
+
 function collect_backbone_atoms(atoms::Vector{PDBTools.Atom})
     residues = Vector{PDBTools.Atom}[]
     i = 1
@@ -39,7 +41,8 @@ function Chain(atoms::Vector{PDBTools.Atom})
     id = PDBTools.chain(atoms[1])
     @assert allequal(PDBTools.chain.(atoms)) "atoms must be from the same chain"
     backbone = Backbone(atoms)
-    return Chain(id, backbone)
+    aaseq = [get(ONE_LETTER_AA_CODES, atom.resname, 'X') for atom in atoms if atom.name == "CA"]
+    return Chain(id, backbone, aaseq=aaseq)
 end
 
 function Protein(atoms::Vector{PDBTools.Atom})
@@ -63,7 +66,7 @@ function protein_to_pdb(protein::Protein, filename, header=:auto, footer=:auto)
     for chain in protein
         L = length(chain)
         for (resnum, (residue_coords, aa)) in enumerate(zip(eachslice(chain.backbone.coords, dims=3), chain.aaseq))
-            resname = THREE_LETTER_AA_CODES[aa]
+            resname = get(THREE_LETTER_AA_CODES, aa, "XXX")
             residue_index += 1
             for (name, atom_coords) in zip(["N", "CA", "C", "O"], eachcol(residue_coords))
                 index += 1
@@ -92,7 +95,7 @@ function protein_to_pdb(protein::Protein, filename, header=:auto, footer=:auto)
         OXT_atom = PDBTools.Atom(
             index = index,
             name = "OXT",
-            resname = THREE_LETTER_AA_CODES[chain.aaseq[end]],
+            resname = get(THREE_LETTER_AA_CODES, chain.aaseq[end], "XXX"),
             chain = chain.id,
             resnum = L,
             residue = residue_index,

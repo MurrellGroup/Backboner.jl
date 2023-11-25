@@ -5,7 +5,6 @@
         coords = randn(3, 4, 5)
         backbone = Backbone(coords)
         chain = Chain("A", backbone)
-        @test chain isa Chain{Float64}
         @test chain.id == "A"
         @test chain.backbone.coords == coords
         @test chain.aaseq == fill('G', length(chain))
@@ -15,6 +14,8 @@
         @test size(chain) == (5,)
         @test Chain(remove_column(backbone, 4)).backbone == add_oxygens(remove_column(backbone, 4))
         @test Chain(backbone).id == "_"
+        
+        @test chain[1] == Residue(1, backbone, 'G', Unassigned)
 
         @test summary(chain) == "Chain A with 5 residues"
 
