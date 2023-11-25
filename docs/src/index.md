@@ -1,7 +1,7 @@
 ```@meta
-CurrentModule = VectorizedKmers
+CurrentModule = Backboner
 DocTestSetup = quote
-    using VectorizedKmers
+    using Backboner
 end
 ```
 
