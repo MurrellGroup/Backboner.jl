@@ -8,12 +8,13 @@
         @test chain isa Chain{Float64}
         @test chain.id == "A"
         @test chain.backbone.coords == coords
-        @test chain.ssvector == fill(Unassigned, length(chain))
+        @test chain.aaseq == fill('G', length(chain))
+        @test chain.ssvec == fill(Unassigned, length(chain))
         @test has_missing_ss(chain)
         @test length(chain) == 5
         @test size(chain) == (5,)
         @test Chain(remove_column(backbone, 4)).backbone == add_oxygens(remove_column(backbone, 4))
-        @test Chain(backbone).id == ""
+        @test Chain(backbone).id == "_"
 
         @test summary(chain) == "Chain A with 5 residues"
 
