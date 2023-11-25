@@ -1,4 +1,4 @@
-export locs_and_rots
+export locs_and_rots_to_backbone, backbone_to_locs_and_rots
 
 const STANDARD_TRIANGLE_ANGSTROM = Float32[
     -0.876  -0.248   1.124;
@@ -8,11 +8,17 @@ const STANDARD_TRIANGLE_ANGSTROM = Float32[
 
 const STANDARD_TRIANGLE_NM = STANDARD_TRIANGLE_ANGSTROM .* 0.1
 
-@inline standardtriangle(location::AbstractVector, quatrots::QuatRotation) = quatrots * STANDARD_TRIANGLE_ANGSTROM .+ location
+@inline standardtriangle(location::AbstractVector, quatrots::Rotations.QuatRotation) = quatrots * STANDARD_TRIANGLE_ANGSTROM .+ location
 @inline standardtriangle(location::AbstractVector, rot_matrix::AbstractMatrix) = rot_matrix * STANDARD_TRIANGLE_ANGSTROM .+ location
 
 # 3x3xL array of rotation matrices
-function Backbone(locations::AbstractMatrix{T}, rot_matrices::AbstractArray{T, 3}; unit::Symbol=:angstrom) where T
+"""
+    locs_and_rots_to_backbone(locations, rot_matrices; unit=:angstrom)
+
+Returns a backbone with the given locations and rotation matrices of residues.
+If unit is :nm, the locations are converted to angstroms by multiplying them by 10.
+"""
+function locs_and_rots_to_backbone(locations::AbstractMatrix{T}, rot_matrices::AbstractArray{T, 3}; unit::Symbol=:angstrom) where T
     unit == :nm && (locations *= 10.0)
     @assert size(locations, 1) == 3 "locations must be of size 3xL"
     @assert size(rot_matrices, 1) == size(rot_matrices, 2) == 3 "rot_matrices must be a 3x3xL array"
@@ -21,8 +27,8 @@ function Backbone(locations::AbstractMatrix{T}, rot_matrices::AbstractArray{T, 3
     return Backbone(stack(triangles))
 end
 
-# length L vector of QuatRotation
-function Backbone(locations::AbstractMatrix{T}, quatrots::AbstractVector{QuatRotation{T}}; unit::Symbol=:angstrom) where T
+# length L vector of Rotations.QuatRotation
+function locs_and_rots_to_backbone(locations::AbstractMatrix{T}, quatrots::AbstractVector{Rotations.QuatRotation{T}}; unit::Symbol=:angstrom) where T
     unit == :nm && (locations *= 10.0)
     @assert size(locations, 1) == 3 "locations must be of size 3xL"
     @assert size(locations, 2) == length(quatrots) "The second dimension of locations must be the same as the length of quatrots"
@@ -31,19 +37,19 @@ function Backbone(locations::AbstractMatrix{T}, quatrots::AbstractVector{QuatRot
 end
 
 # 4xL matrix of quaternions
-function Backbone(locations::AbstractMatrix{T}, quatrot_matrix::AbstractMatrix{T}; unit::Symbol=:angstrom) where T
+function locs_and_rots_to_backbone(locations::AbstractMatrix{T}, quatrot_matrix::AbstractMatrix{T}; unit::Symbol=:angstrom) where T
     @assert size(quatrot_matrix, 1) == 4 "quatrot_matrix must be a 4xL array"
-    quatrots = QuatRotation.(eachcol(quatrot_matrix))
-    return Backbone(locations, quatrots, unit=unit)
+    quatrots = Rotations.QuatRotation.(eachcol(quatrot_matrix))
+    return locs_and_rots_to_backbone(locations, quatrots, unit=unit)
 end
 
 """
-    locs_and_rots(backbone, unit=:angstrom)
+    backbone_to_locs_and_rots(backbone, unit=:angstrom)
 
 Returns the locations and rotation matrices of residues in a backbone,
-according to a defined standard triangle.
+according to a defined standard triangle (Backboner.STANDARD_TRIANGLE_ANGSTROM).
 """
-function locs_and_rots(backbone::Backbone{N,T}, unit::Symbol=:angstrom) where {N,T}
+function backbone_to_locs_and_rots(backbone::Backbone{N,T}, unit::Symbol=:angstrom) where {N,T}
     @assert 3 <= N <= 4 "backbone must have 3 or 4 atoms per residue"
     L = length(backbone)
     locations = Array{T}(undef, 3, L)
