@@ -1,6 +1,14 @@
-The reason for having `N` as a type parameter for `Backbone` to make it flexible, so that one can pass only the N, CA, and C atoms of a backbone, such that the O atom positions can added in using the `add_oxygens` function.
+# Oxygen atoms
+
+The reason for having `N` as a type parameter is to make `Backbone` more flexible by allowing one to pass only the N, CA, and C atoms of a backbone, such that the O atom positions can added in using the `add_oxygens` function.
 
 ```jldoctest
+julia> using Backboner
+
+julia> protein = pdb_to_protein("test/data/1ZAK.pdb")
+
+julia> chain = protein["A"]
+
 julia> backbone4 = chain.backbone
 3×4×220 Backbone{4, Float32}:
 [:, :, 1] =
