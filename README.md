@@ -7,7 +7,16 @@
 [![Build Status](https://github.com/MurrellGroup/Backboner.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/MurrellGroup/Backboner.jl/actions/workflows/CI.yml?query=branch%3Amain)
 [![Coverage](https://codecov.io/gh/MurrellGroup/Backboner.jl/branch/main/graph/badge.svg)](https://codecov.io/gh/MurrellGroup/Backboner.jl)
 
-Backboner is a Julia package for storing the atom positions of protein backbones in a compact format, with additional functionality for estimating oxygen atom positions, assigning secondary structure, and loading backbones from residue locations and rotation matrices.
+Backboner is a Julia package that offers a suite of tools for storing protein backbone atom positions, estimating oxygen atom positions, assigning secondary structure, and more.
+
+## Installation
+
+Backboner is a registered Julia package, and can be installed with the Julia package manager:
+
+```julia
+using Pkg
+Pkg.add("Backboner")
+```
 
 ## Types & functions
 
