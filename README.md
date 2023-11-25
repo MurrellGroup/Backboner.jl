@@ -27,27 +27,17 @@ julia> protein = pdb_to_protein("test/data/1ZAK.pdb")
  Chain A with 220 residues
  Chain B with 220 residues
 
-julia> chain_A = protein[1]
+julia> chain = protein["A"]
 Chain A with 220 residues
 
-julia> chain_A.backbone
+julia> chain.backbone
 3×4×220 Backbone{4, Float32}:
 [:, :, 1] =
  22.346  22.901  23.227  22.689
  17.547  18.031  16.793  15.72
  23.294  21.993  21.163  21.448
 
-[:, :, 2] =
- 24.115  24.478  25.289  25.266
- 16.923  15.779  14.65   13.511
- 20.175  19.336  20.009  19.53
-
 ;;; … 
-
-[:, :, 219] =
- 22.572  21.48   22.041  22.749
- 14.235  14.668  14.866  15.845
-  5.844   4.974   3.569   3.29
 
 [:, :, 220] =
  21.808  22.263  21.085  19.939
