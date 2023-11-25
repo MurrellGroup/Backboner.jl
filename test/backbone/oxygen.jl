@@ -4,8 +4,8 @@
     backbone4 = protein[1].backbone
     backbone3 = remove_column(backbone4, 4)
     backbone4est = add_oxygens(backbone3)
-    true_o_coords = backbone4[1][:, 4, 1:size(backbone4[1], 3)-1] # don't compare to last oxygen cause orientation is random
-    est_o_coords = backbone4est[1][:, 4, :]
+    true_o_coords = backbone4[:, 4, 1:end-1] # don't compare to last oxygen cause orientation is random
+    est_o_coords = backbone4est[:, 4, 1:end-1]
     @test all(isapprox.(true_o_coords, est_o_coords, atol=0.2))
 
     """
