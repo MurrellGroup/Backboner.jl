@@ -1,7 +1,7 @@
 using Backboner
 using Documenter
 
-DocMeta.setdocmeta!(Backboner, :DocTestSetup, :(using VectorizedKmers); recursive=true)
+DocMeta.setdocmeta!(Backboner, :DocTestSetup, :(using Backboner); recursive=true)
 
 makedocs(;
     modules = [Backboner],
