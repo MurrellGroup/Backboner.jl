@@ -9,7 +9,8 @@ makedocs(;
     format = Documenter.HTML(prettyurls = (get(ENV, "CI", "false") == "true")),
     doctest = false,
     pages = [
-        "Home" => "index.md",
+        "Overview" => "index.md",
+        "Oxygen atoms" => "oxygen.md",
     ],
     authors = "Anton Oresten",
     checkdocs = :all,

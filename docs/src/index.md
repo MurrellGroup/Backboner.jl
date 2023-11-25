@@ -14,7 +14,43 @@ end
 [![Build Status](https://github.com/MurrellGroup/Backboner.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/MurrellGroup/Backboner.jl/actions/workflows/CI.yml?query=branch%3Amain)
 [![Coverage](https://codecov.io/gh/MurrellGroup/Backboner.jl/branch/main/graph/badge.svg)](https://codecov.io/gh/MurrellGroup/Backboner.jl)
 
-Backboner is a Julia package for storing the atom positions of protein backbones in a compact format, with additional functionality for estimating oxygen atom positions, assigning secondary structure, and loading backbones from residue locations and rotation matrices.
+Backboner is a Julia package that offers a suite of tools for storing protein backbone atom positions, estimating oxygen atom positions, assigning secondary structure, and more. [View the source code on GitHub](https://github.com/MurrellGroup/Backboner.jl) (licensed under MIT).
+
+## Installation
+
+Backboner is a registered Julia package, and can be installed with the Julia package manager:
+
+```julia
+using Pkg
+Pkg.add("Backboner")
+```
+
+## Usage
+
+The `Protein` type wraps a vector of `Chain`s.
+
+```jldoctest
+julia> using Backboner
+
+julia> protein = pdb_to_protein("test/data/1ZAK.pdb")
+2-element Protein{Float32}:
+ Chain A with 220 residues
+ Chain B with 220 residues
+
+julia> chain = protein["A"] # chains can be accessed by name
+Chain A with 220 residues
+
+julia> protein["A"] == protein[1] # numeric indexing also works
+true
+
+julia> new_protein = Protein([protein["A"]]) # create a new protein with a single chain
+1-element Protein{Float32}:
+ Chain A with 220 residues
+
+julia> protein_to_pdb(new_protein, "test/data/1ZAK_A.pdb");
+```
+
+The `Chain` type wraps the `Backbone{4}` type (4, because it stores the positions of 4 atoms per residue: N, CA, C, O).
 
 ## API Reference
 
