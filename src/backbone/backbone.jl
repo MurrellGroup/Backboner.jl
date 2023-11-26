@@ -1,4 +1,4 @@
-export Backbone, remove_column
+export Backbone, remove_column, atom_coord_matrix
 
 """
     Backbone{N, T <: Real} <: AbstractArray{T, 3}
