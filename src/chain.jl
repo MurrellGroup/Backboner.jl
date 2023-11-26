@@ -1,6 +1,5 @@
 export Chain
 
-# could be a wrapper for Vector{Residue} but that would overcomplicate things
 """
     Chain <: AbstractVector{Residue}
 
