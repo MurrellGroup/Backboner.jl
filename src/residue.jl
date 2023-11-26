@@ -1,4 +1,4 @@
-export Residue
+export Residue, backbone_atom_coords
 
 struct Residue
     index::Integer
@@ -16,10 +16,13 @@ struct Residue
     end
 end
 
+backbone_atom_coords(residue::Residue) = residue.backbone[residue.index]
+
 function Base.summary(residue::Residue)
     index = lpad(string(residue.index), length(string(length(residue.backbone))))
     aa3 = get(THREE_LETTER_AA_CODES, residue.aa, "XXX")
     ss = residue.ss
     return "Residue $index $aa3 $ss"
 end
+
 Base.show(io::IO, residue::Residue) = print(io, summary(residue))
