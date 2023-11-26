@@ -9,33 +9,33 @@ A chain has an identifier (usually a single letter) and holds the backbone atom 
 struct Chain <: AbstractVector{Residue}
     id::AbstractString
     backbone::Backbone{4}
-    aaseq::Vector{Char}
-    ssvec::Vector{SecondaryStructure}
+    aavector::Vector{Char}
+    ssvector::Vector{Char}
 
     function Chain(
         id::AbstractString,
         backbone::Backbone{N};
-        aaseq::Vector{Char} = fill('G', length(backbone)),
-        ssvec::Union{Vector{SecondaryStructure}, Vector{<:Integer}} = fill(Unassigned, length(backbone)),
+        aavector::Vector{Char} = fill('G', length(backbone)),
+        ssvector::Union{Vector{Char}, Vector{<:Integer}} = fill(' ', length(backbone)),
     ) where N
         @assert N == 3 || N == 4 "backbone must have 3 or 4 atoms per residue"
         N == 3 && (backbone = add_oxygens(backbone))
 
-        @assert length(backbone) == length(aaseq) == length(ssvec) "backbone, aaseq, and ssvec must have the same length"
-        ssvec isa Vector{<:Integer} && (ssvec = SecondaryStructure.(ssvec))
+        @assert length(backbone) == length(aavector) == length(ssvector) "backbone, aavector, and ssvector must have the same length"
+        ssvector isa Vector{<:Integer} && (ssvector = get.("-HE", ssvector, ' '))
 
-        return new(id, backbone, aaseq, ssvec)
+        return new(id, backbone, aavector, ssvector)
     end
 
     Chain(backbone::Backbone; kwargs...) = Chain("_", backbone; kwargs...) 
 end
 
-@inline Base.:(==)(chain1::Chain, chain2::Chain) = chain1.id == chain2.id && chain1.backbone == chain2.backbone && chain1.ssvec == chain2.ssvec
+@inline Base.:(==)(chain1::Chain, chain2::Chain) = chain1.id == chain2.id && chain1.backbone == chain2.backbone && chain1.ssvector == chain2.ssvector
 @inline Base.length(chain::Chain) = length(chain.backbone)
 @inline Base.size(chain::Chain) = (length(chain),)
-@inline Base.getindex(chain::Chain, i::Integer) = Residue(i, chain.backbone, chain.aaseq[i], chain.ssvec[i])
+@inline Base.getindex(chain::Chain, i::Integer) = Residue(i, chain.backbone, chain.aavector[i], chain.ssvector[i])
 
 Base.summary(chain::Chain) = "Chain $(chain.id) with $(length(chain)) residue$(length(chain) == 1 ? "" : "s")"
 Base.show(io::IO, chain::Chain) = print(io, summary(chain))
 
-has_missing_ss(chain::Chain) = has_missing_ss(chain.ssvec)
+has_assigned_ss(chain::Chain) = has_assigned_ss(chain.ssvector)

@@ -25,4 +25,4 @@ end
 
 Base.summary(protein::Protein) = "Protein with $(length(protein)) chain$(length(protein) == 1 ? "" : "s")"
 
-has_missing_ss(protein::Protein) = any(has_missing_ss, protein.chains)
+has_assigned_ss(protein::Protein) = all(has_assigned_ss, protein.chains)

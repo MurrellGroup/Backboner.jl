@@ -3,23 +3,23 @@ export Residue
 struct Residue
     index::Integer
     backbone::Backbone{4}
-    aminoacid::Char
-    secondarystructure::SecondaryStructure
+    aa::Char
+    ss::Char
 
     function Residue(
         index::Integer,
         backbone::Backbone{4},
-        aminoacid::Char = 'G',
-        secondarystructure::SecondaryStructure = Unassigned
+        aa::Char = 'G',
+        ss::Char = ' ',
     )
-        return new(index, backbone, aminoacid, secondarystructure)
+        return new(index, backbone, aa, ss)
     end
 end
 
 function Base.summary(residue::Residue)
     index = lpad(string(residue.index), length(string(length(residue.backbone))))
-    code = get(THREE_LETTER_AA_CODES, residue.aminoacid, "XXX")
-    ss = lpad(string(residue.secondarystructure), 6)
-    return "Residue $index $code $ss"
+    aa3 = get(THREE_LETTER_AA_CODES, residue.aa, "XXX")
+    ss = residue.ss
+    return "Residue $index $aa3 $ss"
 end
 Base.show(io::IO, residue::Residue) = print(io, summary(residue))

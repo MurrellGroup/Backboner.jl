@@ -10,6 +10,7 @@ makedocs(;
     doctest = false,
     pages = [
         "Overview" => "index.md",
+        "Backbone" => "backbone.md",
         "Oxygen atoms" => "oxygen.md",
     ],
     authors = "Anton Oresten",

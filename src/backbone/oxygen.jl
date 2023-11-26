@@ -59,13 +59,13 @@ where L is the length of the backbone.
     randomized orientation to preserve the length of the backbone.
 """
 function add_oxygens(
-    backbone::Backbone{3,T},
+    backbone::Backbone{3, T},
 ) where T <: Real
     L = length(backbone)
 
-    CAs = eachcol(alphacarbon_coord_matrix(backbone))
-    Cs = eachcol(carbon_coord_matrix(backbone))
-    next_Ns = eachcol(nitrogen_coord_matrix(backbone[2:end]))
+    CAs = eachcol(atom_coord_matrix(backbone, 2))
+    Cs = eachcol(atom_coord_matrix(backbone, 3))
+    next_Ns = eachcol(atom_coord_matrix(backbone[2:end], 1))
 
     oxygen_coords = zeros(T, 3, L-1)
     for (i, (CA, C, next_N)) in enumerate(zip(CAs, Cs, next_Ns))
