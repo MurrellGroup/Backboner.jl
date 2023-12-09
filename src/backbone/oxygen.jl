@@ -23,26 +23,28 @@ function estimate_oxygen_position(
     return R' \ magic_vector + C # inverse of R' * (oxygen_pos - C)
 end
 
+# last oxygen is put on the same plane as the last residue triangle
+# 1.2 angstroms away from the C atom
+# with a 120 degree angle between the C-Ca and C-O bonds
 function add_last_oxygen!(
     coords::AbstractArray{T, 3},
 ) where T
     @assert size(coords, 1) == 3
     @assert size(coords, 2) == 4
-    @assert size(coords, 3) > 1
+    @assert size(coords, 3) > 0
 
     L = size(coords, 3)
 
-    prev_N, prev_CA, prev_C, prev_O = eachcol(coords[:, :, L-1])
-    last_N, last_CA, last_C, last_O = eachcol(coords[:, :, L])
+    N_pos, Ca_pos, C_pos, _ = eachcol(coords[:, :, L])
 
-    prev_rot_matrix = get_rotation_matrix(prev_N, prev_CA, prev_C)
-    last_rot_matrix = get_rotation_matrix(last_N, last_CA, last_C)
-
-    next_N_relative_to_triangle = prev_rot_matrix' * (last_N - prev_CA)
-
-    OXT = last_rot_matrix' \ next_N_relative_to_triangle + last_CA
-    last_O = estimate_oxygen_position(last_CA, last_C, OXT)
-    coords[:, 4, L] = last_O
+    angle = 2π/3
+    bond_length = 1.2
+    v = Ca_pos - C_pos
+    w = cross(v, Ca_pos - N_pos)
+    u = cross(w, v)
+    O_pos = C_pos + normalize(u)*bond_length*cos(angle - 0.5π) - normalize(v)*bond_length*sin(angle - 0.5π)
+    display(norm(O_pos - C_pos))
+    coords[:, 4, L] = O_pos
 
     return coords
 end
