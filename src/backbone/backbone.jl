@@ -41,3 +41,4 @@ end
 
 include("rotations.jl")
 include("oxygen.jl")
+include("distance.jl")
