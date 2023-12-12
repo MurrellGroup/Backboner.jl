@@ -43,7 +43,6 @@ function add_last_oxygen!(
     w = cross(v, Ca_pos - N_pos)
     u = cross(w, v)
     O_pos = C_pos + normalize(u)*bond_length*cos(angle - 0.5π) - normalize(v)*bond_length*sin(angle - 0.5π)
-    display(norm(O_pos - C_pos))
     coords[:, 4, L] = O_pos
 
     return coords
