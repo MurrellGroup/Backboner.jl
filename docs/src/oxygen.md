@@ -1,6 +1,6 @@
 # Oxygen atoms
 
-The reason for having `N` as a type parameter is to make `Backbone` more flexible by allowing one to pass only the N, CA, and C atoms of a backbone, such that the O atom positions can added in using the `add_oxygens` function.
+The `Backbone` type has a type parameter `N` to represent the number of atoms per residue allowing one to pass only the N, CA, and C atoms of a backbone, such that the O atom positions can added in using the `add_oxygens` function.
 
 ```jldoctest
 julia> using Backboner
