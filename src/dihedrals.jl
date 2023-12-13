@@ -33,7 +33,7 @@ function coords_from_vecs(vecs)
 end
 
 """
-Getting dihedral angles from vectors and their lengths.
+Getting dihedral angles from vectors stored as a 3xN matrix and their lengths.
 """
 function get_dihedrals(vecs, lengths)
     len_prot = size(vecs,2) +1
@@ -86,7 +86,7 @@ function fixed_bond_lengths(protxyz, NCa, CaC, CN)
 end
 
 """
-Fixes bond lengths and angles of protxyzs to bond_lengths and bond_angles respectively, where protxyzs is a vector of 3x3xN arrays of xyz coordinates. 
+Idealizes the bond lengths and angles of protxyzs while maintaining the same overall structure. Protxyzs can be a single 3x3xN matrix or a vector of 3x3xN matrices.
 """
 function idealize_lengths_angles(protxyzs::AbstractVector, bond_lengths = bond_lengths, bond_angles = bond_angles)
 
@@ -114,6 +114,10 @@ function idealize_lengths_angles(protxyzs::AbstractVector, bond_lengths = bond_l
         push!(prots_prepped, p)
     end
     return prots_prepped
+end
+
+function idealize_lengths_angles(protxyz::AbstractArray, bond_lengths = bond_lengths, bond_angles = bond_angles)
+    return idealize_lengths_angles([protxyz], bond_lengths, bond_angles)[1]
 end
 
 """
