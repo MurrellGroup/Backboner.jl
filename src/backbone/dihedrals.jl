@@ -2,19 +2,28 @@ using LinearAlgebra
 using NNlib: batched_mul
 using Rotations
 
-export dihedrals2xyz, dihedrals2xyz_exact, get_dihedrals, get_ks_ls_dihs, idealize_lengths_angles
+export dihedrals2xyz, dihedrals2xyz_exact, get_dihedrals, get_ks_ls, get_ks_ls_dihs, idealize_lengths_angles, new_frame_dihedrals
 
 # Mean value of bond lengths and bond angles, from approx. 160k PDB values
 const MEAN_BOND_LENGTH = 1.439029
 const MEAN_BOND_ANGLE = 2.032538
 
-# returns the vectors and lengths connecting each pair of adjacent atoms in the backbone
+#=
+TODO: think about how to better integrate this with the Backbone type.
+could also probably distill the set of functions to be more concise and general,
+e.g. 
+=#
+
+"""
+Returns the vectors and lengths connecting each pair of adjacent atoms in the backbone
+"""
 function bonds_vecs_and_lens(backbone::Backbone{N}) where N
     @assert N >= 3 "backbone needs at least the N, Cα and C atoms to calculate bond vectors"
     bond_vectors = backbone_bond_vectors(backbone)
     lengths = reshape(mapslices(norm, bond_vectors, dims=1), :)
     return bond_vectors, lengths
 end
+
 
 """
 Turns a list of vectors into a set of points starting at the origin, where p1 = 0, p2 = v1 + p1, p3 = v2 + p2, etc.
@@ -59,7 +68,7 @@ Getting dihedral angles from a Backbone.
 @inline get_dihedrals(coords::AbstractArray{T, 3}) where T = get_dihedrals(Backbone(coords))
 
 """
-Fix the bond lengths of respective bonds to NCa, CaC, and CN, and return the new coordinates. 
+Fix the bond lengths of respective bonds to NCa, CaC, and CN, and return the new coordinates.
 """
 function fixed_bond_lengths(coords::AbstractArray{T, 3}, NCa, CaC, CN) where T
     vecs, lengths = bonds_vecs_and_lens(Backbone(coords))
@@ -124,7 +133,7 @@ function idealize_lengths_angles(
 end
 
 """
-Fixes P3 to the correct bond angle given its bond length and skip length, while keeping it in the same plane defined by the initial P1-P2-P3. 
+Fixes P3 to the correct bond angle given its bond length and skip length, while keeping it in the same plane defined by the initial P1-P2-P3.
 """
 function fix_bond_angle(P1, P2, P3, k, l) 
     v1 = P1 - P2
@@ -174,7 +183,7 @@ function fix_sequence_of_points(points, ks, ls)
 end
 
 """
-Edits the dihedrals of the given coords to a list or 3xN matrix of new dihedrals. 
+Edits the dihedrals of the given coords to a list or 3xN matrix of new dihedrals.
 """
 function dihedrals_to_vecs_respect_bond_angles(
     coords::AbstractArray{T, 3},
@@ -205,23 +214,25 @@ function dihedrals_to_vecs_respect_bond_angles(
 end
 
 """ 
+    dihedrals2xyz(dihedrals::AbstractVecOrMat, start_res::AbstractMatrix; bond_length=MEAN_BOND_LENGTH, bond_angle=MEAN_BOND_ANGLE)
+
 Takes an array or a 3xN matrix of dihedrals and a starting residue and returns the xyz coordinates determined by the dihedrals, bond lengths and bond angles. 
 """
 function dihedrals2xyz(
-    dihs::AbstractVecOrMat,
+    dihedrals::AbstractVecOrMat,
     start_res::AbstractMatrix;
     bond_length=MEAN_BOND_LENGTH,
     bond_angle=MEAN_BOND_ANGLE,
 )
-    dihs3xL = reshape(dihs, 3, :) # note there are N-1 sets of three dihedrals for N residues. 
-    reshape(start_res, 3, 3)
-    init_points = cat(start_res, randn(3, 3, size(dihs3xL, 2)), dims = 3) 
+    dihedrals3xL = reshape(dihedrals, 3, :) # note there are N-1 sets of three dihedrals for N residues.
+    init_points = cat(start_res, randn(3, 3, size(dihedrals3xL, 2)), dims = 3) 
     st = idealize_lengths_angles([init_points], bond_length=bond_length, bond_angle=bond_angle)[1]
-    
-    return reshape(coords_from_vecs(dihedrals_to_vecs_respect_bond_angles(st, dihs3xL)[1]) .+ start_res[:, 1], 3, 3, :)
+    return reshape(coords_from_vecs(dihedrals_to_vecs_respect_bond_angles(st, dihedrals3xL)[1]) .+ start_res[:, 1], 3, 3, :)
 end
 
 """
+    get_ks_ls(coords::AbstractArray{T, 3}) where T
+
 Returns the bond lengths between adjacent atoms (ks) and the skip lengths (ls).
 """
 function get_ks_ls(coords::AbstractArray{T, 3}) where T
@@ -232,16 +243,18 @@ function get_ks_ls(coords::AbstractArray{T, 3}) where T
 end 
 
 """
+    get_ks_ls_dihs(coords::AbstractArray{T, 3}) where T
+
 Gets bond lengths, skip lengths, and dihedrals from coords. 
 """
 function get_ks_ls_dihs(coords::AbstractArray{T, 3}) where T
     ks, ls = get_ks_ls(coords)
-    dihs = get_dihedrals(coords)
-    return ks, ls, dihs
+    dihedrals = get_dihedrals(coords)
+    return ks, ls, dihedrals
 end
 
 """
-Fix all bond lengths in coords to the bond lengths given in l. 
+Fix all bond lengths in coords to the bond lengths given in l.
 """
 function fix_bond_lengths_sequence(coords::AbstractArray{T, 3}, ks::AbstractVector) where T
     vecs, lengths = bonds_vecs_and_lens(Backbone(coords))
@@ -253,7 +266,8 @@ function fix_bond_lengths_sequence(coords::AbstractArray{T, 3}, ks::AbstractVect
     end
     return new_coords
 end
-""" 
+ 
+"""
 Fixes the coords_vector to the exact sequence of lengths and angles (angles parametrized by skip lengths "ls"), where ks = [NCa1, CaC1, CN1, ...] and ls = [NC, CaN, CCa, ...].
 """
 function fix_sequence_lengths_angles(coords::AbstractArray{T, 3}, ks::AbstractVector, ls::AbstractVector) where T
@@ -264,11 +278,24 @@ function fix_sequence_lengths_angles(coords::AbstractArray{T, 3}, ks::AbstractVe
 end
 
 """
+    dihedrals2xyz_exact(dihedrals::AbstractVecOrMat, start_res::AbstractMatrix, ks::AbstractVector, ls::AbstractVector)
+
 Maps dihedrals, adjacent bond lengths, skips lengths, and a starting residue to xyz coordinates. 
 """
-function dihedrals2xyz_exact(dihs::AbstractVecOrMat, start_res::AbstractMatrix, ks::AbstractVector, ls::AbstractVector)
-    dihs3xL = reshape(dihs, 3, :) 
-    init_points = cat(start_res, randn(3, 3, size(dihs3xL, 2)), dims = 3)
+function dihedrals2xyz_exact(dihedrals::AbstractVecOrMat, start_res::AbstractMatrix, ks::AbstractVector, ls::AbstractVector)
+    dihedrals3xL = reshape(dihedrals, 3, :) 
+    init_points = cat(start_res, randn(3, 3, size(dihedrals3xL, 2)), dims = 3)
     st = fix_sequence_lengths_angles(init_points, ks, ls)
-    return reshape(coords_from_vecs(dihedrals_to_vecs_respect_bond_angles(st, dihs3xL)[1]) .+ start_res[:, 1], 3, 3, :)
+    return reshape(coords_from_vecs(dihedrals_to_vecs_respect_bond_angles(st, dihedrals3xL)[1]) .+ start_res[:, 1], 3, 3, :)
+end
+
+"""
+    new_frame_dihedrals(frames_prev::AbstractArray{T, 4}, dihedrals::AbstractMatrix) where T
+
+Takes protxyz and a singular set of dihedrals to place the next frame with idealized bond lengths and angles
+"""
+function new_frame_dihedrals(frames_prev::AbstractArray{T, 4}, dihedrals::AbstractMatrix)
+    new_frame = dihedrals2xyz(dihedrals[:, end], frames_prev[:, :, end, 1])
+    pxyz = cat(frames_prev[:, :, :], new_frame[:, :, end], dims=3)
+    return pxyz
 end
