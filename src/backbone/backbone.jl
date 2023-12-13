@@ -1,5 +1,9 @@
 export Backbone, remove_column, atom_coord_matrix
 
+#= TODO: field that defines the true contiguous chain of backbone atoms, e.g. 1:3
+alternatively, the backbone could just be defined as a contiguous chain of atoms
+and oxygen atoms could be moved to the Chain type =#
+
 """
     Backbone{N, T <: Real} <: AbstractArray{T, 3}
 
