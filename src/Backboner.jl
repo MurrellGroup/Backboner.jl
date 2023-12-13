@@ -1,7 +1,6 @@
 module Backboner
 
 using LinearAlgebra
-using StatsBase
 
 import Rotations
 import PDBTools

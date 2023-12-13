@@ -91,18 +91,18 @@ end
 @inline law_of_cosines(a, b, C) = sqrt(a^2 + b^2 - 2*a*b*cos(C))
 
 """
-    idealize_lengths_angles(coords_vector::AbstractVector{<:AbstractArray{T, 3}}; bond_length=MEAN_BOND_LENGTH, bond_angle=MEAN_BOND_ANGLE) where T
+    idealize_lengths_angles(coords_vector::AbstractVector{<:AbstractArray{T, 3}}; bond_lengths=MEAN_BOND_LENGTH, bond_angles=MEAN_BOND_ANGLE) where T
 
 Idealizes the bond lengths and angles of coords_vector while maintaining the same overall structure. coords_vector can be a single 3x3xN matrix or a vector of 3x3xN matrices.
 """
 function idealize_lengths_angles(
     coords_vector::AbstractVector{<:AbstractArray{T, 3}};
-    bond_length=MEAN_BOND_LENGTH,
-    bond_angle=MEAN_BOND_ANGLE,
+    bond_lengths=MEAN_BOND_LENGTH,
+    bond_angles=MEAN_BOND_ANGLE,
 ) where T
     # Code is general as to allow for different bond lengths and angles for different bonds, however it is currently not used. 
-    NCa = CaC = CN = bond_length 
-    NCaC = CaCN = CNCa = bond_angle 
+    NCa = CaC = CN = bond_lengths 
+    NCaC = CaCN = CNCa = bond_angles 
 
     lNCaC = law_of_cosines(NCa, CaC, NCaC)
     lCaCN = law_of_cosines(CaC, CN, CaCN)
@@ -126,10 +126,10 @@ end
 
 function idealize_lengths_angles(
     coords::AbstractArray{T, 3};
-    bond_length=MEAN_BOND_LENGTH,
-    bond_angle=MEAN_BOND_ANGLE
+    bond_lengths=MEAN_BOND_LENGTH,
+    bond_angles=MEAN_BOND_ANGLE
 ) where T
-    return idealize_lengths_angles([coords]; bond_length=bond_length, bond_angle=bond_angle)[1]
+    return idealize_lengths_angles([coords]; bond_lengths=bond_lengths, bond_angles=bond_angles)[1]
 end
 
 """
@@ -214,19 +214,19 @@ function dihedrals_to_vecs_respect_bond_angles(
 end
 
 """ 
-    dihedrals2xyz(dihedrals::AbstractVecOrMat, start_res::AbstractMatrix; bond_length=MEAN_BOND_LENGTH, bond_angle=MEAN_BOND_ANGLE)
+    dihedrals2xyz(dihedrals::AbstractVecOrMat, start_res::AbstractMatrix; bond_lengths=MEAN_BOND_LENGTH, bond_angles=MEAN_BOND_ANGLE)
 
 Takes an array or a 3xN matrix of dihedrals and a starting residue and returns the xyz coordinates determined by the dihedrals, bond lengths and bond angles. 
 """
 function dihedrals2xyz(
     dihedrals::AbstractVecOrMat,
     start_res::AbstractMatrix;
-    bond_length=MEAN_BOND_LENGTH,
-    bond_angle=MEAN_BOND_ANGLE,
+    bond_lengths=MEAN_BOND_LENGTH,
+    bond_angles=MEAN_BOND_ANGLE,
 )
     dihedrals3xL = reshape(dihedrals, 3, :) # note there are N-1 sets of three dihedrals for N residues.
     init_points = cat(start_res, randn(3, 3, size(dihedrals3xL, 2)), dims = 3) 
-    st = idealize_lengths_angles([init_points], bond_length=bond_length, bond_angle=bond_angle)[1]
+    st = idealize_lengths_angles([init_points], bond_lengths=bond_lengths, bond_angles=bond_angles)[1]
     return reshape(coords_from_vecs(dihedrals_to_vecs_respect_bond_angles(st, dihedrals3xL)[1]) .+ start_res[:, 1], 3, 3, :)
 end
 
@@ -294,7 +294,7 @@ end
 
 Takes protxyz and a singular set of dihedrals to place the next frame with idealized bond lengths and angles
 """
-function new_frame_dihedrals(frames_prev::AbstractArray{T, 4}, dihedrals::AbstractMatrix)
+function new_frame_dihedrals(frames_prev::AbstractArray{T, 3}, dihedrals::AbstractMatrix) where T
     new_frame = dihedrals2xyz(dihedrals[:, end], frames_prev[:, :, end, 1])
     pxyz = cat(frames_prev[:, :, :], new_frame[:, :, end], dims=3)
     return pxyz
