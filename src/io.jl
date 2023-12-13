@@ -68,7 +68,7 @@ function protein_to_pdb(protein::Protein, filename, header=:auto, footer=:auto)
         for (resnum, (residue_coords, aa)) in enumerate(zip(eachslice(chain.backbone.coords, dims=3), chain.aavector))
             resname = get(THREE_LETTER_AA_CODES, aa, "XXX")
             residue_index += 1
-            for (name, atom_coords) in zip(["N", "CA", "C", "O"], eachcol(residue_coords))
+            for (name, atom_coord_matrix) in zip(["N", "CA", "C", "O"], eachcol(residue_coords))
                 index += 1
                 atom = PDBTools.Atom(
                     index = index,
@@ -77,7 +77,7 @@ function protein_to_pdb(protein::Protein, filename, header=:auto, footer=:auto)
                     chain = chain.id,
                     resnum = resnum,
                     residue = residue_index,
-                    x = atom_coords[1], y = atom_coords[2], z = atom_coords[3],
+                    x = atom_coord_matrix[1], y = atom_coord_matrix[2], z = atom_coord_matrix[3],
                 )
                 push!(atoms, atom)
             end

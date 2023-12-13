@@ -13,6 +13,7 @@
 
     include("oxygen.jl")
     include("rotations.jl")
-    include("distance.jl")
+    include("bonds.jl")
+    include("dihedrals.jl")
 
 end

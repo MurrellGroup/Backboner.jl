@@ -41,4 +41,5 @@ end
 
 include("rotations.jl")
 include("oxygen.jl")
-include("distance.jl")
+include("bonds.jl")
+include("dihedrals.jl")

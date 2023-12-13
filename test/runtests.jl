@@ -1,6 +1,8 @@
 using Backboner
 using Test
 
+using LinearAlgebra
+
 @testset "Backboner.jl" begin
 
     include("backbone/backbone.jl")
