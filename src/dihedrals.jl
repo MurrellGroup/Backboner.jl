@@ -4,8 +4,8 @@ using Flux:batched_mul
 using StatsBase
 using Rotations
 
-export dihsxyz, dihsxyz_exact, get_dihedrals, get_ks_ls_dihs, idealize_lengths_angles
-mbl, mba = (1.4390292125539965, 2.0325377936819717) # Reasonable value for bond lengths and bond angles to be idealized to. (mean of approx 160k PDB values)
+export dihedrals2xyz, dihedrals2xyz_exact, get_dihedrals, get_ks_ls_dihs, idealize_lengths_angles
+bond_lengths, bond_angles = (1.4390292125539965, 2.0325377936819717) # Reasonable value for bond lengths and bond angles to be idealized to. (mean of approx 160k PDB values)
 
 plotsh(x) = reshape(x, 3, :)
 
@@ -86,15 +86,15 @@ function fixed_bond_lengths(protxyz, NCa, CaC, CN)
 end
 
 """
-Fixes bond lengths and angles of protxyzs to mbl and mba respectively, where protxyzs is a vector of 3x3xN arrays of xyz coordinates. 
+Fixes bond lengths and angles of protxyzs to bond_lengths and bond_angles respectively, where protxyzs is a vector of 3x3xN arrays of xyz coordinates. 
 """
-function idealize_lengths_angles(protxyzs::AbstractVector, mbl = mbl, mba = mba)
+function idealize_lengths_angles(protxyzs::AbstractVector, bond_lengths = bond_lengths, bond_angles = bond_angles)
 
     prots_prepped = []
 
     # Code is general as to allow for different bond lengths and angles for different bonds, however it is currently not used. 
-    NCa, CaC, CN = mbl, mbl, mbl 
-    NCaC, CaCN, CNCa = mba, mba, mba 
+    NCa, CaC, CN = bond_lengths, bond_lengths, bond_lengths 
+    NCaC, CaCN, CNCa = bond_angles, bond_angles, bond_angles 
 
     # get_triangle uses the law of cosines to find the length of the third side of a triangle given two bond lengths and one bond angle.
     lNCaC = get_triangle(NCa, CaC, NCaC)
@@ -195,16 +195,17 @@ function dihedrals_to_vecs_respect_bond_angles(protxyz, new_dihedrals::AbstractV
 end
 
 """ 
-Takes a list or 3xN matrix of dihedrals and a starting residue and returns the xyz coordinates determined by the dihedrals, bond lengths "mbl" and bond angles "mba". 
+Takes an array or a 3xN matrix of dihedrals and a starting residue and returns the xyz coordinates determined by the dihedrals, bond lengths and bond angles. 
 """
-function dihsxyz(dihs::AbstractVecOrMat, start_res::AbstractMatrix; mbl = mbl, mba = mba)
+function dihedrals2xyz(dihs::AbstractVecOrMat, start_res::AbstractMatrix; bond_lengths = bond_lengths, bond_angles = bond_angles)
     dihs3xL = reshape(dihs,3,:) # note there are N-1 sets of three dihedrals for N residues. 
     reshape(start_res,3,3)
     init_points = cat(start_res, randn(3,3,size(dihs3xL,2)), dims = 3) 
-    st = idealize_lengths_angles([init_points],mbl,mba)[1]
+    st = idealize_lengths_angles([init_points],bond_lengths,bond_angles)[1]
     
     return reshape(coords_from_vecs(dihedrals_to_vecs_respect_bond_angles(st, dihs3xL)[1]) .+ start_res[:,1],3,3,:)
 end
+
 """
 Returns the bond lengths between adjacent atoms (ks) and the skip lengths (ls).
 """
@@ -254,7 +255,7 @@ end
 """
 Maps dihedrals, adjacent bond lengths, skips lengths, and a starting residue to xyz coordinates. 
 """
-function dihsxyz_exact(dihs::AbstractVecOrMat, start_res::AbstractMatrix, ks::AbstractVector, ls::AbstractVector)
+function dihedrals2xyz_exact(dihs::AbstractVecOrMat, start_res::AbstractMatrix, ks::AbstractVector, ls::AbstractVector)
     dihs3xL = reshape(dihs,3,:) 
     init_points = cat(start_res, randn(3,3,size(dihs3xL,2)), dims = 3)
     st = fix_sequence_lengths_angles(init_points,ks,ls)
