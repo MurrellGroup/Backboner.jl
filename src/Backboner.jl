@@ -1,6 +1,8 @@
 module Backboner
 
 using LinearAlgebra
+using Flux:batched_mul
+using StatsBase
 
 import Rotations
 import PDBTools
@@ -15,5 +17,6 @@ include("chain.jl")
 include("protein.jl")
 include("assign.jl")
 include("io.jl")
+include("dihedrals.jl")
 
 end
