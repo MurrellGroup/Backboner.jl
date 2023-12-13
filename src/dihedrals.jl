@@ -3,7 +3,7 @@ using LinearAlgebra
 using Flux:batched_mul
 using Rotations
 
-export dihedrals2xyz, dihedrals2xyz_exact, get_dihedrals, get_ks_ls_dihs, idealize_lengths_angles
+export dihedrals2xyz, dihedrals2xyz_exact, get_dihedrals, get_ks_ls_dihs, idealize_lengths_angles, new_frame_dihedrals
 bond_lengths, bond_angles = (1.4390292125539965, 2.0325377936819717) # Reasonable value for bond lengths and bond angles to be idealized to. (mean of approx 160k PDB values)
 
 plotsh(x) = reshape(x, 3, :)
@@ -263,6 +263,15 @@ function dihedrals2xyz_exact(dihs::AbstractVecOrMat, start_res::AbstractMatrix, 
     init_points = cat(start_res, randn(3,3,size(dihs3xL,2)), dims = 3)
     st = fix_sequence_lengths_angles(init_points,ks,ls)
     return reshape(coords_from_vecs(dihedrals_to_vecs_respect_bond_angles(st, dihs3xL)[1]) .+ start_res[:,1],3,3,:)
+end
+
+"""
+Takes protxyz and a singular set of dihedrals to place the next frame with idealized bond lengths and angles
+"""
+function new_frame_dihedrals(frames_prev, dihedrals)
+    new_frame = dihsxyz(dihedrals[:,end], frames_prev[:,:,end,1])
+    pxyz = cat(frames_prev[:,:,:], new_frame[:,:,end], dims = 3)
+    return pxyz
 end
 
 end
