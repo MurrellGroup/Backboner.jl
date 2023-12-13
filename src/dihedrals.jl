@@ -1,7 +1,6 @@
 module dihedrals
 using LinearAlgebra
 using Flux:batched_mul
-using StatsBase
 using Rotations
 
 export dihedrals2xyz, dihedrals2xyz_exact, get_dihedrals, get_ks_ls_dihs, idealize_lengths_angles

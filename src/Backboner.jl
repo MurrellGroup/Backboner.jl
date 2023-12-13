@@ -2,7 +2,6 @@ module Backboner
 
 using LinearAlgebra
 using Flux:batched_mul
-using StatsBase
 
 import Rotations
 import PDBTools
