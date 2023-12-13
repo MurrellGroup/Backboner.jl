@@ -13,5 +13,6 @@
 
     include("oxygen.jl")
     include("rotations.jl")
+    include("distance.jl")
 
 end
