@@ -295,7 +295,7 @@ end
 Takes protxyz and a singular set of dihedrals to place the next frame with idealized bond lengths and angles
 """
 function new_frame_dihedrals(frames_prev::AbstractArray{T, 3}, dihedrals::AbstractMatrix) where T
-    new_frame = dihedrals2xyz(dihedrals[:, end], frames_prev[:, :, end, 1])
+    new_frame = dihedrals2xyz(dihedrals[:, end], frames_prev[:, :, end])
     pxyz = cat(frames_prev[:, :, :], new_frame[:, :, end], dims=3)
     return pxyz
 end
