@@ -37,19 +37,12 @@ function Backbone(atoms::Vector{PDBTools.Atom})
     return Backbone(coords)
 end
 
-function Chain(atoms::Vector{PDBTools.Atom})
+function ProteinChain(atoms::Vector{PDBTools.Atom})
     id = PDBTools.chain(atoms[1])
     @assert allequal(PDBTools.chain.(atoms)) "atoms must be from the same chain"
     backbone = Backbone(atoms)
     aavector = [get(ONE_LETTER_AA_CODES, atom.resname, 'X') for atom in atoms if atom.name == "CA"]
-    return Chain(id, backbone, aavector=aavector)
-end
-
-function Protein(atoms::Vector{PDBTools.Atom})
-    filter!(a -> a.name in ["N", "CA", "C", "O"], atoms)
-    ids = PDBTools.chain.(atoms)
-    chains = [Chain(atoms[ids .== id]) for id in unique(ids)]
-    return Protein(chains)
+    return ProteinChain(id, backbone, aavector=aavector)
 end
 
 """
@@ -57,9 +50,15 @@ end
 
 Assumes that each residue starts with four atoms: N, CA, C, O.
 """
-pdb_to_protein(filename::String) = Protein(PDBTools.readPDB(filename))
+function pdb_to_protein(filename::String)
+    atoms = PDBTools.readPDB(filename)
+    filter!(a -> a.name in ["N", "CA", "C", "O"], atoms)
+    ids = PDBTools.chain.(atoms)
+    chains = [ProteinChain(atoms[ids .== id]) for id in unique(ids)]
+    return chains
+end
 
-function protein_to_pdb(protein::Protein, filename, header=:auto, footer=:auto)
+function protein_to_pdb(protein::Vector{ProteinChain}, filename, header=:auto, footer=:auto)
     atoms = PDBTools.Atom[]
     index = 0
     residue_index = 0

@@ -6,12 +6,12 @@ The `Backbone` type has a type parameter `N` to represent the number of atoms pe
 julia> using Backboner
 
 julia> protein = pdb_to_protein("test/data/1ZAK.pdb")
-2-element Protein{Float32}:
- Chain A with 220 residues
- Chain B with 220 residues
+2-element Vector{ProteinChain}:
+ ProteinChain A with 220 residues
+ ProteinChain B with 220 residues
 
 julia> chain = protein["A"]
-Chain A with 220 residues
+ProteinChain A with 220 residues
 
 julia> backbone4 = chain.backbone
 3×4×220 Backbone{4, Float32}:

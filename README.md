@@ -20,11 +20,11 @@ Pkg.add("Backboner")
 
 ## Types and functions
 
-The `Protein` type wraps a vector of `Chain`s, which in turn wraps the `Backbone{4}` type (4, because it stores the positions of 4 atoms per residue: N, CA, C, O). The `Backbone{N}` type has the `N` type parameter in order to remain flexible. It allows one pass only the N, CA, and C atoms of a backbone, such that the O atom positions can added in using the `add_oxygens` function.
+Proteins are represented as vectors of `ProteinChain`s, which in turn wrap the `Backbone{3}` type to store the coordinates of N, Ca, and C atoms.
 
-The secondary structure of an entire chain is described by a `Vector{Char}`, where '-' stands for coil/loop, 'H' for helix, and 'E' for strand. For assignment of secondary structure, this package uses the [AssigningSecondaryStructure.jl](https://github.com/MurrellGroup/AssigningSecondaryStructure.jl) package, which implements a simplified version of the DSSP algorithm.
+The secondary structures of a chain are described by a `Vector{Char}`, where '-' stands for coil/loop, 'H' for helix, and 'E' for strand. For assignment of secondary structure, this package uses the [AssigningSecondaryStructure.jl](https://github.com/MurrellGroup/AssigningSecondaryStructure.jl) package, which implements a simplified version of the DSSP algorithm.
 
-Protein backbones can be loaded from a PDB file using the `pdb_to_protein` function, which returns a `Protein` instance. Inversely, a `Protein` instance can be written to a PDB file using the `protein_to_pdb` function.
+Proteins can be loaded from a PDB file using the `pdb_to_protein` function, which returns a `Vector{ProteinChain}` instance. Inversely, a `Vector{ProteinChain}` instance can be written to a PDB file using the `protein_to_pdb` function.
 
 ## Example
 
@@ -32,12 +32,12 @@ Protein backbones can be loaded from a PDB file using the `pdb_to_protein` funct
 julia> using Backboner
 
 julia> protein = pdb_to_protein("test/data/1ZAK.pdb")
-2-element Protein{Float32}:
- Chain A with 220 residues
- Chain B with 220 residues
+2-element Vector{ProteinChain}:
+ ProteinChain A with 220 residues
+ ProteinChain B with 220 residues
 
 julia> chain = protein["A"]
-Chain A with 220 residues
+ProteinChain A with 220 residues
 
 julia> chain.backbone
 3×4×220 Backbone{4, Float32}:
