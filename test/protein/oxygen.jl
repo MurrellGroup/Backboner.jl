@@ -1,12 +1,14 @@
 @testset "oxygen.jl" begin
 
-    protein = pdb_to_protein("data/1ASS.pdb")
+    # The following is outdated.
+
+    #=protein = pdb_to_protein("data/1ASS.pdb")
     backbone4 = protein[1].backbone
     backbone3 = remove_column(backbone4, 4)
     backbone4est = add_oxygens(backbone3)
     true_o_coords = backbone4[:, 4, 1:end-1] # don't compare to last oxygen cause orientation is random
     est_o_coords = backbone4est[:, 4, 1:end-1]
-    @test all(isapprox.(true_o_coords, est_o_coords, atol=0.2))
+    @test all(isapprox.(true_o_coords, est_o_coords, atol=0.2))=#
 
     """
     # The actual distribution of distances between the true and estimated oxygen atom positions:

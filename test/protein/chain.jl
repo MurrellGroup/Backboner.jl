@@ -2,7 +2,7 @@
 
     @testset "chain.jl" begin
 
-        coords = randn(3, 4, 5)
+        coords = randn(3, 3, 5)
         backbone = Backbone(coords)
         chain = ProteinChain("A", backbone)
         @test chain.id == "A"
@@ -12,7 +12,6 @@
         @test !has_assigned_ss(chain)
         @test length(chain) == 5
         @test size(chain) == (5,)
-        @test ProteinChain(remove_column(backbone, 4)).backbone == add_oxygens(remove_column(backbone, 4))
         @test ProteinChain(backbone).id == "_"
         
         @test chain[1] == Residue(1, backbone, 'G', ' ')

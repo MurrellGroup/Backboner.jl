@@ -4,7 +4,7 @@
 
 The `Backbone` type is designed to efficiently store and manipulate the three-dimensional coordinates of backbone atoms in proteins. It is a fundamental component, and is literally the backbone of protein structures.
 
-`Backbone{N, T}` is a wrapper around a 3xNxL array, where:
+`Backbone{A, T}` is a wrapper around a 3xNxL array, where:
 - **3** are the three spatial dimensions for the coordinates.
 - **N** is the number of atoms in the backbone per residue.
 - **L** is the number of residues in the backbone.

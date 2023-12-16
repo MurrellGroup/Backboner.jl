@@ -5,8 +5,8 @@ using Rotations
 export dihedrals2xyz, dihedrals2xyz_exact, get_dihedrals, get_ks_ls, get_ks_ls_dihs, idealize_lengths_angles, new_frame_dihedrals
 
 # Mean value of bond lengths and bond angles, from approx. 160k PDB values
-const MEAN_BOND_LENGTH = 1.439029
-const MEAN_BOND_ANGLE = 2.032538
+const MEAN_BOND_LENGTHS = (1.47, 1.53, 1.32)
+const MEAN_BOND_ANGLES = (deg2rad(110), deg2rad(117), deg2rad(120))
 
 #=
 TODO: think about how to better integrate this with the Backbone type.
@@ -23,7 +23,6 @@ function bonds_vecs_and_lens(backbone::Backbone{A}) where A
     lengths = reshape(mapslices(norm, bond_vectors, dims=1), :)
     return bond_vectors, lengths
 end
-
 
 """
 Turns a list of vectors into a set of points starting at the origin, where p1 = 0, p2 = v1 + p1, p3 = v2 + p2, etc.
@@ -59,11 +58,6 @@ function get_dihedrals(vecs::AbstractMatrix, lengths::AbstractVector)
     return thetas
 end
 
-"""
-    get_dihedrals(backbone::Backbone)
-
-Getting dihedral angles from a Backbone.
-"""
 @inline get_dihedrals(backbone::Backbone) = get_dihedrals(bonds_vecs_and_lens(backbone)...)
 @inline get_dihedrals(coords::AbstractArray{T, 3}) where T = get_dihedrals(Backbone(coords))
 
@@ -91,22 +85,22 @@ end
 @inline law_of_cosines(a, b, C) = sqrt(a^2 + b^2 - 2*a*b*cos(C))
 
 """
-    idealize_lengths_angles(coords_vector::AbstractVector{<:AbstractArray{T, 3}}; bond_lengths=MEAN_BOND_LENGTH, bond_angles=MEAN_BOND_ANGLE) where T
+    idealize_lengths_angles(coords_vector::AbstractVector{<:AbstractArray{T, 3}}; bond_lengths=MEAN_BOND_LENGTHS, bond_angles=MEAN_BOND_ANGLES) where T
 
 Idealizes the bond lengths and angles of coords_vector while maintaining the same overall structure. coords_vector can be a single 3x3xN matrix or a vector of 3x3xN matrices.
 """
 function idealize_lengths_angles(
     coords_vector::AbstractVector{<:AbstractArray{T, 3}};
-    bond_lengths=MEAN_BOND_LENGTH,
-    bond_angles=MEAN_BOND_ANGLE,
+    bond_lengths=MEAN_BOND_LENGTHS,
+    bond_angles=MEAN_BOND_ANGLES,
 ) where T
     # Code is general as to allow for different bond lengths and angles for different bonds, however it is currently not used. 
-    NCa = CaC = CN = bond_lengths 
-    NCaC = CaCN = CNCa = bond_angles 
+    NCa, CaC, CN = bond_lengths 
+    NCaC, CaCN, CNCa = bond_angles 
 
-    lNCaC = law_of_cosines(NCa, CaC, NCaC)
-    lCaCN = law_of_cosines(CaC, CN, CaCN)
-    lCNCa = law_of_cosines(CN, NCa, CNCa)
+    NC = law_of_cosines(NCa, CaC, NCaC)
+    CaN = law_of_cosines(CaC, CN, CaCN)
+    CCa = law_of_cosines(CN, NCa, CNCa)
 
     prots_prepped = Array{T, 3}[]
 
@@ -117,7 +111,7 @@ function idealize_lengths_angles(
 
         # ks and ls are lengths used for fixing bond angles. 
         ks = repeat([CaC, CN, NCa], size(orgp, 3))
-        ls = repeat([lCaCN, lCNCa, lNCaC], size(orgp, 3))
+        ls = repeat([CaN, CCa, NC], size(orgp, 3))
         p = reshape(fix_sequence_of_points(points, ks, ls), 3, 3, :)
         push!(prots_prepped, p)
     end
@@ -126,8 +120,8 @@ end
 
 function idealize_lengths_angles(
     coords::AbstractArray{T, 3};
-    bond_lengths=MEAN_BOND_LENGTH,
-    bond_angles=MEAN_BOND_ANGLE
+    bond_lengths=MEAN_BOND_LENGTHS,
+    bond_angles=MEAN_BOND_ANGLES
 ) where T
     return idealize_lengths_angles([coords]; bond_lengths=bond_lengths, bond_angles=bond_angles)[1]
 end
@@ -214,19 +208,19 @@ function dihedrals_to_vecs_respect_bond_angles(
 end
 
 """ 
-    dihedrals2xyz(dihedrals::AbstractVecOrMat, start_res::AbstractMatrix; bond_lengths=MEAN_BOND_LENGTH, bond_angles=MEAN_BOND_ANGLE)
+    dihedrals2xyz(dihedrals::AbstractVecOrMat, start_res::AbstractMatrix; bond_lengths=MEAN_BOND_LENGTHS, bond_angles=MEAN_BOND_ANGLES)
 
 Takes an array or a 3xN matrix of dihedrals and a starting residue and returns the xyz coordinates determined by the dihedrals, bond lengths and bond angles. 
 """
 function dihedrals2xyz(
     dihedrals::AbstractVecOrMat,
     start_res::AbstractMatrix;
-    bond_lengths=MEAN_BOND_LENGTH,
-    bond_angles=MEAN_BOND_ANGLE,
+    bond_lengths=MEAN_BOND_LENGTHS,
+    bond_angles=MEAN_BOND_ANGLES,
 )
     dihedrals3xL = reshape(dihedrals, 3, :) # note there are N-1 sets of three dihedrals for N residues.
     init_points = cat(start_res, randn(3, 3, size(dihedrals3xL, 2)), dims = 3) 
-    st = idealize_lengths_angles([init_points], bond_lengths=bond_lengths, bond_angles=bond_angles)[1]
+    st = idealize_lengths_angles(init_points, bond_lengths=bond_lengths, bond_angles=bond_angles)
     return reshape(coords_from_vecs(dihedrals_to_vecs_respect_bond_angles(st, dihedrals3xL)[1]) .+ start_res[:, 1], 3, 3, :)
 end
 

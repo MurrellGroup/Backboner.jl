@@ -1,14 +1,14 @@
-export Residue, backbone_atom_coord_matrix
+export Residue, backbone_atom_coords
 
 struct Residue
     index::Integer
-    backbone::Backbone{4}
+    backbone::Backbone{3}
     aa::Char
     ss::Char
 
     function Residue(
         index::Integer,
-        backbone::Backbone{4},
+        backbone::Backbone{3},
         aa::Char = 'G',
         ss::Char = ' ',
     )
@@ -16,10 +16,10 @@ struct Residue
     end
 end
 
-backbone_atom_coord_matrix(residue::Residue) = residue.backbone[residue.index]
+backbone_atom_coords(residue::Residue) = residue.backbone[residue.index]
 
 function Base.summary(residue::Residue)
-    index = lpad(string(residue.index), length(string(length(residue.backbone))))
+    index = lpad(string(residue.index), ndigits(length(residue.backbone)))
     aa3 = get(THREE_LETTER_AA_CODES, residue.aa, "XXX")
     ss = residue.ss
     return "Residue $index $aa3 $ss"

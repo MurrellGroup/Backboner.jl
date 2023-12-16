@@ -3,7 +3,7 @@
     protein = pdb_to_protein("data/1ASS.pdb")
     chain_A = protein["A"]
     backbone = chain_A.backbone
-    backbone3 = Backbone(atom_coord_matrix(backbone, 1:3))
+    backbone3 = Backbone(atom_coords(backbone, 1:3))
 
     @testset "idealized lengths and angles" begin
 
