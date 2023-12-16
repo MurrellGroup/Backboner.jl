@@ -20,7 +20,6 @@ struct Backbone{A, T <: Real} <: AbstractArray{T, 3}
     Backbone{A}(backbone::Backbone) where A = Backbone{A}(reshape(backbone.coords, 3, A, :))
 end
 
-@inline Base.:(==)(bb1::Backbone, bb2::Backbone) = bb1.coords == bb2.coords
 @inline Base.size(backbone::Backbone) = size(backbone.coords)
 @inline Base.length(backbone::Backbone) = size(backbone, 3)
 @inline Base.getindex(backbone::Backbone, i, j, k) = backbone.coords[i, j, k]
@@ -33,13 +32,6 @@ end
 Returns the coordinates of specific columns of atoms in a backbone.
 """
 @inline atom_coords(backbone::Backbone, i) = view(backbone.coords, :, i, :)
-
-"""
-    residue_coords(backbone, i)
-
-Returns the coordinates of a specific residue in a backbone.
-"""
-@inline residue_coords(backbone::Backbone, i) = view(backbone.coords, :, :, i)
 
 include("rotations.jl")
 include("bonds.jl")

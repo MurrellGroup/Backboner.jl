@@ -1,4 +1,4 @@
-export Residue, backbone_atom_coords
+export Residue
 
 struct Residue
     index::Integer
@@ -15,8 +15,6 @@ struct Residue
         return new(index, backbone, aa, ss)
     end
 end
-
-backbone_atom_coords(residue::Residue) = residue.backbone[residue.index]
 
 function Base.summary(residue::Residue)
     index = lpad(string(residue.index), ndigits(length(residue.backbone)))

@@ -19,7 +19,7 @@ Returns the vectors and lengths connecting each pair of adjacent atoms in the ba
 """
 function bonds_vecs_and_lens(backbone::Backbone{A}) where A
     @assert A >= 3 "backbone needs at least the N, Cα and C atoms to calculate bond vectors"
-    bond_vectors = backbone_bond_vectors(backbone)
+    bond_vectors = bond_vectors(backbone)
     lengths = reshape(mapslices(norm, bond_vectors, dims=1), :)
     return bond_vectors, lengths
 end

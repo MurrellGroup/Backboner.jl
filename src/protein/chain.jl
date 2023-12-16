@@ -36,13 +36,15 @@ Base.show(io::IO, chain::ProteinChain) = print(io, summary(chain))
 
 @inline Base.getindex(protein::AbstractVector{ProteinChain}, id::AbstractString) = protein[findfirst(c -> c.id == id, protein)]
 
+export nitrogen_alphacarbon_distances, alphacarbon_carbonyl_distances, carbonyl_nitrogen_distances
+
 """
     nitrogen_alphacarbon_distances(backbone::Backbone)
 
 Calculate the distances between all pairs of contiguous nitrogen and alpha-carbon atoms in a backbone.
 Returns a vector of distances of length `length(backbone)`.
 """
-nitrogen_alphacarbon_distances(backbone::Backbone{3}) = atom_distances(backbone, 1, 2)
+nitrogen_alphacarbon_distances(backbone::Backbone{3}) = get_atom_distances(backbone, 1, 2, 0)
 
 """
     alphacarbon_carbonyl_distances(backbone::Backbone)
@@ -50,7 +52,7 @@ nitrogen_alphacarbon_distances(backbone::Backbone{3}) = atom_distances(backbone,
 Calculate the distances between all pairs of contiguous alpha-carbon and carbonyl atoms in a backbone.
 Returns a vector of distances of length `length(backbone)`.
 """
-alphacarbon_carbonyl_distances(backbone::Backbone{3}) = atom_distances(backbone, 2, 3)
+alphacarbon_carbonyl_distances(backbone::Backbone{3}) = get_atom_distances(backbone, 2, 3, 0)
 
 """
     carbonyl_nitrogen_distances(backbone::Backbone)
@@ -58,4 +60,4 @@ alphacarbon_carbonyl_distances(backbone::Backbone{3}) = atom_distances(backbone,
 Calculate the distances between all pairs of contiguous carbonyl and nitrogen atoms in a backbone.
 Returns a vector of distances of length `length(backbone) - 1`.
 """
-carbonyl_nitrogen_distances(backbone::Backbone{3}) = atom_distances(backbone, 3, 1, 1)
+carbonyl_nitrogen_distances(backbone::Backbone{3}) = get_atom_distances(backbone, 3, 1, 1)
