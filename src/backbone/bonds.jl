@@ -119,7 +119,8 @@ function get_first_points(bonds::ChainedBonds{T}) where T
     return coords
 end
 
-# first points currently don't get adjusted to fit the bonds
+# first_points don't get adjusted to fit the bonds
+# first_points needs to have at least 3 columns
 function Backbone{ATOMS_PER_RESIDUE}(
     bonds::ChainedBonds{T};
     first_points::AbstractMatrix{T} = get_first_points(bonds),
@@ -130,7 +131,7 @@ function Backbone{ATOMS_PER_RESIDUE}(
     coords = fill(T(NaN), 3, L)
 
     l = size(first_points, 2)
-    @assert l <= L
+    @assert 3 <= l <= L
     coords[:, 1:l] = first_points
 
     for i in l+1:L
