@@ -121,7 +121,7 @@ end
 
 # first points currently don't get adjusted to fit the bonds
 function Backbone{ATOMS_PER_RESIDUE}(
-    bonds::ChainedBonds{T},
+    bonds::ChainedBonds{T};
     first_points::AbstractMatrix{T} = get_first_points(bonds),
 ) where {ATOMS_PER_RESIDUE, T}
     @assert (length(bonds) + 1) % ATOMS_PER_RESIDUE == 0 "Invalid number of atoms per residue in backbone"
