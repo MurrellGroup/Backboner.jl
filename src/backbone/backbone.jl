@@ -35,4 +35,3 @@ Returns the coordinates of specific columns of atoms in a backbone.
 
 include("rotations.jl")
 include("bonds.jl")
-include("dihedrals.jl")

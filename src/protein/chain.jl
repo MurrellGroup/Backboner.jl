@@ -34,7 +34,8 @@ end
 Base.summary(chain::ProteinChain) = "ProteinChain $(chain.id) with $(length(chain)) residue$(length(chain) == 1 ? "" : "s")"
 Base.show(io::IO, chain::ProteinChain) = print(io, summary(chain))
 
-@inline Base.getindex(protein::AbstractVector{ProteinChain}, id::AbstractString) = protein[findfirst(c -> c.id == id, protein)]
+@inline Base.getindex(protein::AbstractVector{ProteinChain}, i::AbstractString) = protein[findfirst(c -> c.id == i, protein)]
+@inline Base.getindex(protein::AbstractVector{ProteinChain}, i::Symbol) = protein[String(i)]
 
 export nitrogen_alphacarbon_distances, alphacarbon_carbonyl_distances, carbonyl_nitrogen_distances
 
