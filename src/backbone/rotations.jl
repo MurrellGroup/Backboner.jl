@@ -51,7 +51,7 @@ according to a defined standard triangle (`Backboner.STANDARD_TRIANGLE_ANGSTROM`
 """
 function backbone_to_locs_and_rots(backbone::Backbone{A, T}, unit::Symbol=:angstrom) where {A, T}
     @assert 3 <= A <= 4 "backbone must have 3 or 4 atoms per residue"
-    L = length(backbone)
+    L = size(backbone, 3)
     locations = Array{T}(undef, 3, L)
     rot_matrices = Array{T}(undef, 3, 3, L)
     for i in 1:L

@@ -58,8 +58,12 @@
 
     @testset "ChainedBonds" begin
 
+        backbone = pdb_to_protein("data/1ASS.pdb")["A"].backbone
+        bonds = ChainedBonds(backbone)
+        @test bonds == bonds
+        @test size(bonds) == (length(backbone) - 1,)
+
         @testset "invertibility" begin
-            backbone = pdb_to_protein("data/1ASS.pdb")["A"].backbone
             @test ChainedBonds(Backbone{3}(ChainedBonds(backbone))) ≈ ChainedBonds(backbone)
             @test ChainedBonds(Backbone(ChainedBonds(backbone))) ≈ ChainedBonds(backbone)
         end

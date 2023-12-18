@@ -1,9 +1,12 @@
 export Backbone, atom_coords
 
 """
-    Backbone{A, T <: Real} <: AbstractBackbone{3, A, T}
+    Backbone{A, T <: Real} <: AbstractArray{T, 3}
 
-A wrapper for a 3xAxL array of coordinates of atoms.
+The `Backbone{A}` type is designed to efficiently store and manipulate the three-dimensional coordinates of backbone atoms.
+The type parameter `A` stands for the number of atoms per residue, and is used in the size of the coordinate array, 3xAxL,
+where L is the number of residues.
+
 Backbone{3} is used to store 3-dimensional coordinates of the contiguous backbone atoms (N, Cα, C) of a protein chain.
 """
 struct Backbone{A, T <: Real} <: AbstractArray{T, 3}
@@ -21,7 +24,7 @@ struct Backbone{A, T <: Real} <: AbstractArray{T, 3}
 end
 
 @inline Base.size(backbone::Backbone) = size(backbone.coords)
-@inline Base.length(backbone::Backbone) = size(backbone, 3)
+@inline Base.length(backbone::Backbone) = size(backbone, 2) * size(backbone, 3)
 @inline Base.getindex(backbone::Backbone, i, j, k) = backbone.coords[i, j, k]
 @inline Base.getindex(backbone::Backbone, i::Integer) = view(backbone.coords, :, :, i)
 @inline Base.getindex(backbone::Backbone, r::UnitRange{Int}) = Backbone(view(backbone.coords, :, :, r))

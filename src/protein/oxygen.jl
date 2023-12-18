@@ -50,19 +50,19 @@ function get_oxygens(
 )
     backbone = chain.backbone
     T = eltype(backbone)
-    L = length(backbone)
+    L = size(backbone, 3)
 
     CAs = eachcol(atom_coords(backbone, 2))
     Cs = eachcol(atom_coords(backbone, 3))
-    next_Ns = eachcol(atom_coords(backbone[2:end], 1))
+    next_Ns = eachcol(@view(atom_coords(backbone, 1)[:, 2:end]))
 
     oxygen_coords = zeros(T, 3, L)
     for (i, (CA, C, next_N)) in enumerate(zip(CAs, Cs, next_Ns))
         oxygen_coords[:, i] = estimate_oxygen_position(CA, C, next_N)
     end
-    oxygen_coords[:, end] = get_last_oxygen(eachcol(backbone[end])...)
+    oxygen_coords[:, end] = get_last_oxygen(eachcol(@view(backbone.coords[:, :, end]))...)
 
     return oxygen_coords
 end
 
-NCaCO_coords(chain::ProteinChain) = cat(chain.backbone, reshape(get_oxygens(chain), 3, 1, :), dims=2)
+NCaCO_coords(chain::ProteinChain) = cat(chain.backbone.coords, reshape(get_oxygens(chain), 3, 1, :), dims=2)

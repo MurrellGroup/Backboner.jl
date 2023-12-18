@@ -10,8 +10,6 @@ makedocs(;
     doctest = false,
     pages = [
         "Overview" => "index.md",
-        "Types" => "types.md",
-        "Oxygen atoms" => "oxygen.md",
     ],
     authors = "Anton Oresten",
     checkdocs = :all,

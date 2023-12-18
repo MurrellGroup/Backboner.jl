@@ -73,10 +73,29 @@ get_dihedrals(backbone::Backbone) = get_dihedrals(get_bond_vectors(backbone))
     ChainedBonds{T <: Real}
 
 A lazy way to store a backbone as a series of bond lengths, angles, and dihedrals.
+It can be instantiated from a Backbone or a matrix of bond vectors.
+It can also be used to instantiate a Backbone using the `Backbone{A}(bonds::ChainedBonds)` constructor.
 
-Can be instantiated from a Backbone or a matrix of bond vectors.
+# Example
+```jldoctest
+julia> protein = pdb_to_protein("test/data/1ZAK.pdb")
+2-element Vector{ProteinChain}:
+ ProteinChain A with 220 residues
+ ProteinChain B with 220 residues
 
-Can be used to instantiate a Backbone using the `Backbone{A}(bonds::ChainedBonds)` constructor.
+julia> chain = protein["A"]
+ProteinChain A with 220 residues
+
+julia> get_oxygens(chain) # returns the estimated position of oxygen atoms (~0.05 Å mean deviation)
+3×220 Matrix{Float32}:
+ 22.6697  25.1719  24.7761  25.8559  …  24.7911   22.7649   22.6578   21.24
+ 15.7257  13.505   13.5151  11.478      15.0888   12.2361   15.8825   14.2933
+ 21.4295  19.5663  22.8638  25.3283      7.95346   4.81901   3.24164  -0.742424        
+```
+
+!!! note
+    The `get_oxygens` function adds oxygen atoms to the backbone using idealized geometry, and oxygens atom will on average deviate [0.05 Å](https://github.com/MurrellGroup/Backboner.jl/blob/main/test/protein/oxygen.jl) from the original positions.
+    Moreover, the last oxygen atom is essentially given a random (although deterministic) orientation, as that information is lost when the backbone is reduced to 3 atoms, and there's no next nitrogen atom to compare with.
 """
 struct ChainedBonds{T <: Real}
     lengths::AbstractVector{T}
@@ -91,9 +110,7 @@ struct ChainedBonds{T <: Real}
         return new{T}(lengths, angles, dihedrals)
     end
 
-    function ChainedBonds(backbone::Backbone{A, T}) where {A, T}
-        return ChainedBonds(get_bond_vectors(backbone))
-    end
+    ChainedBonds(backbone::Backbone) = ChainedBonds(get_bond_vectors(backbone))
 end
 
 Base.:(==)(b1::ChainedBonds, b2::ChainedBonds) = b1.lengths == b2.lengths && b1.angles == b2.angles && b1.dihedrals == b2.dihedrals

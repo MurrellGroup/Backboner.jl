@@ -63,7 +63,6 @@ function protein_to_pdb(protein::Vector{ProteinChain}, filename, header=:auto, f
     residue_index = 0
     for chain in protein
         coords = NCaCO_coords(chain)
-        L = length(chain)
         for (resnum, (residue_coords, aa)) in enumerate(zip(eachslice(coords, dims=3), chain.aavector))
             resname = get(THREE_LETTER_AA_CODES, aa, "XXX")
             residue_index += 1
@@ -81,26 +80,6 @@ function protein_to_pdb(protein::Vector{ProteinChain}, filename, header=:auto, f
                 push!(atoms, atom)
             end
         end
-
-        # reuses the magic vector from src/backbone/oxygen.jl
-        # note: the magic vector is meant to be used to calculate the O atom position,
-        # but this is basically using it to get the next N position, 
-        # so it's a hacky way to get a "random" OXT atom position
-        # not actually random -- it has the same orientation as the next-to-last residue
-        index += 1
-        last_N, last_CA, last_C, last_O = eachcol(coords[:, :, end])
-        rot_matrix = get_rotation_matrix(last_CA, last_C, last_O)
-        OXT_pos = rot_matrix' \ magic_vector + last_C
-        OXT_atom = PDBTools.Atom(
-            index = index,
-            name = "OXT",
-            resname = get(THREE_LETTER_AA_CODES, chain.aavector[end], "XXX"),
-            chain = chain.id,
-            resnum = L,
-            residue = residue_index,
-            x = OXT_pos[1], y = OXT_pos[2], z = OXT_pos[3],
-        )
-        push!(atoms, OXT_atom)
     end
     PDBTools.writePDB(atoms, filename, header=header, footer=footer)
 end

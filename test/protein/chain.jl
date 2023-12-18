@@ -30,10 +30,25 @@
     @testset "atom_distances" begin
 
         protein = pdb_to_protein("data/1ASS.pdb")
-        backbone = protein["A"].backbone
-        cn_distances = carbonyl_nitrogen_distances(backbone)
-        @test length(cn_distances) == length(backbone) - 1
-        @test 1.32 <= sum(cn_distances) / length(cn_distances) <= 1.34
+        chain = protein["A"]
+
+        @testset "nitrogen_alphacarbon_distances" begin
+            NCa_distances = nitrogen_alphacarbon_distances(chain)
+            @test length(NCa_distances) == length(chain)
+            @test 1.45 <= sum(NCa_distances) / length(NCa_distances) <= 1.47
+        end
+
+        @testset "alphacarbon_carbonyl_distances" begin
+            CaC_distances = alphacarbon_carbonyl_distances(chain)
+            @test length(CaC_distances) == length(chain)
+            @test 1.51 <= sum(CaC_distances) / length(CaC_distances) <= 1.53
+        end
+
+        @testset "carbonyl_nitrogen_distances" begin
+            CN_distances = carbonyl_nitrogen_distances(chain)
+            @test length(CN_distances) == length(chain) - 1
+            @test 1.32 <= sum(CN_distances) / length(CN_distances) <= 1.34
+        end
 
     end
 
