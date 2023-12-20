@@ -1,47 +1,47 @@
-export get_atom_displacements, get_atom_distances
-export get_bond_vectors, get_bond_lengths
-export get_bond_angles, get_dihedrals
+export get_atom_displacements
+export get_atom_distances
+
+export get_bond_vectors
+export get_bond_lengths
+export get_bond_angles
+export get_dihedrals
+
 export ChainedBonds
+
+export append_bonds!
+export append_bonds
 
 column_norms(vectors::AbstractMatrix) = reshape(mapslices(norm, vectors, dims=1), :)
 
 function get_atom_displacements(
-    backbone::Backbone{A}, atom1::Integer, atom2::Integer, residue_offset::Integer = 0,
-) where A
-    @assert 1 <= atom1 <= A && 1 <= atom2 <= A "Backbone{$N} does not have atoms $atom1 and $atom2"
-    coords = backbone.coords
-    displacements = @view(coords[:, atom2, 1+residue_offset:end]) .- @view(coords[:, atom1, 1:end-residue_offset])
+    backbone::Backbone, start::Integer, step::Integer, stride::Integer,
+)
+    a1 = backbone[start:stride:end-step].coords
+    a2 = backbone[start+step:stride:end].coords
+    @assert size(a1, 2) == size(a2, 2)
+    displacements = a2 .- a1
     return displacements
 end
 
 function get_atom_distances(
-    backbone::Backbone{A}, atom1::Integer, atom2::Integer, residue_offset::Integer = 0,
-) where A
-    @assert 1 <= atom1 <= A && 1 <= atom2 <= A "Backbone{$N} does not have atoms $atom1 and $atom2"
-    displacements = get_atom_displacements(backbone, atom1, atom2, residue_offset)
+    backbone::Backbone, start::Integer, step::Integer, stride::Integer,
+)
+    displacements = get_atom_displacements(backbone, start, step, stride)
     distances = column_norms(displacements)
     return distances
 end
 
 
-function get_bond_vectors(backbone::Backbone{A}) where A
-    backbone1 = Backbone{1}(backbone)
-    bond_vectors = get_atom_displacements(backbone1, 1, 1, 1)
-    return bond_vectors
-end
+get_bond_vectors(backbone::Backbone) = get_atom_displacements(backbone, 1, 1, 1)
 
-
-function get_bond_lengths(bond_vectors::AbstractMatrix{T}) where T
-    bond_lengths = column_norms(bond_vectors)
-    return bond_lengths
-end
-
+get_bond_lengths(bond_vectors::AbstractMatrix{<:Real}) = column_norms(bond_vectors)
 get_bond_lengths(backbone::Backbone) = get_bond_lengths(get_bond_vectors(backbone))
 
+function get_bond_angle(v1::V, v2::V) where V <: AbstractVector{<:Real}
+    return acos((-dot(v1, v2)) / (norm(v1) * norm(v2)))
+end
 
-get_bond_angle(v1::V, v2::V) where V <: AbstractVector{<:Real} = acos((-dot(v1, v2)) / (norm(v1) * norm(v2)))
-
-function get_bond_angles(bond_vectors::AbstractMatrix{T}) where T
+function get_bond_angles(bond_vectors::AbstractMatrix{<:Real})
     bond_vector_pairs = zip(eachcol(bond_vectors), Iterators.drop(eachcol(bond_vectors), 1))
     bond_angles = [get_bond_angle(v1, v2) for (v1, v2) in bond_vector_pairs]
     return bond_angles
@@ -52,7 +52,7 @@ get_bond_angles(backbone::Backbone) = get_bond_angles(get_bond_vectors(backbone)
 # source: en.wikipedia.org/wiki/Dihedral_angle#In_polymer_physics
 function dihedral_angle(u1::V, u2::V, u3::V) where V <: AbstractVector{<:Real}
     c12, c23 = cross(u1, u2), cross(u2, u3)
-    atan(dot(u2, cross(c12, c23)), norm(u2) * dot(c12, c23))
+    return atan(dot(u2, cross(c12, c23)), norm(u2) * dot(c12, c23))
 end
 
 function get_dihedrals(vectors::AbstractMatrix{T}) where T
@@ -74,19 +74,19 @@ get_dihedrals(backbone::Backbone) = get_dihedrals(get_bond_vectors(backbone))
 
 A lazy way to store a backbone as a series of bond lengths, angles, and dihedrals.
 It can be instantiated from a Backbone or a matrix of bond vectors.
-It can also be used to instantiate a Backbone using the `Backbone{A}(bonds::ChainedBonds)` constructor.
+It can also be used to instantiate a Backbone using the `Backbone(bonds::ChainedBonds)` constructor.
 
 # Example
 ```jldoctest
-julia> protein = pdb_to_protein("test/data/1ZAK.pdb")
-2-element Vector{ProteinChain}:
- ProteinChain A with 220 residues
- ProteinChain B with 220 residues
+julia> protein = readpdb("test/data/1ZAK.pdb")
+2-element Vector{Chain}:
+ Chain A with 220 residues
+ Chain B with 220 residues
 
 julia> chain = protein["A"]
-ProteinChain A with 220 residues
+Chain A with 220 residues
 
-julia> get_oxygens(chain) # returns the estimated position of oxygen atoms (~0.05 Å mean deviation)
+julia> oxygen_coords(chain) # returns the estimated position of oxygen atoms (~0.05 Å mean deviation)
 3×220 Matrix{Float32}:
  22.6697  25.1719  24.7761  25.8559  …  24.7911   22.7649   22.6578   21.24
  15.7257  13.505   13.5151  11.478      15.0888   12.2361   15.8825   14.2933
@@ -94,20 +94,28 @@ julia> get_oxygens(chain) # returns the estimated position of oxygen atoms (~0.0
 ```
 
 !!! note
-    The `get_oxygens` function adds oxygen atoms to the backbone using idealized geometry, and oxygens atom will on average deviate [0.05 Å](https://github.com/MurrellGroup/Backboner.jl/blob/main/test/protein/oxygen.jl) from the original positions.
+    The `oxygen_coords` function adds oxygen atoms to the backbone using idealized geometry, and oxygens atom will on average deviate [0.05 Å](https://github.com/MurrellGroup/Backboner.jl/blob/main/test/protein/oxygen.jl) from the original positions.
     Moreover, the last oxygen atom is essentially given a random (although deterministic) orientation, as that information is lost when the backbone is reduced to 3 atoms, and there's no next nitrogen atom to compare with.
 """
 struct ChainedBonds{T <: Real}
-    lengths::AbstractVector{T}
-    angles::AbstractVector{T}
-    dihedrals::AbstractVector{T}
+    lengths::Vector{T}
+    angles::Vector{T}
+    dihedrals::Vector{T}
 
-    function ChainedBonds(vectors::AbstractMatrix{T}) where T
+    function ChainedBonds(lengths::Vector{T}, angles::Vector{T}, dihedrals::Vector{T}) where T
+        @assert length(lengths) == length(angles) + 1 == length(dihedrals) + 2
+        return new{T}(lengths, angles, dihedrals)
+    end
+
+    function ChainedBonds(lengths::AbstractVector{T}, angles::AbstractVector{T}, dihedrals::AbstractVector{T}) where T
+        return ChainedBonds(Vector(lengths), Vector(angles), Vector(dihedrals))
+    end
+
+    function ChainedBonds(vectors::AbstractMatrix{<:Real})
         lengths = get_bond_lengths(vectors)
         angles = get_bond_angles(vectors)
         dihedrals = get_dihedrals(vectors)
-
-        return new{T}(lengths, angles, dihedrals)
+        return ChainedBonds(lengths, angles, dihedrals)
     end
 
     ChainedBonds(backbone::Backbone) = ChainedBonds(get_bond_vectors(backbone))
@@ -117,6 +125,13 @@ Base.:(==)(b1::ChainedBonds, b2::ChainedBonds) = b1.lengths == b2.lengths && b1.
 Base.:(≈)(b1::ChainedBonds, b2::ChainedBonds) = b1.lengths ≈ b2.lengths && b1.angles ≈ b2.angles && b1.dihedrals ≈ b2.dihedrals
 Base.length(bonds::ChainedBonds) = length(bonds.lengths)
 Base.size(bonds::ChainedBonds) = Tuple(length(bonds))
+
+Base.summary(bonds::ChainedBonds) = string(typeof(bonds))
+
+function Base.show(io::IO, bonds::ChainedBonds)
+    print(io, "$(summary(bonds)) with $(length(bonds.lengths)) bonds, $(length(bonds.angles)) angles, and $(length(bonds.dihedrals)) dihedrals")
+end
+
 
 function get_first_points(bonds::ChainedBonds{T}) where T
     L = length(bonds) + 1
@@ -138,12 +153,10 @@ end
 
 # first_points don't get adjusted to fit the bonds
 # first_points needs to have at least 3 columns
-function Backbone{ATOMS_PER_RESIDUE}(
+function Backbone(
     bonds::ChainedBonds{T};
-    first_points::AbstractMatrix{T} = get_first_points(bonds),
-) where {ATOMS_PER_RESIDUE, T}
-    @assert (length(bonds) + 1) % ATOMS_PER_RESIDUE == 0 "Invalid number of atoms per residue in backbone"
-
+    first_points::AbstractMatrix{<:Real} = get_first_points(bonds),
+) where T
     L = length(bonds) + 1
     coords = fill(T(NaN), 3, L)
 
@@ -168,11 +181,52 @@ function Backbone{ATOMS_PER_RESIDUE}(
         coords[:, i] = D
     end
 
-    backbone = Backbone(reshape(coords, 3, ATOMS_PER_RESIDUE, :))
+    backbone = Backbone(coords)
     return backbone
 end
 
-Backbone(bonds::ChainedBonds; kwargs...) = Backbone{1}(bonds; kwargs...)
+
+function append_bonds!(
+    bonds::ChainedBonds,
+    lengths::AbstractVector{<:Real},
+    angles::AbstractVector{<:Real},
+    dihedrals::AbstractVector{<:Real},
+)
+    @assert length(bonds) >= 2
+    @assert length(lengths) == length(angles) == length(dihedrals)
+    append!(bonds.lengths, lengths)
+    append!(bonds.angles, angles)
+    append!(bonds.dihedrals, dihedrals)
+    return bonds
+end
+
+function append_bonds(
+    bonds::ChainedBonds,
+    lengths::AbstractVector{<:Real},
+    angles::AbstractVector{<:Real},
+    dihedrals::AbstractVector{<:Real},
+)
+    deepcopy(bonds)
+    append_bonds!(bonds, lengths, angles, dihedrals)
+    return bonds
+end
+
+function append_bonds(
+    backbone::Backbone,
+    lengths::AbstractVector{<:Real},
+    angles::AbstractVector{<:Real},
+    dihedrals::AbstractVector{<:Real},
+)
+    @assert length(backbone) >= 3
+    @assert length(lengths) == length(angles) == length(dihedrals)
+    last_three_atoms_backbone = backbone[end-2:end]
+    bonds_end = ChainedBonds(last_three_atoms_backbone)
+    append_bonds!(bonds_end, lengths, angles, dihedrals)
+    backbone_end = Backbone(bonds_end, first_points = last_three_atoms_backbone)
+    new_backbone = Backbone(cat(backbone.coords, backbone_end[4:end].coords, dims=2))
+    return new_backbone
+end
+
 
 get_skip_length(L1, L2, θ) = sqrt(L1^2 + L2^2 - 2*L1*L2*cos(θ))
 

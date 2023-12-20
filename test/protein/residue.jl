@@ -1,5 +1,5 @@
 @testset "residue.jl" begin
-    backbone = Backbone(randn(3, 3, 100))
+    backbone = Backbone(randn(3, 300))
     residue = Residue(1, backbone, 'A', 'H')
 
     # index field get padded to digits in length of backbone

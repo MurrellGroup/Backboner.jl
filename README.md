@@ -20,24 +20,24 @@ Pkg.add("Backboner")
 
 ## Types and functions
 
-Proteins are represented as vectors of `ProteinChain`s, which in turn wrap the `Backbone{3}` type to store the coordinates of N, Ca, and C atoms.
+Proteins are represented as vectors of `Chain`s, which wrap the `Backbone` type to store the coordinates of N, Ca, and C atoms.
 
 The secondary structures of a chain are described by a `Vector{Char}`, where '-' stands for coil/loop, 'H' for helix, and 'E' for strand. For assignment of secondary structure, this package uses the [AssigningSecondaryStructure.jl](https://github.com/MurrellGroup/AssigningSecondaryStructure.jl) package, which implements a simplified version of the DSSP algorithm.
 
-Proteins can be loaded from a PDB file using the `pdb_to_protein` function, which returns a `Vector{ProteinChain}` instance. Inversely, a `Vector{ProteinChain}` instance can be written to a PDB file using the `protein_to_pdb` function.
+Proteins can be loaded from a PDB file using the `readpdb` function, which returns a `Vector{Chain}` instance. Inversely, a `Vector{Chain}` instance can be written to a PDB file using the `writepdb` function.
 
 ## Example
 
 ```julia
 julia> using Backboner
 
-julia> protein = pdb_to_protein("test/data/1ZAK.pdb")
-2-element Vector{ProteinChain}:
- ProteinChain A with 220 residues
- ProteinChain B with 220 residues
+julia> protein = readpdb("test/data/1ZAK.pdb")
+2-element Vector{Chain}:
+ Chain A with 220 residues
+ Chain B with 220 residues
 
 julia> chain = protein["A"]
-ProteinChain A with 220 residues
+Chain A with 220 residues
 
 julia> chain.backbone
 3×3×220 Backbone{3, Float32}:

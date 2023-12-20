@@ -2,9 +2,9 @@
 
     @testset "chain.jl" begin
 
-        coords = randn(3, 3, 5)
+        coords = randn(3, 15)
         backbone = Backbone(coords)
-        chain = ProteinChain("A", backbone)
+        chain = Chain("A", backbone)
         @test chain.id == "A"
         @test chain.backbone.coords == coords
         @test chain.aavector == fill('G', length(chain))
@@ -12,14 +12,14 @@
         @test !has_assigned_ss(chain)
         @test length(chain) == 5
         @test size(chain) == (5,)
-        @test ProteinChain(backbone).id == "_"
+        @test Chain(backbone).id == "_"
 
         protein = [chain]
         @test protein["A"] == protein[:A] == protein[1]
         
         @test chain[1] == Residue(1, backbone, 'G', ' ')
 
-        @test summary(chain) == "ProteinChain A with 5 residues"
+        @test summary(chain) == "Chain A with 5 residues"
 
         io = IOBuffer()
         show(io, chain)
@@ -29,7 +29,7 @@
 
     @testset "atom_distances" begin
 
-        protein = pdb_to_protein("data/1ASS.pdb")
+        protein = readpdb("data/1ASS.pdb")
         chain = protein["A"]
 
         @testset "nitrogen_alphacarbon_distances" begin

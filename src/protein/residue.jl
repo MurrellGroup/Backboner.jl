@@ -2,13 +2,13 @@ export Residue
 
 struct Residue
     index::Integer
-    backbone::Backbone{3}
+    backbone::Backbone
     aa::Char
     ss::Char
 
     function Residue(
         index::Integer,
-        backbone::Backbone{3},
+        backbone::Backbone,
         aa::Char = 'G',
         ss::Char = ' ',
     )
@@ -17,7 +17,7 @@ struct Residue
 end
 
 function Base.summary(residue::Residue)
-    index = lpad(string(residue.index), ndigits(length(residue.backbone)))
+    index = lpad(string(residue.index), ndigits(length(residue.backbone) ÷ 3))
     aa3 = get(THREE_LETTER_AA_CODES, residue.aa, "XXX")
     ss = residue.ss
     return "Residue $index $aa3 $ss"
