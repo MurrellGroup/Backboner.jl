@@ -53,5 +53,5 @@ julia> writepdb(new_protein, "test/data/1ZAK_A.pdb");
 ## API Reference
 
 ```@autodocs
-Modules = [Backboner]
+Modules = [Backboner, Protein]
 ```
