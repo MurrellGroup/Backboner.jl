@@ -7,7 +7,7 @@
 [![Build Status](https://github.com/MurrellGroup/Backboner.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/MurrellGroup/Backboner.jl/actions/workflows/CI.yml?query=branch%3Amain)
 [![Coverage](https://codecov.io/gh/MurrellGroup/Backboner.jl/branch/main/graph/badge.svg)](https://codecov.io/gh/MurrellGroup/Backboner.jl)
 
-Backboner is a Julia package that offers a suite of tools for storing protein backbone atom positions, estimating oxygen atom positions, assigning secondary structure, and more.
+Backboner is a Julia package that offers a set of types and functions for working with molecular backbones. It also includes functions for working with protein chains, reading/writing PDB files and assigning secondary structure.
 
 ## Installation
 
@@ -18,13 +18,11 @@ using Pkg
 Pkg.add("Backboner")
 ```
 
-## Types and functions
+## Overview
 
-Proteins are represented as vectors of `Chain`s, which wrap the `Backbone` type to store the coordinates of N, Ca, and C atoms.
+The `Backbone` type is a wrapper for a 3xN matrix of coordinates representing absolute positions of atoms of a continuous molecular backbone. For working with the geometry of a backbone, the `ChainedBonds` type exists to store bond lengths, bond angles, and dihedral angles of a continuous chain of bonds.
 
-The secondary structures of a chain are described by a `Vector{Char}`, where '-' stands for coil/loop, 'H' for helix, and 'E' for strand. For assignment of secondary structure, this package uses the [AssigningSecondaryStructure.jl](https://github.com/MurrellGroup/AssigningSecondaryStructure.jl) package, which implements a simplified version of the DSSP algorithm.
-
-Proteins can be loaded from a PDB file using the `readpdb` function, which returns a `Vector{Chain}` instance. Inversely, a `Vector{Chain}` instance can be written to a PDB file using the `writepdb` function.
+Proteins can be loaded from a PDB file using the `readpdb` function, which returns a `Vector{Protein.Chain}`. Inversely, a `Vector{Protein.Chain}` instance can be written to a PDB file using the `writepdb` function.
 
 ## Example
 
