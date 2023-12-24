@@ -45,6 +45,7 @@ end
 """
     readpdb(filename::String)
 
+Loads a protein (represented as a `Vector{Protein.Chain}`) from a PDB file.
 Assumes that each residue starts with four atoms: N, CA, C.
 """
 function readpdb(filename::String)
@@ -55,6 +56,11 @@ function readpdb(filename::String)
     return chains
 end
 
+"""
+    writepdb(protein::Vector{Protein.Chain}, filename)
+
+Write a protein (represented as a `Vector{Protein.Chain}`s) to a PDB file.
+"""
 function writepdb(protein::Vector{Chain}, filename, header=:auto, footer=:auto)
     atoms = PDBTools.Atom[]
     index = 0

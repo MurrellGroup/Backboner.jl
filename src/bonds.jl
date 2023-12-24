@@ -78,26 +78,24 @@ A lazy way to store a backbone as a series of bond lengths, angles, and dihedral
 It can be instantiated from a Backbone or a matrix of bond vectors.
 It can also be used to instantiate a Backbone using the `Backbone(bonds::ChainedBonds)` constructor.
 
-# Example
+# Examples
+
 ```jldoctest
-julia> protein = readpdb("test/data/1ZAK.pdb")
-2-element Vector{Chain}:
- Chain A with 220 residues
- Chain B with 220 residues
+julia> backbone = readpdb("test/data/1ZAK.pdb")["A"].backbone
+660-element Backbone{Float32}:
+ [22.346, 17.547, 23.294]
+ [22.901, 18.031, 21.993]
+ [23.227, 16.793, 21.163]
+ [24.115, 16.923, 20.175]
+ ⋮
+ [22.041, 14.866, 3.569]
+ [21.808, 13.861, 2.734]
+ [22.263, 13.862, 1.355]
+ [21.085, 14.233, 0.446]
 
-julia> chain = protein["A"]
-Chain A with 220 residues
-
-julia> oxygen_coords(chain) # returns the estimated position of oxygen atoms (~0.05 Å mean deviation)
-3×220 Matrix{Float32}:
- 22.6697  25.1719  24.7761  25.8559  …  24.7911   22.7649   22.6578   21.24
- 15.7257  13.505   13.5151  11.478      15.0888   12.2361   15.8825   14.2933
- 21.4295  19.5663  22.8638  25.3283      7.95346   4.81901   3.24164  -0.742424        
+julia> bonds = ChainedBonds(backbone)
+ChainedBonds{Float32} with 659 bonds, 658 angles, and 657 dihedrals
 ```
-
-!!! note
-    The `oxygen_coords` function adds oxygen atoms to the backbone using idealized geometry, and oxygens atom will on average deviate [0.05 Å](https://github.com/MurrellGroup/Backboner.jl/blob/main/test/protein/oxygen.jl) from the original positions.
-    Moreover, the last oxygen atom is essentially given a random (although deterministic) orientation, as that information is lost when the backbone is reduced to 3 atoms, and there's no next nitrogen atom to compare with.
 """
 struct ChainedBonds{T <: Real}
     lengths::Vector{T}
