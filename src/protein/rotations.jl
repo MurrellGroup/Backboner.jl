@@ -1,3 +1,5 @@
+import Rotations
+
 export locs_and_rots_to_backbone, backbone_to_locs_and_rots
 
 const STANDARD_TRIANGLE_ANGSTROM = Float32[

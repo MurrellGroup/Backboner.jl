@@ -1,9 +1,9 @@
 module Backboner
 
 using LinearAlgebra
-import Rotations
 
-include("backbone/backbone.jl")
+include("backbone.jl")
+include("bonds.jl")
 include("protein/protein.jl")
 
 end

@@ -27,6 +27,3 @@ end
 @inline Base.size(backbone::Backbone) = Tuple(length(backbone))
 @inline Base.getindex(backbone::Backbone, i::Integer) = view(backbone.coords, :, i)
 @inline Base.getindex(backbone::Backbone, r::AbstractVector{<:Integer}) = Backbone(view(backbone.coords, :, r))
-
-include("rotations.jl")
-include("bonds.jl")

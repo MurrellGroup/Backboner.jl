@@ -1,3 +1,5 @@
+import Rotations
+
 export get_atom_displacements
 export get_atom_distances
 
@@ -49,7 +51,7 @@ end
 
 get_bond_angles(backbone::Backbone) = get_bond_angles(get_bond_vectors(backbone))
 
-# source: en.wikipedia.org/wiki/Dihedral_angle#In_polymer_physics
+# source: https://en.wikipedia.org/w/index.php?title=Dihedral_angle&oldid=1182848974#In_polymer_physics
 function dihedral_angle(u1::V, u2::V, u3::V) where V <: AbstractVector{<:Real}
     c12, c23 = cross(u1, u2), cross(u2, u3)
     return atan(dot(u2, cross(c12, c23)), norm(u2) * dot(c12, c23))
