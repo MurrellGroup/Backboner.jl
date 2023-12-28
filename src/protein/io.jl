@@ -25,7 +25,7 @@ function collect_backbone_atoms(atoms::Vector{PDBTools.Atom})
     return backbone_atoms
 end
 
-function Backbone(atoms::Vector{PDBTools.Atom})
+function Backboner.Backbone(atoms::Vector{PDBTools.Atom})
     backbone_atoms = collect_backbone_atoms(atoms)
     coords = zeros(Float32, (3, length(backbone_atoms)))
     for (i, atom) in enumerate(backbone_atoms)
