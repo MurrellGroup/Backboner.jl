@@ -44,15 +44,15 @@ Base.show(io::IO, chain::Chain) = print(io, summary(chain))
 @inline Base.getindex(protein::AbstractVector{Chain}, id::AbstractString) = protein[findfirst(chain -> chain.id == id, protein)]
 @inline Base.getindex(protein::AbstractVector{Chain}, id::Symbol) = protein[String(id)]
 
-export nitrogens, alphacarbons, carbonyls
+export nitrogen_coords, alphacarbon_coords, carbonyl_coords
 
-nitrogens(backbone::Backbone) = backbone[1:3:end]
-alphacarbons(backbone::Backbone) = backbone[2:3:end]
-carbonyls(backbone::Backbone) = backbone[3:3:end]
+nitrogen_coords(backbone::Backbone) = (@view backbone[1:3:end]).coords
+alphacarbon_coords(backbone::Backbone) = (@view backbone[2:3:end]).coords
+carbonyl_coords(backbone::Backbone) = (@view backbone[3:3:end]).coords
 
-nitrogens(chain::Chain) = nitrogens(chain.backbone)
-alphacarbons(chain::Chain) = alphacarbons(chain.backbone)
-carbonyls(chain::Chain) = carbonyls(chain.backbone)
+nitrogen_coords(chain::Chain) = nitrogen_coords(chain.backbone)
+alphacarbon_coords(chain::Chain) = alphacarbon_coords(chain.backbone)
+carbonyl_coords(chain::Chain) = carbonyl_coords(chain.backbone)
 # oxygen_coords function in src/protein/oxygen.jl
 
 export nitrogen_alphacarbon_distances, alphacarbon_carbonyl_distances, carbonyl_nitrogen_distances

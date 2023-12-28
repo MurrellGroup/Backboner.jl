@@ -39,15 +39,13 @@ function get_last_oxygen(
     return O_pos
 end
 
-function oxygen_coords(
-    backbone::Backbone,
-)
+function oxygen_coords(backbone::Backbone)
     T = eltype(eltype(backbone))
     L = length(backbone) ÷ 3
 
-    CAs = alphacarbons(backbone)
-    Cs = carbonyls(backbone)
-    next_Ns = @view nitrogens(backbone)[2:end]
+    CAs = eachcol(alphacarbon_coords(backbone))
+    Cs = eachcol(carbonyl_coords(backbone))
+    next_Ns = eachcol(@view nitrogen_coords(backbone)[:, 2:end])
     oxygen_coords = zeros(T, 3, L)
     for (i, (CA, C, next_N)) in enumerate(zip(CAs, Cs, next_Ns))
         oxygen_coords[:, i] = estimate_oxygen_position(CA, C, next_N)
