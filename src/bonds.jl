@@ -1,4 +1,5 @@
 import Rotations
+import Distances
 
 export get_atom_displacements
 export get_atom_distances
@@ -13,30 +14,49 @@ export ChainedBonds
 export append_bonds!
 export append_bonds
 
-column_norms(vectors::AbstractMatrix) = reshape(mapslices(norm, vectors, dims=1), :)
+_column_norms(columns::AbstractMatrix) = reshape(mapslices(norm, columns, dims=1), :)
+
+function _pairwise_column_displacements(
+    columns1::M, columns2::M
+) where M <: AbstractMatrix{<:Real}
+    @assert size(columns1) == size(columns2)
+    displacements = columns2 .- columns1
+    return displacements
+end
+
+function _pairwise_column_distances(
+    columns1::M, columns2::M, f = Distances.euclidean
+) where {T <: Real, M <: AbstractMatrix{T}}
+    @assert size(columns1, 2) == size(columns2, 2)
+    distances = Vector{T}(undef, size(columns1, 2))
+    @inbounds for (i, (col1, col2)) in enumerate(zip(eachcol(columns1), eachcol(columns2)))
+        distances[i] = f(col1, col2)
+    end
+    return distances
+end
 
 function get_atom_displacements(
     backbone::Backbone, start::Integer, step::Integer, stride::Integer,
 )
-    a1 = backbone[start:stride:end-step].coords
-    a2 = backbone[start+step:stride:end].coords
-    @assert size(a1, 2) == size(a2, 2)
-    displacements = a2 .- a1
+    displacements = _pairwise_column_displacements(
+        @view(backbone.coords[:, start:stride:end-step]),
+        @view(backbone.coords[:, start+step:stride:end]))
     return displacements
 end
 
 function get_atom_distances(
     backbone::Backbone, start::Integer, step::Integer, stride::Integer,
 )
-    displacements = get_atom_displacements(backbone, start, step, stride)
-    distances = column_norms(displacements)
+    distances = _pairwise_column_distances(
+        @view(backbone.coords[:, start:stride:end-step]),
+        @view(backbone.coords[:, start+step:stride:end]))
     return distances
 end
 
 
 get_bond_vectors(backbone::Backbone) = get_atom_displacements(backbone, 1, 1, 1)
 
-get_bond_lengths(bond_vectors::AbstractMatrix{<:Real}) = column_norms(bond_vectors)
+get_bond_lengths(bond_vectors::AbstractMatrix{<:Real}) = _column_norms(bond_vectors)
 get_bond_lengths(backbone::Backbone) = get_bond_lengths(get_bond_vectors(backbone))
 
 function get_bond_angle(v1::V, v2::V) where V <: AbstractVector{<:Real}
