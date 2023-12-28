@@ -85,9 +85,9 @@ Returns a vector of distances of length `length(chain) - 1`.
 """
 carbonyl_nitrogen_distances(chain::Chain) = carbonyl_nitrogen_distances(chain.backbone)
 
-phi_angles(bonds::ChainedBonds) = @view(bonds.dihedrals[3:3:end])
-psi_angles(bonds::ChainedBonds) = @view(bonds.dihedrals[1:3:end])
-omega_angles(bonds::ChainedBonds) = @view(bonds.dihedrals[2:3:end])
+phi_angles(bonds::ChainedBonds) = @view bonds.dihedrals[3:3:end]
+psi_angles(bonds::ChainedBonds) = @view bonds.dihedrals[1:3:end]
+omega_angles(bonds::ChainedBonds) = @view bonds.dihedrals[2:3:end]
 
 # TODO: functions for getting beta-carbon and hydrogen atom positions? is that even possible without knowing AAs and molecular dynamics?
 

@@ -2,6 +2,7 @@ import Rotations
 
 export locs_and_rots_to_backbone, backbone_to_locs_and_rots
 
+# may or may not be enough precision
 const STANDARD_TRIANGLE_ANGSTROM = Float32[
     -0.876  -0.248   1.124;
      0.656  -0.656   0.000;
