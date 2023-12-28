@@ -44,12 +44,18 @@ Base.show(io::IO, chain::Chain) = print(io, summary(chain))
 @inline Base.getindex(protein::AbstractVector{Chain}, id::AbstractString) = protein[findfirst(chain -> chain.id == id, protein)]
 @inline Base.getindex(protein::AbstractVector{Chain}, id::Symbol) = protein[String(id)]
 
-export nitrogen_alphacarbon_distances, alphacarbon_carbonyl_distances, carbonyl_nitrogen_distances
+export nitrogens, alphacarbons, carbonyls
 
-nitrogen_coords(chain::Chain) = @view(chain.backbone.coords[:, 1:3:end])
-alphacarbon_coords(chain::Chain) = @view(chain.backbone.coords[:, 2:3:end])
-carbonyl_coords(chain::Chain) = @view(chain.backbone.coords[:, 3:3:end])
+nitrogens(backbone::Backbone) = backbone[1:3:end]
+alphacarbons(backbone::Backbone) = backbone[2:3:end]
+carbonyls(backbone::Backbone) = backbone[3:3:end]
+
+nitrogens(chain::Chain) = nitrogens(chain.backbone)
+alphacarbons(chain::Chain) = alphacarbons(chain.backbone)
+carbonyls(chain::Chain) = carbonyls(chain.backbone)
 # oxygen_coords function in src/protein/oxygen.jl
+
+export nitrogen_alphacarbon_distances, alphacarbon_carbonyl_distances, carbonyl_nitrogen_distances
 
 nitrogen_alphacarbon_distances(backbone::Backbone) = get_atom_distances(backbone, 1, 1, 3)
 alphacarbon_carbonyl_distances(backbone::Backbone) = get_atom_distances(backbone, 2, 1, 3)
@@ -78,3 +84,23 @@ Calculate the distances between all pairs of contiguous carbonyl and nitrogen at
 Returns a vector of distances of length `length(chain) - 1`.
 """
 carbonyl_nitrogen_distances(chain::Chain) = carbonyl_nitrogen_distances(chain.backbone)
+
+phi_angles(bonds::ChainedBonds) = @view(bonds.dihedrals[3:3:end])
+psi_angles(bonds::ChainedBonds) = @view(bonds.dihedrals[1:3:end])
+omega_angles(bonds::ChainedBonds) = @view(bonds.dihedrals[2:3:end])
+
+# TODO: functions for getting beta-carbon and hydrogen atom positions? is that even possible without knowing AAs and molecular dynamics?
+
+# FIXME: better idealized bond lengths and angles
+# currently taken from https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2810841/
+#=const IDEALIZED_BOND_LENGTHS = [1.45, 1.52, 1.33]
+const IDEALIZED_BOND_ANGLES = [121.7, 111.0, 117.2]
+
+# TODO: append_residues! function. also get the Residue type sorted out. user shouldn't need to create it manually.
+function append_residues!(
+    chain::Chain,
+    dihedral_angles::AbstractVector{<:Real},
+    bond_lengths::AbstractVector{<:Real} = IDEALIZED_BOND_LENGTHS,
+    bond_angles::AbstractVector{<:Real} = IDEALIZED_BOND_ANGLES,
+)
+end=#
