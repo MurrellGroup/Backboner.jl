@@ -61,11 +61,15 @@ struct Backbone{T <: Real} <: AbstractVector{AbstractVector{T}}
         @assert size(coords, 1) == 3 "coords must have 3 coordinates per atom"
         return new{T}(coords)
     end
+end
 
-    function Backbone(coords::AbstractArray{T, 3}) where T
-        @assert size(coords, 1) == 3 "coords must have 3 coordinates per atom"
-        return Backbone(reshape(coords, 3, :))
-    end
+function Backbone{T}(::UndefInitializer, n_atoms::Integer) where T
+    return Backbone(Matrix{T}(undef, 3, n_atoms))
+end
+
+function Backbone(coords::AbstractArray{T, 3}) where T
+    @assert size(coords, 1) == 3 "coords must have 3 coordinates per atom"
+    return Backbone(reshape(coords, 3, :))
 end
 
 @inline Base.:(==)(backbone1::Backbone, backbone2::Backbone) = backbone1.coords == backbone2.coords
