@@ -123,22 +123,24 @@ struct ChainedBonds{T <: Real}
     dihedrals::Vector{T}
 
     function ChainedBonds(lengths::Vector{T}, angles::Vector{T}, dihedrals::Vector{T}) where T
-        @assert length(lengths) == length(angles) + 1 == length(dihedrals) + 2
+        @assert length(lengths) == length(angles) + 1 == length(dihedrals) + 2 || 1 >= length(lengths) >= length(angles) == length(dihedrals) == 0
         return new{T}(lengths, angles, dihedrals)
     end
+end
 
-    function ChainedBonds(lengths::AbstractVector{T}, angles::AbstractVector{T}, dihedrals::AbstractVector{T}) where T
-        return ChainedBonds(Vector(lengths), Vector(angles), Vector(dihedrals))
-    end
+function ChainedBonds(lengths::AbstractVector{T}, angles::AbstractVector{T}, dihedrals::AbstractVector{T}) where T
+    return ChainedBonds(Vector(lengths), Vector(angles), Vector(dihedrals))
+end
 
-    function ChainedBonds(vectors::AbstractMatrix{<:Real})
-        lengths = get_bond_lengths(vectors)
-        angles = get_bond_angles(vectors)
-        dihedrals = get_dihedrals(vectors)
-        return ChainedBonds(lengths, angles, dihedrals)
-    end
+function ChainedBonds(vectors::AbstractMatrix{<:Real})
+    lengths = get_bond_lengths(vectors)
+    angles = get_bond_angles(vectors)
+    dihedrals = get_dihedrals(vectors)
+    return ChainedBonds(lengths, angles, dihedrals)
+end
 
-    ChainedBonds(backbone::Backbone) = ChainedBonds(get_bond_vectors(backbone))
+function ChainedBonds(backbone::Backbone)
+    return ChainedBonds(get_bond_vectors(backbone))
 end
 
 Base.:(==)(b1::ChainedBonds, b2::ChainedBonds) = b1.lengths == b2.lengths && b1.angles == b2.angles && b1.dihedrals == b2.dihedrals
