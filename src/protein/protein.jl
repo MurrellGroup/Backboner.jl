@@ -2,7 +2,7 @@ export Protein
 
 module Protein
 
-import ..Backboner: Backbone, get_atom_distances
+using ..Backboner
 using LinearAlgebra
 
 import PDBTools
