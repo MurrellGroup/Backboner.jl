@@ -74,8 +74,8 @@ end
 @inline Base.length(backbone::Backbone) = size(backbone.coords, 2)
 @inline Base.size(backbone::Backbone) = Tuple(length(backbone))
 
-@inline Base.getindex(backbone::Backbone, i::Integer) = view(backbone.coords, :, i)
-@inline Base.getindex(backbone::Backbone, r::AbstractVector{<:Integer}) = Backbone(view(backbone.coords, :, r))
+@inline Base.getindex(backbone::Backbone, i::Integer) = backbone.coords[:, i]
+@inline Base.getindex(backbone::Backbone, r::AbstractVector{<:Integer}) = Backbone(backbone.coords[:, r])
 
 @inline Base.setindex!(backbone::Backbone, coords::AbstractVector, i::Integer) = (backbone[i] .= coords)
 @inline Base.setindex!(backbone::Backbone, coords::AbstractMatrix, r::AbstractVector{<:Integer}) = (backbone[r].coords .= coords)
