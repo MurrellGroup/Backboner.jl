@@ -80,7 +80,7 @@ end
 
 @inline Base.getindex(backbone::Backbone, i::Integer) = backbone.coords[:, i]
 @inline Base.getindex(backbone::Backbone, r::AbstractVector{<:Integer}) = Backbone(backbone.coords[:, r])
-@inline Base.view(backbone::Backbone, r::AbstractVector{<:Integer}) = Backbone(view(backbone.coords, :, r))
+@inline Base.view(backbone::Backbone, I...) = Backbone(view(backbone.coords, :, I...))
 
 @inline Base.setindex!(backbone::Backbone, coords::AbstractVector, i::Integer) = (backbone[i] .= coords)
 @inline Base.setindex!(backbone::Backbone, coords::AbstractMatrix, r::AbstractVector{<:Integer}) = (backbone[r].coords .= coords)
