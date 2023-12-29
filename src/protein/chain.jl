@@ -1,4 +1,7 @@
 export Chain
+export nitrogen_coords, alphacarbon_coords, carbonyl_coords
+export nitrogen_alphacarbon_distances, alphacarbon_carbonyl_distances, carbonyl_nitrogen_distances
+export phi_angles, psi_angles, omega_angles
 
 """
     Chain <: AbstractVector{Residue}
@@ -10,12 +13,14 @@ A `Chain` represents a chain of a protein, and is a vector of `Residue`s, which 
 - `backbone::Backbone`: A backbone with a length divisible by 3, to ensure 3 atoms per residue (N, Ca, C).
 - `aavector::Vector{Char}`: storing the amino acid sequence.
 - `ssvector::Vector{Char}`: storing the secondary structure.
+- `bonds::ChainedBonds`: storing the bonds between atoms of the backbone.
 """
 struct Chain <: AbstractVector{Residue}
     id::AbstractString
     backbone::Backbone
     aavector::Vector{Char}
     ssvector::Vector{Char}
+    bonds::ChainedBonds
 
     function Chain(
         id::AbstractString,
@@ -26,8 +31,9 @@ struct Chain <: AbstractVector{Residue}
         @assert length(backbone) % 3 == 0
         @assert length(backbone) ÷ 3 == length(aavector) == length(ssvector) "backbone, aavector, and ssvector must have the same length"
         ssvector isa Vector{<:Integer} && (ssvector = get.(('-', 'H', 'E'), ssvector, ' '))
+        bonds = ChainedBonds(backbone)
 
-        return new(id, backbone, aavector, ssvector)
+        return new(id, backbone, aavector, ssvector, bonds)
     end
 
     Chain(backbone::Backbone; kwargs...) = Chain("_", backbone; kwargs...) 
@@ -36,7 +42,7 @@ end
 @inline Base.:(==)(chain1::Chain, chain2::Chain) = chain1.id == chain2.id && chain1.backbone == chain2.backbone && chain1.ssvector == chain2.ssvector
 @inline Base.length(chain::Chain) = length(chain.backbone) ÷ 3
 @inline Base.size(chain::Chain) = Tuple(length(chain))
-@inline Base.getindex(chain::Chain, i::Integer) = Residue(i, chain.backbone, chain.aavector[i], chain.ssvector[i])
+@inline Base.getindex(chain::Chain, i::Integer) = Residue(i, chain.aavector[i], chain.ssvector[i])
 
 Base.summary(chain::Chain) = "Chain $(chain.id) with $(length(chain)) residue$(length(chain) == 1 ? "" : "s")"
 Base.show(io::IO, chain::Chain) = print(io, summary(chain))
@@ -44,18 +50,32 @@ Base.show(io::IO, chain::Chain) = print(io, summary(chain))
 @inline Base.getindex(protein::AbstractVector{Chain}, id::AbstractString) = protein[findfirst(chain -> chain.id == id, protein)]
 @inline Base.getindex(protein::AbstractVector{Chain}, id::Symbol) = protein[String(id)]
 
-export nitrogen_coords, alphacarbon_coords, carbonyl_coords
-
 nitrogen_coords(backbone::Backbone) = (@view backbone[1:3:end]).coords
 alphacarbon_coords(backbone::Backbone) = (@view backbone[2:3:end]).coords
 carbonyl_coords(backbone::Backbone) = (@view backbone[3:3:end]).coords
-
-nitrogen_coords(chain::Chain) = nitrogen_coords(chain.backbone)
-alphacarbon_coords(chain::Chain) = alphacarbon_coords(chain.backbone)
-carbonyl_coords(chain::Chain) = carbonyl_coords(chain.backbone)
 # oxygen_coords function in src/protein/oxygen.jl
+# TODO: hydrogen_coords
 
-export nitrogen_alphacarbon_distances, alphacarbon_carbonyl_distances, carbonyl_nitrogen_distances
+"""
+    nitrogen_coords(chain::Chain)
+
+Returns the coordinates of all nitrogen atoms in a chain, as a 3xN matrix.
+"""
+nitrogen_coords(chain::Chain) = nitrogen_coords(chain.backbone)
+
+"""
+    alphacarbon_coords(chain::Chain)
+
+Returns the coordinates of all alphacarbon atoms in a chain, as a 3xN matrix.
+"""
+alphacarbon_coords(chain::Chain) = alphacarbon_coords(chain.backbone)
+
+"""
+    carbonyl_coords(chain::Chain)
+
+Returns the coordinates of all carbonyl atoms in a chain, as a 3xN matrix.
+"""
+carbonyl_coords(chain::Chain) = carbonyl_coords(chain.backbone)
 
 nitrogen_alphacarbon_distances(backbone::Backbone) = get_atom_distances(backbone, 1, 1, 3)
 alphacarbon_carbonyl_distances(backbone::Backbone) = get_atom_distances(backbone, 2, 1, 3)
@@ -89,15 +109,34 @@ phi_angles(bonds::ChainedBonds) = @view bonds.dihedrals[3:3:end]
 psi_angles(bonds::ChainedBonds) = @view bonds.dihedrals[1:3:end]
 omega_angles(bonds::ChainedBonds) = @view bonds.dihedrals[2:3:end]
 
+"""
+    phi_angles(chain::Backboner.Protein.Chain)
+
+Returns the phi (φ) angles of a chain of bonds, assuming every 3n+1th bond is a nitrogen-alphacarbon bond,
+every 3n+2nd bond is a alphacarbon-carbonyl bond, and every 3n+3rd bond is a carbonyl-nitrogen bond.
+"""
+phi_angles(chain::Chain) = phi_angles(chain.bonds)
+
+"""
+    psi_angles(chain::Backboner.Protein.Chain)
+
+Returns the psi (ψ) angles of a chain of bonds, assuming every 3n+1th bond is a nitrogen-alphacarbon bond,
+every 3n+2nd bond is a alphacarbon-carbonyl bond, and every 3n+3rd bond is a carbonyl-nitrogen bond.
+"""
+psi_angles(chain::Chain) = psi_angles(chain.bonds)
+
+"""
+    omega_angles(chain::Backboner.Protein.Chain)
+
+Returns the omega (Ω) angles of a chain of bonds, assuming every 3n+1th bond is a nitrogen-alphacarbon bond,
+every 3n+2nd bond is a alphacarbon-carbonyl bond, and every 3n+3rd bond is a carbonyl-nitrogen bond.
+"""
+omega_angles(chain::Chain) = omega_angles(chain.bonds)
+
 # TODO: functions for getting beta-carbon and hydrogen atom positions? is that even possible without knowing AAs and molecular dynamics?
 
-# FIXME: better idealized bond lengths and angles
-# currently taken from https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2810841/
-#=const IDEALIZED_BOND_LENGTHS = [1.45, 1.52, 1.33]
-const IDEALIZED_BOND_ANGLES = [121.7, 111.0, 117.2]
-
 # TODO: append_residues! function. also get the Residue type sorted out. user shouldn't need to create it manually.
-function append_residues!(
+#=function append_residues!(
     chain::Chain,
     dihedral_angles::AbstractVector{<:Real},
     bond_lengths::AbstractVector{<:Real} = IDEALIZED_BOND_LENGTHS,

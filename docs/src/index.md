@@ -30,7 +30,7 @@ Pkg.add("Backboner")
 The `Protein` type wraps a vector of `Chain`s.
 
 ```jldoctest
-julia> using Backboner
+julia> using Backboner, Backboner.Protein
 
 julia> protein = readpdb("test/data/1ZAK.pdb")
 2-element Vector{Chain}:
@@ -48,10 +48,4 @@ julia> new_protein = [protein["A"]] # create a new protein with a single chain
  Chain A with 220 residues
 
 julia> writepdb(new_protein, "test/data/1ZAK_A.pdb");
-```
-
-## API Reference
-
-```@autodocs
-Modules = [Backboner, Protein]
 ```

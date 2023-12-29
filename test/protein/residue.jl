@@ -1,9 +1,7 @@
 @testset "residue.jl" begin
-    backbone = Backbone(randn(3, 300))
-    residue = Residue(1, backbone, 'A', 'H')
+    residue = Residue(1, 'A', 'H')
 
-    # index field get padded to digits in length of backbone
-    @test summary(residue) == "Residue   1 ALA H"
+    @test summary(residue) == "Residue 1 ALA H"
 
     io = IOBuffer()
     show(io, residue)

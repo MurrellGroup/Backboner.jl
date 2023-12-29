@@ -1,4 +1,4 @@
-export readpdb, writepdb
+export readpdb, writepdb, pdb_to_protein, protein_to_pdb
 
 const THREE_LETTER_AA_CODES = Dict(
     'A' => "ALA", 'R' => "ARG", 'N' => "ASN", 'D' => "ASP",
@@ -89,3 +89,5 @@ function writepdb(protein::Vector{Chain}, filename, header=:auto, footer=:auto)
     end
     PDBTools.writePDB(atoms, filename, header=header, footer=footer)
 end
+
+pdb_to_protein, protein_to_pdb = readpdb, writepdb

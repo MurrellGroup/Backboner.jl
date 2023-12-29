@@ -1,6 +1,4 @@
 export Backbone
-export get_atom
-export num_atoms
 
 # TODO: allow using elastic/resizable arrays for coords
 
@@ -52,7 +50,7 @@ julia> backbone = Backbone(zeros(3, 3, 100)) # 3 coordinates per atom, 3 atoms p
  [0.0, 0.0, 0.0]
  [0.0, 0.0, 0.0]
  [0.0, 0.0, 0.0]
-
+```
 """
 struct Backbone{T <: Real} <: AbstractVector{AbstractVector{T}}
     coords::AbstractMatrix{T}

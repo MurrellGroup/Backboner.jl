@@ -1,5 +1,3 @@
-export Protein
-
 module Protein
 
 using ..Backboner

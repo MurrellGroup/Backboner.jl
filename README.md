@@ -22,7 +22,9 @@ Pkg.add("Backboner")
 
 The `Backbone` type is a wrapper for a 3xN matrix of coordinates representing absolute positions of atoms of a continuous molecular backbone. For working with the geometry of a backbone, the `ChainedBonds` type exists to store bond lengths, bond angles, and dihedral angles of a continuous chain of bonds.
 
-Proteins can be loaded from a PDB file using the `readpdb` function, which returns a `Vector{Protein.Chain}`. Inversely, a `Vector{Protein.Chain}` instance can be written to a PDB file using the `writepdb` function.
+The `Protein` submodule contains functions and types for working specifically with proteins. A protein can be loaded from a PDB file using the `Backboner.Protein.readpdb` function, which returns a `Vector{Backboner.Protein.Chain}`. Inversely, a `Vector{Backboner.Protein.Chain}` instance can be written to a PDB file using the `writepdb` function.
+
+**Note:** The `Protein` submodule is not exported by default, but can be imported explicitly with: `using/import Backboner.Protein`.
 
 ## Example
 

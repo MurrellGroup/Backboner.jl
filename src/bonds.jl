@@ -1,5 +1,6 @@
-import Rotations
-import Distances
+using LinearAlgebra
+import Rotations: AngleAxis
+import Distances: euclidean
 
 export get_atom_displacements
 export get_atom_distances
@@ -25,7 +26,7 @@ function _pairwise_column_displacements(
 end
 
 function _pairwise_column_distances(
-    columns1::M, columns2::M, f = Distances.euclidean
+    columns1::M, columns2::M, f = euclidean
 ) where {T <: Real, M <: AbstractMatrix{T}}
     @assert size(columns1, 2) == size(columns2, 2)
     distances = Vector{T}(undef, size(columns1, 2))
@@ -165,7 +166,7 @@ function get_first_points(bonds::ChainedBonds{T}) where T
         coords[:, 2] = [bonds.lengths[1], 0, 0]
         if l == 3
             N = normalize([0, 0, 1])
-            bond_angle_rotation = Rotations.AngleAxis(π - bonds.angles[1], N...)
+            bond_angle_rotation = AngleAxis(π - bonds.angles[1], N...)
             coords[:, 3] = coords[:, 2] + bond_angle_rotation * [bonds.lengths[2], 0, 0]
         end
     end
@@ -193,10 +194,10 @@ function Backbone(
         CD_init = n_BC * bonds.lengths[i-1]
 
         N = normalize(cross(n_AB, n_BC)) # wont work if AB == BC        
-        bond_angle_rotation = Rotations.AngleAxis(π - bonds.angles[i-2], N...)
+        bond_angle_rotation = AngleAxis(π - bonds.angles[i-2], N...)
         CD_rot1 = bond_angle_rotation * CD_init
 
-        dihedral_rotation = Rotations.AngleAxis(bonds.dihedrals[i-3], n_BC...)
+        dihedral_rotation = AngleAxis(bonds.dihedrals[i-3], n_BC...)
         CD_rot2 = dihedral_rotation * CD_rot1
 
         D = C + CD_rot2
@@ -233,6 +234,9 @@ function append_bonds(
     return bonds
 end
 
+"""
+    append_bonds(backbone, lengths, angles, dihedrals)
+"""
 function append_bonds(
     backbone::Backbone,
     lengths::AbstractVector{<:Real},
@@ -248,19 +252,3 @@ function append_bonds(
     new_backbone = Backbone(cat(backbone.coords, backbone_end[4:end].coords, dims=2))
     return new_backbone
 end
-
-
-get_skip_length(L1, L2, θ) = sqrt(L1^2 + L2^2 - 2*L1*L2*cos(θ))
-
-function get_skip_lengths(lengths::V, angles::V) where V <: AbstractVector{<:Real}
-    @assert length(lengths) == length(angles) + 1
-    L1s = lengths
-    L2s = Iterators.drop(lengths, 1)
-    skip_lengths = similar(angles)
-    for (L1, L2, (i, θ)) in zip(L1s, L2s, enumerate(angles))
-        skip_lengths[i] = get_skip_length(L1, L2, θ)
-    end
-    return skip_lengths
-end
-
-get_skip_lengths(bonds::ChainedBonds{T}) where T = get_skip_lengths(bonds.lengths, bonds.angles)

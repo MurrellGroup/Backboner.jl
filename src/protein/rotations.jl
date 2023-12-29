@@ -9,8 +9,6 @@ const STANDARD_TRIANGLE_ANGSTROM = Float32[
      0.000   0.000   0.000;
 ] #  N       Ca      C
 
-const STANDARD_TRIANGLE_NM = STANDARD_TRIANGLE_ANGSTROM .* 0.1
-
 @inline standardtriangle(location::AbstractVector, quatrots::Rotations.QuatRotation) = quatrots * STANDARD_TRIANGLE_ANGSTROM .+ location
 @inline standardtriangle(location::AbstractVector, rot_matrix::AbstractMatrix) = rot_matrix * STANDARD_TRIANGLE_ANGSTROM .+ location
 
@@ -21,7 +19,7 @@ const STANDARD_TRIANGLE_NM = STANDARD_TRIANGLE_ANGSTROM .* 0.1
 Returns a backbone with the given locations and rotation matrices of residues.
 If unit is :nm, the locations are converted to angstroms by multiplying them by 10.
 """
-function locs_and_rots_to_backbone(locations::AbstractMatrix{T}, rot_matrices::AbstractArray{T, 3}; unit::Symbol=:angstrom) where T
+function locs_and_rots_to_backbone(locations::AbstractMatrix, rot_matrices::AbstractArray{T, 3}; unit::Symbol=:angstrom) where T
     unit == :nm && (locations *= 10.0)
     @assert size(locations, 1) == 3 "locations must be of size 3xL"
     @assert size(rot_matrices, 1) == size(rot_matrices, 2) == 3 "rot_matrices must be a 3x3xL array"
@@ -31,7 +29,7 @@ function locs_and_rots_to_backbone(locations::AbstractMatrix{T}, rot_matrices::A
 end
 
 # length L vector of Rotations.QuatRotation
-function locs_and_rots_to_backbone(locations::AbstractMatrix{T}, quatrots::AbstractVector{Rotations.QuatRotation{T}}; unit::Symbol=:angstrom) where T
+function locs_and_rots_to_backbone(locations::AbstractMatrix, quatrots::AbstractVector{<:Rotations.QuatRotation}; unit::Symbol=:angstrom)
     unit == :nm && (locations *= 10.0)
     @assert size(locations, 1) == 3 "locations must be of size 3xL"
     @assert size(locations, 2) == length(quatrots) "The second dimension of locations must be the same as the length of quatrots"
@@ -40,7 +38,7 @@ function locs_and_rots_to_backbone(locations::AbstractMatrix{T}, quatrots::Abstr
 end
 
 # 4xL matrix of quaternions
-function locs_and_rots_to_backbone(locations::AbstractMatrix{T}, quatrot_matrix::AbstractMatrix{T}; unit::Symbol=:angstrom) where T
+function locs_and_rots_to_backbone(locations::AbstractMatrix, quatrot_matrix::AbstractMatrix; unit::Symbol=:angstrom)
     @assert size(quatrot_matrix, 1) == 4 "quatrot_matrix must be a 4xL array"
     quatrots = Rotations.QuatRotation.(eachcol(quatrot_matrix))
     return locs_and_rots_to_backbone(locations, quatrots, unit=unit)

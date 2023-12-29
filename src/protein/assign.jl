@@ -27,6 +27,8 @@ function assign_secondary_structure(protein::AbstractVector{Chain})
     return new_protein
 end
 
+assign_secondary_structure(backbones::AbstractVector{<:Backbone}) = assign_secondary_structure(Chain.(backbones))
+
 export has_assigned_ss
 
 has_assigned_ss(ssvector::Vector{Char}) = all(!=(' '), ssvector)

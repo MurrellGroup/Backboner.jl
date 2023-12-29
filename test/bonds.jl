@@ -54,7 +54,7 @@
 
     @testset "ChainedBonds" begin
 
-        backbone = Protein.readpdb("data/1ASS.pdb")["A"].backbone
+        backbone = Backboner.Protein.readpdb("data/1ASS.pdb")["A"].backbone
         bonds = ChainedBonds(backbone)
         @test bonds == bonds
         @test size(bonds) == (length(backbone) - 1,)
