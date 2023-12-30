@@ -1,7 +1,7 @@
 using Backboner
 using Documenter
 
-DocMeta.setdocmeta!(Backboner, :DocTestSetup, :(using Backboner); recursive=true)
+DocMeta.setdocmeta!(Backboner, :DocTestSetup, :(using Backboner, Backboner.Protein); recursive=true)
 
 makedocs(;
     modules = [Backboner],
