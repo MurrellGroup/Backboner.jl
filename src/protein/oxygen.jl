@@ -82,4 +82,4 @@ julia> oxygen_coords(protein["A"]) # returns the estimated position of oxygen at
 oxygen_coords(chain::Chain) = oxygen_coords(chain.backbone)
 
 
-NCaCO_coords(chain::Chain) = cat(reshape(chain.backbone.coords, 3, 3, :), reshape(oxygen_coords(chain), 3, 1, :), dims=2)
+ncaco_coords(chain::Chain) = cat(reshape(chain.backbone.coords, 3, 3, :), reshape(oxygen_coords(chain), 3, 1, :), dims=2)

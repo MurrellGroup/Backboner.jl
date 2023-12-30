@@ -46,7 +46,7 @@ end
     readpdb(filename::String)
 
 Loads a protein (represented as a `Vector{Protein.Chain}`) from a PDB file.
-Assumes that each residue starts with four atoms: N, CA, C.
+Assumes that each residue starts with three atoms: N, CA, C.
 """
 function readpdb(filename::String)
     atoms = PDBTools.readPDB(filename)
@@ -66,7 +66,7 @@ function writepdb(protein::Vector{Chain}, filename, header=:auto, footer=:auto)
     index = 0
     residue_index = 0
     for chain in protein
-        coords = NCaCO_coords(chain)
+        coords = ncaco_coords(chain)
         for (resnum, (residue_coords, aa)) in enumerate(zip(eachslice(coords, dims=3), chain.aavector))
             resname = get(THREE_LETTER_AA_CODES, aa, "XXX")
             residue_index += 1
