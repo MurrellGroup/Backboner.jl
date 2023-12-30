@@ -110,7 +110,7 @@ function pdb_oxygen_coords(filename::String)
     i = 1
     while i <= length(atoms) - 3
         if atoms[i].name == "N" && atoms[i+1].name == "CA" && atoms[i+2].name == "C" && atoms[i+3].name == "O"
-            push!(oxygens, atoms[i+1])
+            push!(oxygens, atoms[i+3])
             i += 4
         else
             i += 1
