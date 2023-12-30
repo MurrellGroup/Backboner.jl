@@ -1,4 +1,4 @@
-@testset "io.jl" begin
+@testset "pdb.jl" begin
 
     @testset "PDB" begin
 
