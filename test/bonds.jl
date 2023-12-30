@@ -54,14 +54,22 @@
 
     @testset "ChainedBonds" begin
 
-        backbone = Backboner.Protein.readpdb("data/1ASS.pdb")["A"].backbone
+        protein = Backboner.Protein.readpdb("data/1ASS.pdb")
+        chain = protein["A"]
+        backbone = chain.backbone
         bonds = ChainedBonds(backbone)
-        @test bonds == bonds
+        @test bonds == chain.bonds
         @test size(bonds) == (length(backbone) - 1,)
 
         @testset "invertibility" begin
             @test ChainedBonds(Backbone(ChainedBonds(backbone))) ≈ ChainedBonds(backbone)
         end
+
+        @test ChainedBonds(@view(bonds.lengths[1:end]), bonds.angles, bonds.dihedrals) == bonds
+
+        io = IOBuffer()
+        show(io, bonds)
+        @test String(take!(io)) == "ChainedBonds{Float32} with 455 bonds, 454 angles, and 453 dihedrals"
 
     end
 

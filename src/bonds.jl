@@ -149,8 +149,6 @@ Base.:(≈)(b1::ChainedBonds, b2::ChainedBonds) = b1.lengths ≈ b2.lengths && b
 Base.length(bonds::ChainedBonds) = length(bonds.lengths)
 Base.size(bonds::ChainedBonds) = Tuple(length(bonds))
 
-Base.summary(bonds::ChainedBonds) = string(typeof(bonds))
-
 function Base.show(io::IO, bonds::ChainedBonds)
     print(io, "$(summary(bonds)) with $(length(bonds.lengths)) bonds, $(length(bonds.angles)) angles, and $(length(bonds.dihedrals)) dihedrals")
 end
