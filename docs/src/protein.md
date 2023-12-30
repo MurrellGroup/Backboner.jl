@@ -1,5 +1,5 @@
 ```@meta
-CurrentModule = Protein
+CurrentModule = Backboner.Protein
 DocTestSetup = quote
     using Backboner.Protein
 end
