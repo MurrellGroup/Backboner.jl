@@ -29,7 +29,7 @@ The `Protein` submodule contains functions and types for working specifically wi
 ## Example
 
 ```julia
-julia> using Backboner
+julia> using Backboner, Backboner.Protein
 
 julia> protein = readpdb("test/data/1ZAK.pdb")
 2-element Vector{Chain}:
