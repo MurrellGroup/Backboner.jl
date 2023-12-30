@@ -91,3 +91,31 @@ function writepdb(protein::Vector{Chain}, filename, header=:auto, footer=:auto)
 end
 
 pdb_to_protein, protein_to_pdb = readpdb, writepdb
+
+
+function oxygen_coord_matrix(chain_id::AbstractString, oxygens::Vector{PDBTools.Atom})
+    chain_oxygens = filter(a -> PDBTools.chain(a) == chain_id, oxygens)
+    coords = Matrix{Float32}(undef, 3, length(chain_oxygens))
+    for (i, atom) in enumerate(chain_oxygens)
+        coords[:, i] = [atom.x, atom.y, atom.z]
+    end
+    return coords
+end
+
+# Alternative to oxygen_coords function in src/protein/oxygen.jl to get exact coordinates of oxygen atoms
+function pdb_oxygen_coords(filename::String)
+    atoms = PDBTools.readPDB(filename)
+    chain_ids = unique(PDBTools.chain.(atoms))
+    oxygens = PDBTools.Atom[]
+    i = 1
+    while i <= length(atoms) - 3
+        if atoms[i].name == "N" && atoms[i+1].name == "CA" && atoms[i+2].name == "C" && atoms[i+3].name == "O"
+            push!(oxygens, atoms[i+1])
+            i += 4
+        else
+            i += 1
+        end
+    end
+    oxygen_coord_matrices = [oxygen_coord_matrix(chain_id, oxygens) for chain_id in chain_ids]
+    return oxygen_coord_matrices
+end

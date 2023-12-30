@@ -1,4 +1,5 @@
 export Chain
+export has_assigned_ss
 export nitrogen_coords, alphacarbon_coords, carbonyl_coords
 export nitrogen_alphacarbon_distances, alphacarbon_carbonyl_distances, carbonyl_nitrogen_distances
 export phi_angles, psi_angles, omega_angles
@@ -49,6 +50,10 @@ Base.show(io::IO, chain::Chain) = print(io, summary(chain))
 
 @inline Base.getindex(protein::AbstractVector{Chain}, id::AbstractString) = protein[findfirst(chain -> chain.id == id, protein)]
 @inline Base.getindex(protein::AbstractVector{Chain}, id::Symbol) = protein[String(id)]
+
+has_assigned_ss(ssvector::Vector{Char}) = all(!=(' '), ssvector)
+has_assigned_ss(chain::Chain) = has_assigned_ss(chain.ssvector)
+has_assigned_ss(protein::AbstractVector{Chain}) = all(has_assigned_ss, protein)
 
 nitrogen_coords(backbone::Backbone) = (@view backbone[1:3:end]).coords
 alphacarbon_coords(backbone::Backbone) = (@view backbone[2:3:end]).coords
