@@ -1,9 +1,7 @@
 export Backbone
 
-# TODO: allow using elastic/resizable arrays for coords
-
 """
-    Backbone{T <: Real} <: AbstractVector{AbstractVector{T}}
+    Backbone{T <: Real, M <: AbstractMatrix{T}} <: AbstractVector{AbstractVector{T}}
 
 The `Backbone` type is designed to efficiently store and manipulate the three-dimensional coordinates of backbone atoms.
 
@@ -52,23 +50,24 @@ julia> backbone = Backbone(zeros(3, 3, 100)) # 3 coordinates per atom, 3 atoms p
  [0.0, 0.0, 0.0]
 ```
 """
-struct Backbone{T <: Real} <: AbstractVector{AbstractVector{T}}
-    coords::AbstractMatrix{T}
+struct Backbone{T <: Real, M <: AbstractMatrix{T}} <: AbstractVector{AbstractVector{T}}
+    coords::M
 
-    function Backbone(coords::AbstractMatrix{T}) where T
+    function Backbone{T, M}(coords::M) where {T <: Real, M <: AbstractMatrix{T}}
         @assert size(coords, 1) == 3 "coords must have 3 coordinates per atom"
-        return new{T}(coords)
+        return new{T, M}(coords)
+    end
+
+    function Backbone{T}(coords::AbstractArray{T}) where T
+        new_coords = reshape(coords, size(coords, 1), :)
+        M = typeof(new_coords)
+        return Backbone{T, M}(new_coords)
     end
 end
 
-function Backbone{T}(::UndefInitializer, n_atoms::Integer) where T
-    return Backbone(Matrix{T}(undef, 3, n_atoms))
-end
+Backbone(coords::AbstractArray{T}) where T = Backbone{T}(coords)
 
-function Backbone(coords::AbstractArray{T, 3}) where T
-    @assert size(coords, 1) == 3 "coords must have 3 coordinates per atom"
-    return Backbone(reshape(coords, 3, :))
-end
+Backbone{T}(::UndefInitializer, n_atoms::Integer) where T = Backbone{T}(Matrix{T}(undef, 3, n_atoms))
 
 @inline Base.:(==)(backbone1::Backbone, backbone2::Backbone) = backbone1.coords == backbone2.coords
 @inline Base.:(≈)(backbone1::Backbone, backbone2::Backbone) = backbone1.coords ≈ backbone2.coords
