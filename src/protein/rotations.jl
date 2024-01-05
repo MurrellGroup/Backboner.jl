@@ -2,10 +2,9 @@ import Rotations
 
 export locs_and_rots_to_backbone, backbone_to_locs_and_rots
 
-# may or may not be enough precision
-const STANDARD_TRIANGLE_ANGSTROM = Float32[
-    -0.876  -0.248   1.124;
-     0.656  -0.656   0.000;
+const STANDARD_TRIANGLE_ANGSTROM = [
+    -1.066  -0.200   1.266;
+     0.645  -0.527  -0.118;
      0.000   0.000   0.000;
 ] #  N       Ca      C
 
