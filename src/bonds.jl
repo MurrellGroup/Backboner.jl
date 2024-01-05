@@ -2,18 +2,16 @@ using LinearAlgebra
 import Rotations: AngleAxis
 import Distances: euclidean
 
-export get_atom_displacements
-export get_atom_distances
-
-export get_bond_vectors
-export get_bond_lengths
-export get_bond_angles
-export get_dihedrals
-
-export ChainedBonds
-
-export append_bonds!
-export append_bonds
+export
+    get_atom_displacements,
+    get_atom_distances,
+    get_bond_vectors,
+    get_bond_lengths,
+    get_bond_angles,
+    get_dihedrals,
+    ChainedBonds,
+    append_bonds!,
+    append_bonds
 
 _column_norms(columns::AbstractMatrix) = reshape(mapslices(norm, columns, dims=1), :)
 
@@ -53,7 +51,6 @@ function get_atom_distances(
         @view(backbone.coords[:, start+step:stride:end]))
     return distances
 end
-
 
 get_bond_vectors(backbone::Backbone) = get_atom_displacements(backbone, 1, 1, 1)
 

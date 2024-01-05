@@ -1,93 +1,74 @@
-export readpdb, writepdb, pdb_to_protein, protein_to_pdb
+export readpdb
 
-const THREE_LETTER_AA_CODES = Dict(
-    'A' => "ALA", 'R' => "ARG", 'N' => "ASN", 'D' => "ASP",
-    'C' => "CYS", 'Q' => "GLN", 'E' => "GLU", 'G' => "GLY",
-    'H' => "HIS", 'I' => "ILE", 'L' => "LEU", 'K' => "LYS",
-    'M' => "MET", 'F' => "PHE", 'P' => "PRO", 'S' => "SER",
-    'T' => "THR", 'W' => "TRP", 'Y' => "TYR", 'V' => "VAL",
-)
+import BioStructures
 
-const ONE_LETTER_AA_CODES = Dict(v => k for (k, v) in THREE_LETTER_AA_CODES)
+const AMINOACIDS = Set("ACDEFGHIKLMNPQRSTVWY")
+const BACKBONE_ATOM_NAMES = ["N", "CA", "C"]
 
-function collect_backbone_atoms(atoms::Vector{PDBTools.Atom})
-    backbone_atoms = PDBTools.Atom[]
-    i = 1
-    while i <= length(atoms) - 2 # Ensure there are at least three atoms left to process
-        # Check if the next four atoms are N, CA, C, O in order
-        if atoms[i].name == "N" && atoms[i+1].name == "CA" && atoms[i+2].name == "C" && allequal(PDBTools.resnum.(atoms[i:i+2]))
-            append!(backbone_atoms, atoms[i:i+2])
-            i += 3
-        else
-            i += 1
-        end
+oneletter_resname(res::BioStructures.Residue) = Char(get(BioStructures.threeletter_to_aa, BioStructures.resname(res), '-'))
+
+backboneselector(at::BioStructures.AbstractAtom) = BioStructures.atomnameselector(at, BACKBONE_ATOM_NAMES)
+
+proteindesignselector(res::BioStructures.Residue) =
+    oneletter_resname(res) ∈ AMINOACIDS &&
+    BioStructures.countatoms(res, backboneselector)==3 && 
+    BioStructures.standardselector(res) &&
+    !BioStructures.disorderselector(res)
+
+atomcoords(res, ATOM_NAME)::Vector = BioStructures.collectatoms(res, at -> BioStructures.atomnameselector(at, [ATOM_NAME])) |> only |> BioStructures.coords
+
+backbonecoords(res::BioStructures.Residue)::Matrix = stack(AT -> atomcoords(res, AT), BACKBONE_ATOM_NAMES)
+
+getresidues(chain::BioStructures.Chain) = BioStructures.collectresidues(chain, proteindesignselector)
+
+Base.isempty(chain::BioStructures.Chain) = isempty(getresidues(chain))
+
+Backboner.Backbone(chain::BioStructures.Chain) = Backbone(mapreduce(backbonecoords, hcat, getresidues(chain)))
+
+function Backboner.Backbone(struc::BioStructures.ProteinStructure)
+    backbones = Backbone[]
+    for model in struc, chain in model
+        isempty(chain) || push!(backbones, Backbone(chain))
     end
-    return backbone_atoms
-end
-
-function Backboner.Backbone(atoms::Vector{PDBTools.Atom})
-    backbone_atoms = collect_backbone_atoms(atoms)
-    coords = zeros(Float32, (3, length(backbone_atoms)))
-    for (i, atom) in enumerate(backbone_atoms)
-        coords[:, i] = [atom.x, atom.y, atom.z]
+    if isempty(backbones)
+        return Backbone{Float64}(undef, 0)
+    else
+        return Backbone(mapreduce(b -> b.coords, hcat, backbones))
     end
-    return Backbone(coords)
 end
 
-function Chain(atoms::Vector{PDBTools.Atom})
-    id = PDBTools.chain(atoms[1])
-    @assert allequal(PDBTools.chain.(atoms)) "atoms must be from the same chain"
-    backbone = Backbone(atoms)
-    aavector = [get(ONE_LETTER_AA_CODES, atom.resname, 'X') for atom in atoms if atom.name == "CA"]
-    return Chain(id, backbone, aavector=aavector)
-end
+sequence(chain::BioStructures.Chain) = join(map(oneletter_resname, getresidues(chain)))
 
-"""
-    readpdb(filename::String)
-
-Loads a protein (represented as a `Vector{Protein.Chain}`) from a PDB file.
-Assumes that each residue starts with three atoms: N, CA, C.
-"""
-function readpdb(filename::String)
-    atoms = PDBTools.readPDB(filename)
-    filter!(a -> a.name in ["N", "CA", "C"], atoms)
-    ids = PDBTools.chain.(atoms)
-    chains = [Chain(atoms[ids .== id]) for id in unique(ids)]
-    return chains
-end
-
-"""
-    writepdb(protein::Vector{Protein.Chain}, filename)
-
-Write a protein (represented as a `Vector{Protein.Chain}`s) to a PDB file.
-"""
-function writepdb(protein::Vector{Chain}, filename, header=:auto, footer=:auto)
-    atoms = PDBTools.Atom[]
-    index = 0
-    residue_index = 0
-    for chain in protein
-        coords = ncaco_coords(chain)
-        for (resnum, (residue_coords, aa)) in enumerate(zip(eachslice(coords, dims=3), chain.aavector))
-            resname = get(THREE_LETTER_AA_CODES, aa, "XXX")
-            residue_index += 1
-            for (name, atom_coords) in zip(["N", "CA", "C", "O"], eachcol(residue_coords))
-                index += 1
-                atom = PDBTools.Atom(
-                    index = index,
-                    name = name,
-                    resname = resname,
-                    chain = chain.id,
-                    resnum = resnum,
-                    residue = residue_index,
-                    x = atom_coords[1],
-                    y = atom_coords[2],
-                    z = atom_coords[3],
-                )
-                push!(atoms, atom)
-            end
-        end
+function sequence(struc::BioStructures.ProteinStructure)
+    _sequence = String[]
+    for model in struc, chain in model
+        isempty(chain) || push!(_sequence, sequence(chain))
     end
-    PDBTools.writePDB(atoms, filename, header=header, footer=footer)
+    return join(_sequence)
 end
 
-pdb_to_protein, protein_to_pdb = readpdb, writepdb
+function modelspecific_chainid(chain::BioStructures.Chain)
+    str = BioStructures.chainid(chain)
+    if length(str) <= 4
+        throw(ArgumentError("ChainID is too long for structure $(BioStructures.structurename(chain)), chain $(str)"))
+    end
+    int_bits = join(map(bitstring, collect(codeunits(str))))
+    return parse(Int32, int_bits)
+end
+
+modelnumber(chain::BioStructures.Chain) = Int32(BioStructures.modelnumber(chain))
+
+chainid(chain::BioStructures.Chain) = parse(Int64, join([
+        modelnumber(chain)::Int32 |> bitstring,
+        modelspecific_chainid(chain)::Int32 |> bitstring
+    ]))
+
+chainids(chain::BioStructures.Chain) = fill(chainid(chain), length(getresidues(chain)))
+
+function chainids(struc::BioStructures.ProteinStructure)
+    _chainids = Vector{Int64}[]
+    for model in struc, chain in model
+        isempty(chain) || push!(_chainids, chainids(chain))
+    end
+    return vcat(_chainids)
+end
