@@ -1,18 +1,18 @@
 export Residue
 
 struct Residue
-    index::Integer
+    num::Integer
     aa::Char
     ss::Char
 
-    function Residue(index::Integer, aa::Char = 'G', ss::Char = ' ')
-        return new(index, aa, ss)
+    function Residue(num::Integer, aa::Char='G', ss::Char=' ')
+        return new(num, aa, ss)
     end
 end
 
 function Base.show(io::IO, residue::Residue)
-    index = residue.index
+    num = residue.num
     aa3 = get(THREE_LETTER_AA_CODES, residue.aa, "XXX")
     ss = residue.ss
-    print(io, "$(summary(residue)) $index $aa3 $ss")
+    print(io, "$(summary(residue)) $num $aa3 $ss")
 end

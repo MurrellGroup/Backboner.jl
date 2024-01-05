@@ -12,6 +12,7 @@ A `Chain` represents a chain of a protein, and is a vector of `Residue`s, which 
 ## Fields
 - `id::AbstractString`: A string identifier (usually a single letter).
 - `backbone::Backbone`: A backbone with a length divisible by 3, to ensure 3 atoms per residue (N, Ca, C).
+- `resnums::Vector{Int}`: storing the residue numbers.
 - `aavector::Vector{Char}`: storing the amino acid sequence.
 - `ssvector::Vector{Char}`: storing the secondary structure.
 - `bonds::ChainedBonds`: storing the bonds between atoms of the backbone.
@@ -19,6 +20,7 @@ A `Chain` represents a chain of a protein, and is a vector of `Residue`s, which 
 struct Chain <: AbstractVector{Residue}
     id::AbstractString
     backbone::Backbone
+    resnums::Vector{Int}
     aavector::Vector{Char}
     ssvector::Vector{Char}
     bonds::ChainedBonds
@@ -26,15 +28,19 @@ struct Chain <: AbstractVector{Residue}
     function Chain(
         id::AbstractString,
         backbone::Backbone;
+        resnums::Vector{Int} = collect(1:length(backbone) ÷ 3),
         aavector::Vector{Char} = fill('G', length(backbone) ÷ 3),
         ssvector::Union{Vector{Char}, Vector{<:Integer}} = fill(' ', length(backbone) ÷ 3),
     )
-        @assert length(backbone) % 3 == 0
-        @assert length(backbone) ÷ 3 == length(aavector) == length(ssvector) "backbone, aavector, and ssvector must have the same length"
+        L, r = divrem(length(backbone), 3)
+        iszero(r) || throw(ArgumentError("backbone must have a length divisible by 3"))
+        length(resnums) == L || throw(ArgumentError("length of resnums must be equal to length of backbone divided by 3"))
+        length(aavector) == L || throw(ArgumentError("length of aavector must be equal to length of backbone divided by 3"))
+        length(ssvector) == L || throw(ArgumentError("length of ssvector must be equal to length of backbone divided by 3"))
         ssvector isa Vector{<:Integer} && (ssvector = get.(('-', 'H', 'E'), ssvector, ' '))
         bonds = ChainedBonds(backbone)
 
-        return new(id, backbone, aavector, ssvector, bonds)
+        return new(id, backbone, resnums, aavector, ssvector, bonds)
     end
 
     Chain(backbone::Backbone; kwargs...) = Chain("_", backbone; kwargs...) 
@@ -43,7 +49,7 @@ end
 @inline Base.:(==)(chain1::Chain, chain2::Chain) = chain1.id == chain2.id && chain1.backbone == chain2.backbone && chain1.ssvector == chain2.ssvector
 @inline Base.length(chain::Chain) = length(chain.backbone) ÷ 3
 @inline Base.size(chain::Chain) = Tuple(length(chain))
-@inline Base.getindex(chain::Chain, i::Integer) = Residue(i, chain.aavector[i], chain.ssvector[i])
+@inline Base.getindex(chain::Chain, i::Integer) = Residue(chain.resnums[i], chain.aavector[i], chain.ssvector[i])
 
 Base.summary(chain::Chain) = "Chain $(chain.id) with $(length(chain)) residue$(length(chain) == 1 ? "" : "s")"
 Base.show(io::IO, chain::Chain) = print(io, summary(chain))

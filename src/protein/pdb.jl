@@ -67,17 +67,17 @@ function writepdb(protein::Vector{Chain}, filename, header=:auto, footer=:auto)
     residue_index = 0
     for chain in protein
         coords = ncaco_coords(chain)
-        for (resnum, (residue_coords, aa)) in enumerate(zip(eachslice(coords, dims=3), chain.aavector))
-            resname = get(THREE_LETTER_AA_CODES, aa, "XXX")
+        for (residue, res_coords) in zip(chain, eachslice(coords, dims=3))
+            resname = get(THREE_LETTER_AA_CODES, residue.aa, "XXX")
             residue_index += 1
-            for (name, atom_coords) in zip(["N", "CA", "C", "O"], eachcol(residue_coords))
+            for (name, atom_coords) in zip(["N", "CA", "C", "O"], eachcol(res_coords))
                 index += 1
                 atom = PDBTools.Atom(
                     index = index,
                     name = name,
                     resname = resname,
                     chain = chain.id,
-                    resnum = resnum,
+                    resnum = residue.num,
                     residue = residue_index,
                     x = atom_coords[1],
                     y = atom_coords[2],
