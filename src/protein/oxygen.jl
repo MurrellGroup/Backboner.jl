@@ -1,5 +1,7 @@
 export oxygen_coords
 
+## Warning: wonky code ahead
+
 function get_rotation_matrix(
     point1::AbstractVector{T}, center::AbstractVector{T}, point3::AbstractVector{T}
 ) where T <: Real
@@ -13,14 +15,13 @@ function get_rotation_matrix(
     return rotation_matrix
 end
 
-# the average rotation matrix calculated from a set of PDB files
-const magic_vector = [-0.672, -1.034, 0.003]
+const IDEALIZED_OXYGEN_VECTOR = [-0.672, -1.034, 0.003]
 
 function estimate_oxygen_position(
     CA::AbstractVector{T}, C::AbstractVector{T}, next_N::AbstractVector{T},
 ) where T <: Real
     R = get_rotation_matrix(CA, C, next_N)
-    return R' \ magic_vector + C # inverse of R' * (oxygen_pos - C)
+    return R' \ IDEALIZED_OXYGEN_VECTOR + C # inverse of R' * (oxygen_pos - C)
 end
 
 # last oxygen is put on the same plane as the last residue triangle
