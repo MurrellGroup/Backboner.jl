@@ -122,7 +122,7 @@ carbonyl_nitrogen_distances(chain::Chain) = carbonyl_nitrogen_distances(chain.ba
 
 Returns the phi (φ) angles of a chain. A `ChainedBonds` object can be passed instead to avoid recalculating the dihedrals.
 """
-phi_angles(chain::Chain) = phi_angles(ChainedBonds(chain))
+phi_angles(chain::Chain) = phi_angles(ChainedBonds(chain.backbone))
 phi_angles(bonds::ChainedBonds) = @view bonds.dihedrals[3:3:end]
 
 """
@@ -131,7 +131,7 @@ phi_angles(bonds::ChainedBonds) = @view bonds.dihedrals[3:3:end]
 
 Returns the psi (ψ) angles of a chain.
 """
-psi_angles(chain::Chain) = psi_angles(ChainedBonds(chain))
+psi_angles(chain::Chain) = psi_angles(ChainedBonds(chain.backbone))
 psi_angles(bonds::ChainedBonds) = @view bonds.dihedrals[1:3:end]
 
 """
@@ -140,7 +140,7 @@ psi_angles(bonds::ChainedBonds) = @view bonds.dihedrals[1:3:end]
 
 Returns the phi (Ω) angles of a chain.
 """
-omega_angles(chain::Chain) = omega_angles(ChainedBonds(chain))
+omega_angles(chain::Chain) = omega_angles(ChainedBonds(chain.backbone))
 omega_angles(bonds::ChainedBonds) = @view bonds.dihedrals[2:3:end]
 
 

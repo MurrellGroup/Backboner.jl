@@ -43,18 +43,14 @@ function chains(struc::BioStructures.ProteinStructure; res_selector=BioStructure
 end
 
 """
-    readpdb(filename::String)
+    readpdb(pdbfile::String)
 
 Loads a protein (represented as a `Vector{Protein.Chain}`) from a PDB file.
 Assumes that each residue starts with three atoms: N, CA, C.
 """
 function readpdb(pdbfile::String)
-    struc = read(filename, BioStructures.PDB)
-    chains = Protein.Chain[]
-    for model in struc, chain in model
-        push!(chains, Protein.Chain(chain))
-    end
-    return chains
+    struc = read(pdbfile, BioStructures.PDB)
+    return chains(struc)
 end
 
 

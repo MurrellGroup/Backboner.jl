@@ -2,6 +2,8 @@ export oxygen_coords
 
 ## Warning: wonky code ahead
 
+using LinearAlgebra
+
 function get_rotation_matrix(
     point1::AbstractVector{T}, center::AbstractVector{T}, point3::AbstractVector{T}
 ) where T <: Real

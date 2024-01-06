@@ -20,7 +20,7 @@ end
 
 function Base.show(io::IO, residue::Residue)
     num = residue.num
-    aa = residue.aa
+    aa = get(threeletter_aa_names, residue.aa, "XXX")
     ss = residue.ss
     print(io, "Residue $num $aa $ss")
 end

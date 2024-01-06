@@ -58,7 +58,6 @@
         chain = protein["A"]
         backbone = chain.backbone
         bonds = ChainedBonds(backbone)
-        @test bonds == chain.bonds
         @test size(bonds) == (length(backbone) - 1,)
 
         @testset "invertibility" begin

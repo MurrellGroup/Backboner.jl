@@ -27,13 +27,14 @@ struct Frames{T <: Real} <: AbstractVector{Tuple{QuatRotation{T}, Vector{T}}}
 
     function Frames{T}(rotations::Matrix{T}, locations::Matrix{T}) where T <: Real
         size(rotations, 2) == size(locations, 2) || throw(ArgumentError("rotations and locations must have the same number of columns"))
-        size(rotations, 1) == 4 || throw(ArgumentError("rotations must be a 4xN matrix representing quaternions"))
-        size(locations, 1) == 3 || throw(ArgumentError("locations must be a 3xN matrix representing 3D coordinates"))
+        size(rotations, 1) == 4 || throw(ArgumentError("rotations must be a 4xN quaternion matrix"))
+        size(locations, 1) == 3 || throw(ArgumentError("locations must be a 3xN 3D coordinates matrix"))
         new{T}(rotations, locations)
     end
 end
 
 Frames(rotations::Matrix{T}, locations::Matrix{T}) where T <: Real = Frames{T}(rotations, locations)
+Frames(rotations::Matrix{T}) where T <: Real = Frames{T}(rotations, zeros(T, 3, size(rotations, 2)))
 
 Base.length(frames::Frames) = size(frames.rotations, 2)
 Base.size(frames::Frames) = Tuple(length(frames))
@@ -67,5 +68,3 @@ function Backbone(frames::Frames{T}, ideal_coords::AbstractMatrix{<:Real}) where
     end
     return Backbone(approx_raw_coords)
 end
-
-#end

@@ -1,7 +1,7 @@
 module Protein
 
 using ..Backboner
-using LinearAlgebra
+import BioStructures
 
 include("residue.jl")
 include("chain.jl")
