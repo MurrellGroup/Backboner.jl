@@ -1,5 +1,3 @@
-
-
 module ProteinData
 
 using ..Backboner
@@ -12,7 +10,6 @@ include("numbering.jl")
 include("pdb.jl")
 include("records.jl")
 
-export 
-    GeneralRecord
+export GeneralRecord
 
 end

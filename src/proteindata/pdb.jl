@@ -13,11 +13,11 @@ const BACKBONE_ATOM_NAMES = ["N", "CA", "C"]
 
 oneletter_resname(threeletter::AbstractString) = Char(get(BioStructures.threeletter_to_aa, threeletter, 'X'))
 
-oneletter_resname(res::BioStructures.Residue) = oneletter_resname(BioStructures.resname(res))
+oneletter_resname(res::BioStructures.AbstractResidue) = oneletter_resname(BioStructures.resname(res))
 
 backboneselector(at::BioStructures.AbstractAtom) = BioStructures.atomnameselector(at, BACKBONE_ATOM_NAMES)
 
-proteindesignselector(res::BioStructures.Residue) =
+proteindesignselector(res::BioStructures.AbstractResidue) =
     oneletter_resname(res) ∈ AMINOACIDS &&
     BioStructures.countatoms(res, backboneselector)==3 && 
     BioStructures.standardselector(res) &&
@@ -25,7 +25,7 @@ proteindesignselector(res::BioStructures.Residue) =
 
 atomcoords(res, ATOM_NAME)::Vector = BioStructures.collectatoms(res, at -> BioStructures.atomnameselector(at, [ATOM_NAME])) |> only |> BioStructures.coords
 
-backbonecoords(res::BioStructures.Residue)::Matrix = stack(AT -> atomcoords(res, AT), BACKBONE_ATOM_NAMES)
+backbonecoords(res::BioStructures.AbstractResidue)::Matrix = stack(AT -> atomcoords(res, AT), BACKBONE_ATOM_NAMES)
 
 getresidues(chain::BioStructures.Chain) = BioStructures.collectresidues(chain, proteindesignselector)
 
@@ -92,7 +92,7 @@ SEQRES   7 A  548  ALA LYS MET MET VAL GLU VAL ALA LYS THR GLN ASP LYS
 function read_seqres_line(line::String)
     cols = split(line)
     chainid = cols[3]
-    residues = oneletter_resname.(cols[5:end])
+    residues = oneletter_resname.(cols[5:end]) # a gap will become an X
 
     return chainid, residues
 end
