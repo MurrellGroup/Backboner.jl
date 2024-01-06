@@ -22,7 +22,7 @@ struct Chain <: AbstractVector{Residue}
     backbone::Backbone
     modelnum::Int
     resnums::Vector{Int}
-    aavector::Vector{Char} # TODO: move over to BioStructures.LongAA (from BioSequences)
+    aavector::Vector{Char} # TODO: switch to BioStructures.LongAA (from BioSequences)
     ssvector::Vector{Char}
 
     function Chain(
