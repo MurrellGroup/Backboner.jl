@@ -60,18 +60,19 @@ end
 
 """
     oxygen_coords(chain::Chain)
+    oxygen_coords(backbone::Backbone)
 
 Add oxygen atoms to the backbone of a protein, turning the coordinate array from size 3x3xL to 3x4xL-1,
 where L is the length of the backbone.
 
 # Example
 ```jldoctest
-julia> protein = readpdb("test/data/1ZAK.pdb")
+julia> chains = readpdb("test/data/1ZAK.pdb")
 2-element Vector{Chain}:
  Chain A with 220 residues
  Chain B with 220 residues
 
-julia> oxygen_coords(protein["A"]) # returns the estimated position of oxygen atoms in chain A (~0.05 Å mean deviation)
+julia> oxygen_coords(chains["A"]) # returns the estimated position of oxygen atoms in chain A (~0.05 Å mean deviation)
 3×220 Matrix{Float32}:
  22.6697  25.1719  24.7761  25.8559  …  24.7911   22.7649   22.6578   21.24
  15.7257  13.505   13.5151  11.478      15.0888   12.2361   15.8825   14.2933
@@ -83,6 +84,5 @@ julia> oxygen_coords(protein["A"]) # returns the estimated position of oxygen at
     Moreover, the last oxygen atom is essentially given a random (although deterministic) orientation, as that information is lost when the backbone is reduced to 3 atoms, and there's no next nitrogen atom to compare with.
 """
 oxygen_coords(chain::Chain) = oxygen_coords(chain.backbone)
-
 
 ncaco_coords(chain::Chain) = cat(reshape(chain.backbone.coords, 3, 3, :), reshape(oxygen_coords(chain), 3, 1, :), dims=2)
