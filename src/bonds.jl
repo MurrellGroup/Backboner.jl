@@ -1,7 +1,3 @@
-using LinearAlgebra
-import Rotations: AngleAxis
-import Distances: euclidean
-
 export
     get_atom_displacements,
     get_atom_distances,
@@ -12,6 +8,10 @@ export
     ChainedBonds,
     append_bonds!,
     append_bonds
+
+using LinearAlgebra
+import Rotations: AngleAxis
+import Distances: euclidean
 
 _column_norms(columns::AbstractMatrix) = reshape(mapslices(norm, columns, dims=1), :)
 

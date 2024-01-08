@@ -194,8 +194,6 @@ omega_angles(backbone::Backbone) = omega_angles(ChainedBonds(backbone))
 omega_angles(bonds::ChainedBonds) = @view bonds.dihedrals[2:3:end]
 
 
-# TODO: functions for getting beta-carbon and hydrogen atom positions? is that even possible without knowing AAs and molecular dynamics?
-
 # TODO: append_residues! function. also get the Residue type sorted out. user shouldn't need to create it manually.
 #=function append_residues!(
     chain::Chain,
