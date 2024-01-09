@@ -71,7 +71,7 @@ Backbone{T}(::UndefInitializer, n_atoms::Integer) where T = Backbone{T}(Matrix{T
 Backbone{T}() where T = Backbone{T}(undef, 0)
 
 @inline Base.:(==)(backbone1::Backbone, backbone2::Backbone) = backbone1.coords == backbone2.coords
-@inline Base.:(≈)(backbone1::Backbone, backbone2::Backbone) = backbone1.coords ≈ backbone2.coords
+@inline Base.:(≈)(backbone1::Backbone, backbone2::Backbone) = isapprox(backbone1.coords, backbone2.coords, atol=1e-10)
 
 @inline Base.length(backbone::Backbone) = size(backbone.coords, 2)
 @inline Base.size(backbone::Backbone) = Tuple(length(backbone))

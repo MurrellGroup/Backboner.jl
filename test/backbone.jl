@@ -14,5 +14,11 @@
 
     @test length(Backbone{Float32}(undef, 20)) == 20
     @test length(Backbone(randn(3, 3, 5))) == 15
+    @test length(Backbone{Float32}()) == 0
+
+    io = IOBuffer()
+    show(io, backbone)
+    @test String(take!(io)) == "20-element Backbone{Float64, Matrix{Float64}}"
+
 
 end
