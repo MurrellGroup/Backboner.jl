@@ -5,7 +5,7 @@ import BioStructures
 struct GeneralRecord
     id::String
     resnumbers::Vector{Int64}
-    chainids::Vector{Int64}
+    chainids::Vector{Int32}
     sequence::String
     rotations::Matrix{Float32}
     locations::Matrix{Float32}
@@ -14,11 +14,11 @@ struct GeneralRecord
     function GeneralRecord(
         id::String,
         resnumbers::Vector{Int64},
-        chainids::Vector{Int64},
+        chainids::Vector{Int32},
         sequence::String,
         rotations::Matrix{Float32},
         locations::Matrix{Float32},
-        coordinates::Array{Float32, 3}
+        coordinates::Array{Float32, 3},
     )
         L = length(resnumbers)
         length(chainids) == L || throw(ArgumentError("chainids array size mismatch"))

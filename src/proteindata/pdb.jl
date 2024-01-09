@@ -27,23 +27,19 @@ atomcoords(res, ATOM_NAME)::Vector = BioStructures.collectatoms(res, at -> BioSt
 
 backbonecoords(res::BioStructures.AbstractResidue)::Matrix = stack(AT -> atomcoords(res, AT), BACKBONE_ATOM_NAMES)
 
-getresidues(chain::BioStructures.Chain) = BioStructures.collectresidues(chain, proteindesignselector)
+getresidues(chain::BioStructures.Chain, selectors... = proteindesignselector) = BioStructures.collectresidues(chain, selectors...)
 
-Base.isempty(chain::BioStructures.Chain) = isempty(getresidues(chain))
+issmall(chain::BioStructures.Chain; threshold = 5) = length(getresidues(chain)) <= threshold
 
 Backboner.Backbone(chain::BioStructures.Chain) = Backbone(convert(Matrix{Float32}, mapreduce(backbonecoords, hcat, getresidues(chain))))
 
 function Backboner.Backbone(struc::BioStructures.ProteinStructure)
     backbones = Backbone{Float32}[]
     for model in struc, chain in model
-        isempty(chain) || push!(backbones, Backbone(chain))
+        issmall(chain) || push!(backbones, Backbone(chain))
     end
 
-    if isempty(backbones)
-        return Backbone{Float32}(undef, 0)
-    else
-        return Backbone(mapreduce(b -> b.coords, hcat, backbones))
-    end
+    return Backbone(mapreduce(b -> b.coords, hcat, backbones, init=Matrix{Float32}(undef, 3, 0)))
 end
 
 Backboner.Frames(struc::BioStructures.ProteinStructure) = Frames(Backbone(struc), STANDARD_RESIDUE_ANGSTROM)
@@ -53,30 +49,35 @@ sequence(chain::BioStructures.Chain) = join(map(oneletter_resname, getresidues(c
 function sequence(struc::BioStructures.ProteinStructure)
     _sequence = String[]
     for model in struc, chain in model
-        isempty(chain) || push!(_sequence, sequence(chain))
+        issmall(chain) || push!(_sequence, sequence(chain))
     end
     return join(_sequence)
 end
 
-function modelspecific_chainid(chain::BioStructures.Chain)::Int32
-    str = BioStructures.chainid(chain)
-    bytes = codeunits(str)
-    length(bytes) <= 4 || throw(ArgumentError("ChainID is too long for structure $(BioStructures.structurename(chain)), chain $(str)"))
-    return sum(p -> p[2] << 8(p[1] - 1), enumerate(collect(Int32, bytes)))
+modelspecific_chainid(chain::BioStructures.Chain) = findfirst(==(BioStructures.chainid(chain)), BioStructures.chainids(BioStructures.model(chain)))
+
+modelnumber(chain::BioStructures.Chain) = BioStructures.modelnumber(chain)
+
+function allchainids(struc::BioStructures.ProteinStructure)
+    _allchainids = Tuple{Int, Int}[]
+    for model in struc, chain in model
+        issmall(chain) || push!(_allchainids, (modelspecific_chainid(chain), modelnumber(chain)))
+    end
+    return sort(_allchainids)
 end
 
-modelnumber(chain::BioStructures.Chain)::Int32 = Int32(BioStructures.modelnumber(chain))
+chainid(chain::BioStructures.Chain, all_chainids::Vector) = Int32(searchsortedfirst(all_chainids, (modelspecific_chainid(chain), modelnumber(chain))))
 
-chainid(chain::BioStructures.Chain) = first(reinterpret(Int64, [modelspecific_chainid(chain), modelnumber(chain)]))
-
-chainids(chain::BioStructures.Chain) = fill(chainid(chain), length(getresidues(chain)))
+chainids(chain::BioStructures.Chain, all_chainids) = fill(chainid(chain, all_chainids), length(getresidues(chain)))
 
 function chainids(struc::BioStructures.ProteinStructure)
-    _chainids = Vector{Int64}[]
+    _chainids = Int32[]
+
+    all_chainids = allchainids(struc)
     for model in struc, chain in model
-        isempty(chain) || push!(_chainids, chainids(chain))
+        issmall(chain) || append!(_chainids, chainids(chain, all_chainids))
     end
-    return reduce(vcat, _chainids; init=Int64[])
+    return _chainids
 end
 
 """
@@ -91,10 +92,10 @@ SEQRES   7 A  548  ALA LYS MET MET VAL GLU VAL ALA LYS THR GLN ASP LYS
 
 function read_seqres_line(line::String)
     cols = split(line)
-    chainid = cols[3]
+    _chainid = cols[3]
     residues = oneletter_resname.(cols[5:end]) # a gap will become an X
 
-    return chainid, residues
+    return _chainid, residues
 end
 
 function read_chainwise_seqres(pdbfile::String)
@@ -102,8 +103,8 @@ function read_chainwise_seqres(pdbfile::String)
 
     for line in eachline(pdbfile)
         if startswith(line, "SEQRES")
-            chainid, residues = read_seqres_line(line)
-            append!(get!(chainwise_seqres, chainid, Char[]), residues)
+            _chainid, residues = read_seqres_line(line)
+            append!(get!(chainwise_seqres, _chainid, Char[]), residues)
         end
     end
 
@@ -116,10 +117,10 @@ function resnumbers(chain::BioStructures.Chain, chainwise_seqres)
 end
 
 function resnumbers(struc::BioStructures.ProteinStructure, chainwise_seqres)
-    _resnumbers = Vector{Int64}[]
+    _resnumbers = Int[]
     for model in struc, chain in model
-        isempty(chain) || push!(_resnumbers, resnumbers(chain, chainwise_seqres))
+        issmall(chain) || append!(_resnumbers, resnumbers(chain, chainwise_seqres))
     end
-    return reduce(vcat, _resnumbers; init=Int64[])
+    return _resnumbers
 end
 # end
