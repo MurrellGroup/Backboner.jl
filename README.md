@@ -7,7 +7,7 @@
 [![Build Status](https://github.com/MurrellGroup/Backboner.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/MurrellGroup/Backboner.jl/actions/workflows/CI.yml?query=branch%3Amain)
 [![Coverage](https://codecov.io/gh/MurrellGroup/Backboner.jl/branch/main/graph/badge.svg)](https://codecov.io/gh/MurrellGroup/Backboner.jl)
 
-Backboner is a Julia package that offers a set of types and functions for working with molecular *backbones*: defined here as a continuous chain of bonded atoms. The package provides a variety of different types for representing backbones:
+Backboner is a Julia package that offers a set of types and functions for working with molecular *backbones*: defined here as continuous chains of bonded atoms. The package provides a variety of different types for representing backbones:
 - `Backbone`: a type containing a 3xN matrix of coordinates
 - `ChainedBonds`: a type that holds vectors of bond lengths, bond angles, and dihedral angles
 - `Frames`: a collection of rotations and translations (e.g. for representing orientations and locations of protein residues)
