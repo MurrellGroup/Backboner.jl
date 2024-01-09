@@ -1,7 +1,6 @@
 export Frames
 
 using LinearAlgebra
-using Statistics: mean
 using Rotations: QuatRotation, params
 
 """
@@ -42,7 +41,7 @@ Base.getindex(frames::Frames, i::Integer) = QuatRotation(frames.rotations[:, i])
 Base.:(==)(frames1::Frames, frames2::Frames) = all(r1 == r2 && l1 == l2 for ((r1, l1), (r2, l2)) in zip(frames1, frames2))
 Base.:(≈)(frames1::Frames, frames2::Frames) = all(isapprox(r1, r2; atol=1e-10) && isapprox(l1, l2; atol=1e-10) for ((r1, l1), (r2, l2)) in zip(frames1, frames2))
 
-centroid(P::AbstractMatrix{<:Real}) = mean(P, dims=2)
+centroid(P::AbstractMatrix{<:Real}) = sum(P, dims=2) ./ size(P, 2)
 
 function kabsch_algorithm(P::AbstractMatrix{T}, Q::AbstractMatrix{T}) where T <: Real
     size(P) == size(Q) || throw(ArgumentError("P and Q must have the same size"))
