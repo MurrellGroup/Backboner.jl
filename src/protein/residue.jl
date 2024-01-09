@@ -1,5 +1,13 @@
 export Residue
 
+const threeletter_aa_names = Dict{Char, String}([Char(v) => k for (k, v) in BioStructures.threeletter_to_aa])
+
+const STANDARD_TRIANGLE_ANGSTROM = [
+    -1.066  -0.200   1.266;
+     0.645  -0.527  -0.118;
+     0.000   0.000   0.000;
+] #  N       Ca      C
+
 struct Residue
     num::Integer
     aa::Char
@@ -12,7 +20,7 @@ end
 
 function Base.show(io::IO, residue::Residue)
     num = residue.num
-    aa3 = get(THREE_LETTER_AA_CODES, residue.aa, "XXX")
+    aa = get(threeletter_aa_names, residue.aa, "XXX")
     ss = residue.ss
-    print(io, "$(summary(residue)) $num $aa3 $ss")
+    print(io, "Residue $num $aa $ss")
 end

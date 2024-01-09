@@ -68,6 +68,7 @@ end
 Backbone(coords::AbstractArray{T}) where T = Backbone{T}(coords)
 
 Backbone{T}(::UndefInitializer, n_atoms::Integer) where T = Backbone{T}(Matrix{T}(undef, 3, n_atoms))
+Backbone{T}() where T = Backbone{T}(undef, 0)
 
 @inline Base.:(==)(backbone1::Backbone, backbone2::Backbone) = backbone1.coords == backbone2.coords
 @inline Base.:(≈)(backbone1::Backbone, backbone2::Backbone) = backbone1.coords ≈ backbone2.coords
@@ -81,3 +82,5 @@ Backbone{T}(::UndefInitializer, n_atoms::Integer) where T = Backbone{T}(Matrix{T
 
 @inline Base.setindex!(backbone::Backbone, coords::AbstractVector, i::Integer) = (backbone.coords[:, i] .= coords)
 @inline Base.setindex!(backbone::Backbone, coords::AbstractMatrix, r::AbstractVector{<:Integer}) = (backbone.coords[:, r] .= coords)
+
+Base.show(io::IO, backbone::Backbone) = print(io, summary(backbone))

@@ -1,60 +1,60 @@
-export readpdb, writepdb, pdb_to_protein, protein_to_pdb
+export readpdb, writepdb
 
-const THREE_LETTER_AA_CODES = Dict(
-    'A' => "ALA", 'R' => "ARG", 'N' => "ASN", 'D' => "ASP",
-    'C' => "CYS", 'Q' => "GLN", 'E' => "GLU", 'G' => "GLY",
-    'H' => "HIS", 'I' => "ILE", 'L' => "LEU", 'K' => "LYS",
-    'M' => "MET", 'F' => "PHE", 'P' => "PRO", 'S' => "SER",
-    'T' => "THR", 'W' => "TRP", 'Y' => "TYR", 'V' => "VAL",
-)
+import BioStructures
 
-const ONE_LETTER_AA_CODES = Dict(v => k for (k, v) in THREE_LETTER_AA_CODES)
+const BACKBONE_ATOM_NAMES = ["N", "CA", "C"]
 
-function collect_backbone_atoms(atoms::Vector{PDBTools.Atom})
-    backbone_atoms = PDBTools.Atom[]
-    i = 1
-    while i <= length(atoms) - 2 # Ensure there are at least three atoms left to process
-        # Check if the next four atoms are N, CA, C, O in order
-        if atoms[i].name == "N" && atoms[i+1].name == "CA" && atoms[i+2].name == "C" && allequal(PDBTools.resnum.(atoms[i:i+2]))
-            append!(backbone_atoms, atoms[i:i+2])
-            i += 3
-        else
-            i += 1
-        end
-    end
-    return backbone_atoms
+oneletter_resname(threeletter::AbstractString) = Char(get(BioStructures.threeletter_to_aa, threeletter, 'X'))
+oneletter_resname(res::BioStructures.AbstractResidue) = oneletter_resname(BioStructures.resname(res))
+
+getresidues(chain::BioStructures.Chain, res_selector) = BioStructures.collectresidues(chain, res_selector)
+
+atom_coords(res, atom_name)::Vector = BioStructures.collectatoms(res, atom -> BioStructures.atomnameselector(atom, [atom_name])) |> only |> BioStructures.coords
+backbone_coords(res::BioStructures.AbstractResidue)::Matrix = stack(AT -> atom_coords(res, AT), BACKBONE_ATOM_NAMES)
+
+protein_backbone(residues::Vector{<:BioStructures.AbstractResidue}) = Backboner.Backbone(convert(Matrix{Float32}, mapreduce(backbone_coords, hcat, residues; init=Matrix{Float32}(undef, 3, 0))))
+protein_backbone(chain::BioStructures.Chain, res_selector) = Backboner.Backbone(getresidues(chain, res_selector))
+
+aminoacid_sequence(residues::Vector{<:BioStructures.AbstractResidue}) = map(oneletter_resname, residues)
+aminoacid_sequence(chain::BioStructures.Chain, res_selector) = aminoacid_sequence(getresidues(chain, res_elector))
+
+function Protein.Chain(residues::Vector{<:BioStructures.AbstractResidue})
+    id = only(unique(BioStructures.chainid.(residues)))
+    backbone = protein_backbone(residues)
+    aavector = aminoacid_sequence(residues)
+    resnums = BioStructures.resnumber.(residues)
+    modelnum = only(unique(BioStructures.modelnumber.(residues)))
+    return Protein.Chain(id, backbone; resnums, aavector, modelnum)
 end
 
-function Backboner.Backbone(atoms::Vector{PDBTools.Atom})
-    backbone_atoms = collect_backbone_atoms(atoms)
-    coords = zeros(Float32, (3, length(backbone_atoms)))
-    for (i, atom) in enumerate(backbone_atoms)
-        coords[:, i] = [atom.x, atom.y, atom.z]
-    end
-    return Backbone(coords)
+function Protein.Chain(chain::BioStructures.Chain; res_selector=BioStructures.standardselector)
+    residues = getresidues(chain, res_selector)
+    isempty(residues) && return Protein.Chain(
+        BioStructures.chainid(chain), Backbone{Float32}(undef, 0); resnums=Int[], aavector=Char[], modelnum=BioStructures.modelnumber(chain))
+    return Protein.Chain(residues)
 end
 
-function Chain(atoms::Vector{PDBTools.Atom})
-    id = PDBTools.chain(atoms[1])
-    @assert allequal(PDBTools.chain.(atoms)) "atoms must be from the same chain"
-    backbone = Backbone(atoms)
-    aavector = [get(ONE_LETTER_AA_CODES, atom.resname, 'X') for atom in atoms if atom.name == "CA"]
-    return Chain(id, backbone, aavector=aavector)
+function chains(struc::BioStructures.ProteinStructure; res_selector=BioStructures.standardselector)
+    chains = Protein.Chain[]
+    for model in struc, chain in model
+        isempty(chain) || push!(chains, Protein.Chain(chain, res_selector=res_selector))
+    end
+    return chains
 end
 
 """
-    readpdb(filename::String)
+    readpdb(pdbfile::String)
 
 Loads a protein (represented as a `Vector{Protein.Chain}`) from a PDB file.
 Assumes that each residue starts with three atoms: N, CA, C.
 """
-function readpdb(filename::String)
-    atoms = PDBTools.readPDB(filename)
-    filter!(a -> a.name in ["N", "CA", "C"], atoms)
-    ids = PDBTools.chain.(atoms)
-    chains = [Chain(atoms[ids .== id]) for id in unique(ids)]
-    return chains
+function readpdb(pdbfile::String)
+    struc = read(pdbfile, BioStructures.PDB)
+    return chains(struc)
 end
+
+
+import PDBTools
 
 """
     writepdb(protein::Vector{Protein.Chain}, filename)
@@ -68,7 +68,7 @@ function writepdb(protein::Vector{Chain}, filename, header=:auto, footer=:auto)
     for chain in protein
         coords = ncaco_coords(chain)
         for (residue, res_coords) in zip(chain, eachslice(coords, dims=3))
-            resname = get(THREE_LETTER_AA_CODES, residue.aa, "XXX")
+            resname = get(threeletter_aa_names, residue.aa, "XXX")
             residue_index += 1
             for (name, atom_coords) in zip(["N", "CA", "C", "O"], eachcol(res_coords))
                 index += 1
@@ -89,5 +89,3 @@ function writepdb(protein::Vector{Chain}, filename, header=:auto, footer=:auto)
     end
     PDBTools.writePDB(atoms, filename, header=header, footer=footer)
 end
-
-pdb_to_protein, protein_to_pdb = readpdb, writepdb
