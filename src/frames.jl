@@ -28,7 +28,16 @@ function Frames{T}(rotations::AbstractMatrix{<:Real}, locations::AbstractMatrix{
     Frames{T}(rotations_T, locations_T)
 end
 
-function Frames(rotations::AbstractMatrix{<:Real}, locations::AbstractMatrix{<:Real})
+function Frames{T}(rotmats::AbstractArray{<:Real, 3}, locations::AbstractMatrix{<:Real}) where T <: Real
+    rotations_T = Matrix{T}(undef, 4, size(rotmats, 3))
+    for i in axes(rotmats, 3)
+        rotations_T[:, i] = params(QuatRotation(rotmats[:, :, i]))
+    end
+    locations_T = convert(Matrix{T}, locations)
+    Frames{T}(rotations_T, locations_T)
+end
+
+function Frames(rotations::AbstractArray{<:Real}, locations::AbstractMatrix{<:Real})
     T = promote_type(eltype(rotations), eltype(locations))
     Frames{T}(rotations, locations)
 end
@@ -37,7 +46,6 @@ Base.length(frames::Frames) = size(frames.rotations, 2)
 Base.size(frames::Frames) = Tuple(length(frames))
 Base.getindex(frames::Frames, i::Integer) = QuatRotation(frames.rotations[:, i]), frames.locations[:, i]
 
-# conversion to quatrotation is necessary, as multiple quaternions could represent the same rotation, and quatrotation accounts for this
 Base.:(==)(frames1::Frames, frames2::Frames) = all(r1 == r2 && l1 == l2 for ((r1, l1), (r2, l2)) in zip(frames1, frames2))
 Base.:(≈)(frames1::Frames, frames2::Frames) = all(isapprox(r1, r2; atol=1e-10) && isapprox(l1, l2; atol=1e-10) for ((r1, l1), (r2, l2)) in zip(frames1, frames2))
 
@@ -63,15 +71,15 @@ function Frames(backbone::Backbone{T}, ideal_coords::AbstractMatrix{<:Real}) whe
     num_frame_points = size(ideal_coords, 2)
     L, r = divrem(length(backbone), num_frame_points)
     iszero(r) || throw(ArgumentError("Backbone length must be a multiple of the number of points in a frame ($num_frame_points)"))
-    rotations = Matrix{T}(undef, 4, L)
+    rotmats = Array{T, 3}(undef, 3, 3, L)
     locations = Matrix{T}(undef, 3, L)
     all_raw_coords = reshape(backbone.coords, 3, num_frame_points, L)
     for (i, raw_coords) in enumerate(eachslice(all_raw_coords, dims=3))
         rotmat, _, raw_centroid = kabsch_algorithm(ideal_coords, raw_coords)
-        rotations[:, i] = params(QuatRotation(rotmat))
+        rotmats[:, :, i] = rotmat
         locations[:, i] = raw_centroid
     end
-    return Frames(rotations, locations)
+    return Frames(rotmats, locations)
 end
 
 function Backbone(frames::Frames{T}, ideal_coords::AbstractMatrix{<:Real}) where T <: Real
