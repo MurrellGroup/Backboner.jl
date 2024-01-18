@@ -32,4 +32,12 @@ import Rotations: QuatRotation, params
     @test Frames(backbone, standard_coords) != frames # due to numerical error
     @test Frames(backbone, standard_coords) ≈ frames
 
+    @testset "constructor with rotmats" begin
+        rotations = frames.rotations
+        rotmats = stack(collect(QuatRotation(rot)) for rot in eachcol(rotations))
+        locations = frames.locations
+        frames2 = Frames(rotmats, locations)
+        @test frames2 == frames
+    end
+
 end
