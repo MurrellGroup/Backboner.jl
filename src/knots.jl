@@ -1,10 +1,9 @@
 export is_knotted
 
-"""
+#=
 This file contains an implementation of the KnotFind algorithm, described by Khatib, Weirauch,
 and Rohl in 2006, in the paper "Rapid knot detection and application to protein structure prediction"
 
-Essentially:
  1. Take line segments formed by alphacarbons of a protein backbone.
  2. For an individual triple, i-1,i,i+1, if no line segments j,j+1 connecting consecutive Cα atoms
 cross through the triangle, then Cα i is removed from the chain.
@@ -13,9 +12,9 @@ and the algorithm proceeds to the *next shortest*.
  4. After any Cα is removed, the algorithm returns to the triple with the shortest distance.
 This is repeated until the last triple is reached and simplified, if possible.
  5. When it terminates, the protein contains no knots if there's only one segment left.
-"""
+=#
 
-@inline triangle_area(u::V, v::V) where V <: AbstractVector{<:Real} = 0.5 * norm(cross(u, v))
+@inline triangle_area(u::V, v::V) where {T <: Real, V <: AbstractVector{T}} = T(0.5) * norm(cross(u, v))
 @inline triangle_area(a::V, b::V, c::V) where V <: AbstractVector{<:Real} = triangle_area(b - a, c - a)
 triangle_areas(points::Vector{Vector{T}}) where T <: Real = [triangle_area(points[i:i+2]...) for i in 1:length(points)-2]
 
