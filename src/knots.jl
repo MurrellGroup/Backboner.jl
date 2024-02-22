@@ -37,22 +37,19 @@ function line_segment_intersects_triangle(
     return epsilon < t <= 1 # segment intersection
 end
 
-function splice_atom!(bond_vectors::Vector{Vector{T}}, bond_angles::Vector{T}, i::Integer) where T <: Real
+function splice_atom!(bond_vectors::Vector{Vector{T}}, bond_angles::Vector{T}, i::Int) where T <: Real
+    n = length(bond_angles)
     bond_vectors[i] = bond_vectors[i] + bond_vectors[i+1]
     splice!(bond_vectors, i+1)
     i > 1 && (bond_angles[i-1] = calculate_bond_angle(bond_vectors[i-1], bond_vectors[i]))
-    i < length(bond_angles) && (bond_angles[i+1] = calculate_bond_angle(bond_vectors[i], bond_vectors[i+1]))
+    i < n && (bond_angles[i+1] = calculate_bond_angle(bond_vectors[i], bond_vectors[i+1]))
     splice!(bond_angles, i)
     return nothing
 end
 
-function get_bond_triangle(
-    bond_vectors::Vector{Vector{T}}, i::Integer
-) where T <: Real
-    return zeros(T, 3), bond_vectors[i], bond_vectors[i] + bond_vectors[i+1]
-end
+get_bond_triangle(bond_vectors::Vector{Vector{T}}, i::Int) where T <: Real = zeros(T, 3), bond_vectors[i], bond_vectors[i] + bond_vectors[i+1]
 
-function check_intersection(bond_vectors::Vector{Vector{T}}, i::Integer) where T <: Real
+function check_intersection(bond_vectors::Vector{Vector{T}}, i::Int) where T <: Real
     a, b, c = get_bond_triangle(bond_vectors, i)
     
     p1 = c
