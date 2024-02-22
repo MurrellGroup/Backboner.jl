@@ -14,38 +14,44 @@ end
 [![Build Status](https://github.com/MurrellGroup/Backboner.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/MurrellGroup/Backboner.jl/actions/workflows/CI.yml?query=branch%3Amain)
 [![Coverage](https://codecov.io/gh/MurrellGroup/Backboner.jl/branch/main/graph/badge.svg)](https://codecov.io/gh/MurrellGroup/Backboner.jl)
 
-Backboner is a Julia package that offers a suite of tools for storing protein backbone atom positions, estimating oxygen atom positions, assigning secondary structure, and more. [View the source code on GitHub](https://github.com/MurrellGroup/Backboner.jl) (licensed under MIT).
+Backboner is a Julia package that offers a set of types and functions for working with molecular *backbones*: defined here as continuous chains of bonded atoms.[^1] The package provides a few different types for representing backbones:
+- `Backbone`: a type containing a 3xN matrix of coordinates
+- `ChainedBonds`: a type that holds vectors of bond lengths, bond angles, and dihedral angles
+- `Frames`: a collection of rotations and translations (e.g. for representing orientations and locations of protein residues)
+
+The `Protein` submodule contains functions and types for working specifically with proteins. A protein can be loaded from a PDB file using the `Backboner.Protein.readpdb` function, which returns a `Vector{Backboner.Protein.Chain}`. Conversely, a `Vector{Backboner.Protein.Chain}` instance can be written to a PDB file using the `writepdb` function.
+
+[View the source code on GitHub](https://github.com/MurrellGroup/Backboner.jl) (licensed under MIT).
 
 ## Installation
 
-Backboner is a registered Julia package, and can be installed with the Julia package manager:
+Backboner is registered, and can be installed in the Julia REPL. Press `]` to enter pkg mode, and then run:
 
-```julia
-using Pkg
-Pkg.add("Backboner")
+```
+add Backboner
 ```
 
-## Usage
+## Example usage
 
-The `Protein` type wraps a vector of `Chain`s.
-
-```jldoctest
+```julia
 julia> using Backboner, Backboner.Protein
 
-julia> protein = readpdb("test/data/1ZAK.pdb")
+julia> chains = readpdb("test/data/1ZAK.pdb")
 2-element Vector{Chain}:
  Chain A with 220 residues
  Chain B with 220 residues
 
-julia> chain = protein["A"] # chains can be accessed by name
-Chain A with 220 residues
+julia> backbone = chains[1].backbone
+3×660 Backbone{Float32, Matrix{Float32}}:
+ 22.346  22.901  23.227  24.115  24.478  …  21.48   22.041  21.808  22.263  21.085
+ 17.547  18.031  16.793  16.923  15.779     14.668  14.866  13.861  13.862  14.233
+ 23.294  21.993  21.163  20.175  19.336      4.974   3.569   2.734   1.355   0.446
 
-julia> protein["A"] == protein[1] # numeric indexing also works
-true
+julia> is_knotted(backbone)
+false
 
-julia> new_protein = [protein["A"]] # create a new protein with a single chain
-1-element Vector{Chain}:
- Chain A with 220 residues
-
-julia> writepdb(new_protein, "test/data/1ZAK_A.pdb");
+julia> ChainedBonds(backbone)
+ChainedBonds{Float32, Vector{Float32}} with 659 bonds, 658 angles, and 657 dihedrals
 ```
+
+[^1]: In some contexts, the term *backbone* may be used more loosely, and allow for atoms that do not part of the main continuous chain of atoms. This package does not support storing e.g. oxygen and beta-carbon atoms in the matrix of coordinates, as they are not part of the continuous chain of atoms.
