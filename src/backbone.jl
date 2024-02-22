@@ -11,12 +11,10 @@ A `Backbone` can be created from a matrix of coordinates:
 
 ```jldoctest
 julia> backbone = Backbone(zeros(3, 5)) # 5 atoms with 3 coordinates each
-5-element Backbone{Float64}:
- [0.0, 0.0, 0.0]
- [0.0, 0.0, 0.0]
- [0.0, 0.0, 0.0]
- [0.0, 0.0, 0.0]
- [0.0, 0.0, 0.0]
+3×5 Backbone{Float64, Matrix{Float64}}:
+ 0.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0
 
 julia> backbone[1] = [1.0, 2.0, 3.0]; # set the first atom's coordinates
 
@@ -26,14 +24,14 @@ julia> backbone
  2.0  0.0  0.0  0.0  0.0
  3.0  0.0  0.0  0.0  0.0
 
-julia> backbone[1:2] # indexing by range returns a `Backbone` wrapped around a view of the original
+julia> backbone[1:2] # indexing by range returns a new Backbone
 3×2 Backbone{Float64, Matrix{Float64}}:
  1.0  0.0
  2.0  0.0
  3.0  0.0
 ```
 
-Arrays will always be flattened to be a 3xN matrix:
+Arrays will always be flattened to a 3xN matrix:
 
 ```jldoctest
 julia> backbone = Backbone(zeros(3, 3, 4)) # e.g. 3 coordinates per atom, 3 atoms per residue, 4 residues
