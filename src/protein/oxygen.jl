@@ -53,7 +53,7 @@ function oxygen_coords(backbone::Backbone)
     for (i, (CA, C, next_N)) in enumerate(zip(CAs, Cs, next_Ns))
         oxygen_coords[:, i] = estimate_oxygen_position(CA, C, next_N)
     end
-    oxygen_coords[:, end] = get_last_oxygen(collect(backbone[end-2:end])...)
+    oxygen_coords[:, end] = get_last_oxygen(eachcol(backbone[end-2:end])...)
 
     return oxygen_coords
 end
