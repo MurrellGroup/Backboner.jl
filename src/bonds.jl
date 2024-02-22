@@ -11,86 +11,73 @@ export
 
 using LinearAlgebra
 import Rotations: AngleAxis
-import Distances: euclidean
 
-_column_norms(columns::AbstractMatrix) = reshape(mapslices(norm, columns, dims=1), :)
+_column_sums(columns::AbstractMatrix{<:Real}) = vec(sum(columns, dims=1))
+_column_norms(columns::AbstractMatrix{<:Real}) = sqrt.(_column_sums(abs2.(columns)))
+_column_dots(columns1::M, columns2::M) where M <: AbstractMatrix{<:Real} = _column_sums(columns1 .* columns2)
 
-function _pairwise_column_displacements(
-    columns1::M, columns2::M
-) where M <: AbstractMatrix{<:Real}
-    @assert size(columns1) == size(columns2)
-    displacements = columns2 .- columns1
-    return displacements
+function _pairwise_column_displacements(columns1::M, columns2::M) where M <: AbstractMatrix{<:Real}
+    size(columns1) == size(columns2) || throw(DimensionMismatch("columns1 and columns2 must have the same size"))
+    return columns2 .- columns1
 end
 
-function _pairwise_column_distances(
-    columns1::M, columns2::M, f = euclidean
-) where {T <: Real, M <: AbstractMatrix{T}}
-    @assert size(columns1, 2) == size(columns2, 2)
-    distances = Vector{T}(undef, size(columns1, 2))
-    @inbounds for (i, (col1, col2)) in enumerate(zip(eachcol(columns1), eachcol(columns2)))
-        distances[i] = f(col1, col2)
-    end
-    return distances
+function _pairwise_column_distances(columns1::M, columns2::M) where M <: AbstractMatrix{<:Real}
+    return _column_norms(_pairwise_column_displacements(columns1, columns2))
 end
 
-function get_atom_displacements(
-    backbone::Backbone, start::Integer, step::Integer, stride::Integer,
-)
-    displacements = _pairwise_column_displacements(
+function get_atom_displacements(backbone::Backbone, start::Integer, step::Integer, stride::Integer)
+    return _pairwise_column_displacements(
         @view(backbone.coords[:, start:stride:end-step]),
         @view(backbone.coords[:, start+step:stride:end]))
-    return displacements
 end
 
-function get_atom_distances(
-    backbone::Backbone, start::Integer, step::Integer, stride::Integer,
-)
-    distances = _pairwise_column_distances(
+function get_atom_distances(backbone::Backbone, start::Integer, step::Integer, stride::Integer)
+    return _pairwise_column_distances(
         @view(backbone.coords[:, start:stride:end-step]),
         @view(backbone.coords[:, start+step:stride:end]))
-    return distances
+end
+
+get_bond_lengths(bond_vectors::AbstractMatrix{<:Real}) = _column_norms(bond_vectors)
+
+calculate_bond_angle(u::V, v::V) where V <: AbstractVector{<:Real} = π - acos(dot(u, v) / (norm(u) * norm(v)))
+
+function get_bond_angles(bond_vectors::AbstractMatrix{<:Real})
+    us = @view(bond_vectors[:, 1:end-1])
+    vs = @view(bond_vectors[:, 2:end])
+    return π .- acos.(_column_dots(us, vs) ./ (_column_norms(us) .* _column_norms(vs)))
+end
+
+# source: https://en.wikipedia.org/w/index.php?title=Dihedral_angle&oldid=1182848974#In_polymer_physics
+calculate_dihedral_angle(u1::V, u2::V, u3::V) where V <: AbstractVector{<:Real} = let c12 = cross(u1, u2), c23 = cross(u2, u3)
+    atan(dot(u2, cross(c12, c23)), norm(u2) * dot(c12, c23))
+end
+
+function get_dihedrals(bond_vectors::AbstractMatrix{<:Real})
+    len_prot = size(bond_vectors, 2) + 1
+    lengths = sqrt.(bond_vectors[1,:].^2 .+ bond_vectors[2,:].^2 .+ bond_vectors[3,:].^2)
+
+    crosses  = stack(cross.(eachcol(bond_vectors[:,1:len_prot-2]), eachcol(bond_vectors[:,2:len_prot-1])),dims=2)
+    lengths_cross = reshape(sqrt.(crosses[1,:].^2 .+ crosses[2,:].^2 .+ crosses[3,:].^2),1,:)
+    normalized_crosses = crosses ./ lengths_cross
+    cos_theta = dot.(eachcol(normalized_crosses[:,1:len_prot-3]), eachcol(normalized_crosses[:,2:len_prot-2]))
+
+    cross_crosses = stack(cross.(eachcol(normalized_crosses[:,1:len_prot-3]), eachcol(normalized_crosses[:,2:len_prot-2])),dims=2)
+    normalized_bond_vectors = (bond_vectors ./ reshape(lengths,1,:))[:,2:len_prot-2]
+
+    sin_theta = dot.(eachcol(cross_crosses), eachcol(normalized_bond_vectors))
+
+    thetas = atan.(sin_theta, cos_theta)
+    return thetas
 end
 
 get_bond_vectors(backbone::Backbone) = get_atom_displacements(backbone, 1, 1, 1)
-
-get_bond_lengths(bond_vectors::AbstractMatrix{<:Real}) = _column_norms(bond_vectors)
-get_bond_lengths(backbone::Backbone) = get_bond_lengths(get_bond_vectors(backbone))
-
-function get_bond_angle(v1::V, v2::V) where V <: AbstractVector{<:Real}
-    return acos((-dot(v1, v2)) / (norm(v1) * norm(v2)))
-end
-
-function get_bond_angles(bond_vectors::AbstractMatrix{<:Real})
-    bond_vector_pairs = zip(eachcol(bond_vectors), Iterators.drop(eachcol(bond_vectors), 1))
-    bond_angles = [get_bond_angle(v1, v2) for (v1, v2) in bond_vector_pairs]
-    return bond_angles
-end
-
+get_bond_lengths(backbone::Backbone) = get_atom_distances(backbone, 1, 1, 1)
 get_bond_angles(backbone::Backbone) = get_bond_angles(get_bond_vectors(backbone))
-
-# source: https://en.wikipedia.org/w/index.php?title=Dihedral_angle&oldid=1182848974#In_polymer_physics
-function dihedral_angle(u1::V, u2::V, u3::V) where V <: AbstractVector{<:Real}
-    c12, c23 = cross(u1, u2), cross(u2, u3)
-    return atan(dot(u2, cross(c12, c23)), norm(u2) * dot(c12, c23))
-end
-
-function get_dihedrals(vectors::AbstractMatrix{T}) where T
-    dihedrals = Vector{T}(undef, size(vectors, 2) - 2)
-    u1s = eachcol(vectors)
-    u2s = Iterators.drop(u1s, 1)
-    u3s = Iterators.drop(u1s, 2)
-    for (i, u1, u2, u3) in zip(eachindex(dihedrals), u1s, u2s, u3s)
-        dihedrals[i] = dihedral_angle(u1, u2, u3)
-    end
-    return dihedrals
-end
-
 get_dihedrals(backbone::Backbone) = get_dihedrals(get_bond_vectors(backbone))
 
 
 """
-    ChainedBonds{T <: Real}
+    ChainedBonds{T <: Real, V <: AbstractVector{T}}
 
 A lazy way to store a backbone as a series of bond lengths, angles, and dihedrals.
 It can be instantiated from a Backbone or a matrix of bond vectors.
@@ -99,52 +86,39 @@ It can also be used to instantiate a Backbone using the `Backbone(bonds::Chained
 # Examples
 
 ```jldoctest
-julia> backbone = readpdb("test/data/1ZAK.pdb")["A"].backbone
-660-element Backbone{Float32}:
- [22.346, 17.547, 23.294]
- [22.901, 18.031, 21.993]
- [23.227, 16.793, 21.163]
- [24.115, 16.923, 20.175]
- ⋮
- [22.041, 14.866, 3.569]
- [21.808, 13.861, 2.734]
- [22.263, 13.862, 1.355]
- [21.085, 14.233, 0.446]
+julia> backbone = Protein.readpdb("test/data/1ZAK.pdb")["A"].backbone
+3×660 Backbone{Float32, Matrix{Float32}}:
+ 22.346  22.901  23.227  24.115  24.478  25.289  26.091  26.814  …  23.137  22.572  21.48   22.041  21.808  22.263  21.085
+ 17.547  18.031  16.793  16.923  15.779  14.65   14.958  13.827     13.041  14.235  14.668  14.866  13.861  13.862  14.233
+ 23.294  21.993  21.163  20.175  19.336  20.009  21.056  21.652      5.676   5.844   4.974   3.569   2.734   1.355   0.446
 
 julia> bonds = ChainedBonds(backbone)
-ChainedBonds{Float32} with 659 bonds, 658 angles, and 657 dihedrals
+ChainedBonds{Float32, Vector{Float32}} with 659 bonds, 658 angles, and 657 dihedrals
 ```
 """
-struct ChainedBonds{T <: Real}
-    lengths::Vector{T}
-    angles::Vector{T}
-    dihedrals::Vector{T}
+struct ChainedBonds{T <: Real, V <: AbstractVector{T}}
+    lengths::V
+    angles::V
+    dihedrals::V
 
-    function ChainedBonds(lengths::Vector{T}, angles::Vector{T}, dihedrals::Vector{T}) where T
-        @assert length(lengths) == length(angles) + 1 == length(dihedrals) + 2 || 1 >= length(lengths) >= length(angles) == length(dihedrals) == 0
-        return new{T}(lengths, angles, dihedrals)
+    function ChainedBonds{T, V}(lengths::V, angles::V, dihedrals::V) where {T <: Real, V <: AbstractVector{T}}
+        length(lengths) == length(angles) + 1 == length(dihedrals) + 2 || 1 >= length(lengths) >= length(angles) == length(dihedrals) == 0 || throw(ArgumentError("lengths, angles, and dihedrals must have compatible lengths"))
+        return new{T, V}(lengths, angles, dihedrals)
     end
 end
 
-function ChainedBonds(lengths::AbstractVector{T}, angles::AbstractVector{T}, dihedrals::AbstractVector{T}) where T
-    return ChainedBonds(Vector(lengths), Vector(angles), Vector(dihedrals))
-end
+@inline ChainedBonds{T}(lengths::V, angles::V, dihedrals::V) where {T <: Real, V <: AbstractVector{T}} = ChainedBonds{T, V}(lengths, angles, dihedrals)
+@inline ChainedBonds(lengths::V, angles::V, dihedrals::V) where {T <: Real, V <: AbstractVector{T}} = ChainedBonds{T, V}(lengths, angles, dihedrals)
 
-function ChainedBonds(vectors::AbstractMatrix{<:Real})
-    lengths = get_bond_lengths(vectors)
-    angles = get_bond_angles(vectors)
-    dihedrals = get_dihedrals(vectors)
+function ChainedBonds(backbone::Backbone)
+    bond_vectors = get_bond_vectors(backbone)
+    lengths = get_bond_lengths(bond_vectors)
+    angles = get_bond_angles(bond_vectors)
+    dihedrals = get_dihedrals(bond_vectors)
     return ChainedBonds(lengths, angles, dihedrals)
 end
 
-function ChainedBonds(backbone::Backbone)
-    return ChainedBonds(get_bond_vectors(backbone))
-end
-
-Base.:(==)(b1::ChainedBonds, b2::ChainedBonds) = b1.lengths == b2.lengths && b1.angles == b2.angles && b1.dihedrals == b2.dihedrals
-Base.:(≈)(b1::ChainedBonds, b2::ChainedBonds) = b1.lengths ≈ b2.lengths && b1.angles ≈ b2.angles && b1.dihedrals ≈ b2.dihedrals
 Base.length(bonds::ChainedBonds) = length(bonds.lengths)
-Base.size(bonds::ChainedBonds) = Tuple(length(bonds))
 
 function Base.show(io::IO, bonds::ChainedBonds)
     print(io, "$(summary(bonds)) with $(length(bonds.lengths)) bonds, $(length(bonds.angles)) angles, and $(length(bonds.dihedrals)) dihedrals")
@@ -247,3 +221,5 @@ function append_bonds(
     new_backbone = Backbone(cat(backbone.coords, backbone_end[4:end].coords, dims=2))
     return new_backbone
 end
+
+# TODO: a "popat!" function that removes a single atom by popping one element from each vector and updating the surrounding elements of each vector
