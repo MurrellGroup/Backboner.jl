@@ -12,39 +12,26 @@ export
 using LinearAlgebra
 import Rotations: AngleAxis
 
-_column_sums(columns::AbstractMatrix{<:Real}) = vec(sum(columns, dims=1))
-_column_norms(columns::AbstractMatrix{<:Real}) = sqrt.(_column_sums(abs2.(columns)))
-_column_dots(columns1::M, columns2::M) where M <: AbstractMatrix{<:Real} = _column_sums(columns1 .* columns2)
-
-function _pairwise_column_displacements(columns1::M, columns2::M) where M <: AbstractMatrix{<:Real}
-    size(columns1) == size(columns2) || throw(DimensionMismatch("columns1 and columns2 must have the same size"))
-    return columns2 .- columns1
-end
-
-function _pairwise_column_distances(columns1::M, columns2::M) where M <: AbstractMatrix{<:Real}
-    return _column_norms(_pairwise_column_displacements(columns1, columns2))
-end
+column_sums(columns::AbstractMatrix{<:Real}) = vec(sum(columns, dims=1))
+column_norms(columns::AbstractMatrix{<:Real}) = sqrt.(column_sums(abs2.(columns)))
+column_dots(columns1::M, columns2::M) where M <: AbstractMatrix{<:Real} = column_sums(columns1 .* columns2)
 
 function get_atom_displacements(backbone::Backbone, start::Integer, step::Integer, stride::Integer)
-    return _pairwise_column_displacements(
-        @view(backbone.coords[:, start:stride:end-step]),
-        @view(backbone.coords[:, start+step:stride:end]))
+    return @view(backbone.coords[:, start+step:stride:end]) .- @view(backbone.coords[:, start:stride:end-step])
 end
 
 function get_atom_distances(backbone::Backbone, start::Integer, step::Integer, stride::Integer)
-    return _pairwise_column_distances(
-        @view(backbone.coords[:, start:stride:end-step]),
-        @view(backbone.coords[:, start+step:stride:end]))
+    return column_norms(get_atom_displacements(backbone, start, step, stride))
 end
 
-get_bond_lengths(bond_vectors::AbstractMatrix{<:Real}) = _column_norms(bond_vectors)
+get_bond_lengths(bond_vectors::AbstractMatrix{<:Real}) = column_norms(bond_vectors)
 
-calculate_bond_angle(u::V, v::V) where V <: AbstractVector{<:Real} = π - acos(dot(u, v) / (norm(u) * norm(v)))
+calculate_bond_angle(u::V, v::V) where {T <: Real, V <: AbstractVector{T}} = π - acos(clamp(dot(u, v) / (norm(u) * norm(v)), -one(T), one(T)))
 
-function get_bond_angles(bond_vectors::AbstractMatrix{<:Real})
+function get_bond_angles(bond_vectors::AbstractMatrix{T}) where T <: Real
     us = @view(bond_vectors[:, 1:end-1])
     vs = @view(bond_vectors[:, 2:end])
-    return π .- acos.(_column_dots(us, vs) ./ (_column_norms(us) .* _column_norms(vs)))
+    return π .- acos.(clamp.(column_dots(us, vs) ./ (column_norms(us) .* column_norms(vs)), -one(T), one(T)))
 end
 
 # source: https://en.wikipedia.org/w/index.php?title=Dihedral_angle&oldid=1182848974#In_polymer_physics
