@@ -68,3 +68,4 @@ Backbone{T}() where T = Backbone{T}(undef, 0)
 
 @inline Base.length(backbone::Backbone) = size(backbone, 2)
 @inline Base.getindex(backbone::Backbone, indices::AbstractVector{Int}) = Backbone(backbone.coords[:, indices])
+@inline Base.view(backbone::Backbone, indices::AbstractVector{Int}) = Backbone(view(backbone.coords, :, indices))
