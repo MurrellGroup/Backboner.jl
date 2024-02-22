@@ -15,19 +15,22 @@ This is repeated until the last triple is reached and simplified, if possible.
  5. When it terminates, the protein contains no knots if there's only one segment left.
 """
 
+@inline triangle_area(u::V, v::V) where V <: AbstractVector{<:Real} = 0.5 * norm(cross(u, v))
+@inline triangle_area(a::V, b::V, c::V) where V <: AbstractVector{<:Real} = triangle_area(b - a, c - a)
+triangle_areas(points::Vector{Vector{T}}) where T <: Real = [triangle_area(points[i:i+2]...) for i in 1:length(points)-2]
+
 function line_segment_intersects_triangle(
-    p1::AbstractVector{T}, p2::AbstractVector{T}, a::AbstractVector{T}, b::AbstractVector{T}, c::AbstractVector{T},
+    segment_start::AbstractVector{T}, segment_end::AbstractVector{T},
+    a::AbstractVector{T}, b::AbstractVector{T}, c::AbstractVector{T},
 ) where T <: Real
     epsilon = eps(T)
-    segment_origin = p1
-    segment_vector = p2 - p1
-    edge1 = b - a
-    edge2 = c - a
+    segment_vector = segment_end - segment_start
+    edge1, edge2 = b - a, c - a
     segment_cross_e2 = cross(segment_vector, edge2)
     det = dot(edge1, segment_cross_e2)
-    abs(det) < epsilon && return false    # This segment is parallel to this triangle.
+    abs(det) < epsilon && return false # segment is parallel to this triangle.
     inv_det = 1.0 / det
-    s = segment_origin - a
+    s = segment_start - a
     u = inv_det * dot(s, segment_cross_e2)
     (u < 0 || u > 1) && return false
     s_cross_e1 = cross(s, edge1)
@@ -37,56 +40,51 @@ function line_segment_intersects_triangle(
     return epsilon < t <= 1 # segment intersection
 end
 
-function splice_atom!(bond_vectors::Vector{Vector{T}}, bond_angles::Vector{T}, i::Int) where T <: Real
-    n = length(bond_angles)
-    bond_vectors[i] = bond_vectors[i] + bond_vectors[i+1]
-    splice!(bond_vectors, i+1)
-    i > 1 && (bond_angles[i-1] = calculate_bond_angle(bond_vectors[i-1], bond_vectors[i]))
-    i < n && (bond_angles[i+1] = calculate_bond_angle(bond_vectors[i], bond_vectors[i+1]))
-    splice!(bond_angles, i)
+# for removing an atom from a backbone, making sure to update the surrounding points
+function remove_atom!(points::Vector{Vector{T}}, areas::Vector{T}, i::Int) where T <: Real
+    triangle_index = i - 1
+    triangle_index > 1 && (areas[triangle_index-1] = triangle_area(points[i-2], points[i-1], points[i+1]))
+    triangle_index < length(areas) && (areas[triangle_index+1] = triangle_area(points[i-1], points[i+1], points[i+2]))
+    deleteat!(points, i)
+    deleteat!(areas, triangle_index)
     return nothing
 end
 
-get_bond_triangle(bond_vectors::Vector{Vector{T}}, i::Int) where T <: Real = zeros(T, 3), bond_vectors[i], bond_vectors[i] + bond_vectors[i+1]
-
-function check_intersection(bond_vectors::Vector{Vector{T}}, i::Int) where T <: Real
-    a, b, c = get_bond_triangle(bond_vectors, i)
-    
-    p1 = c
-    for j in i+2:length(bond_vectors)
-        p2 = p1 + bond_vectors[j]
+function check_intersection(points::Vector{Vector{T}}, i::Int) where T <: Real
+    a, b, c = points[i-1], points[i], points[i+1] 
+    for j in 1:length(points)-1
+        i-1 <= j < i+1 && continue
+        p1, p2 = points[j], points[j+1]
         line_segment_intersects_triangle(p1, p2, a, b, c) && return true
-        p1 = p2
     end
-
-    p1 = a
-    for j in i-1:-1:1
-        p2 = p1 - bond_vectors[j]
-        line_segment_intersects_triangle(p1, p2, a, b, c) && return true
-        p1 = p2
-    end
-
     return false
 end
 
-function is_knotted(backbone::Backbone{T}) where T <: Real
-    length(backbone) < 3 && return false
-
-    bond_vectors = Vector.(eachcol(get_bond_vectors(backbone)))
-    bond_angles = get_bond_angles(backbone)
-
-    while !isempty(bond_angles)
-        order = sortperm(bond_angles)
-        has_spliced = false
-        for i in order
-            if !check_intersection(bond_vectors, i)
-                splice_atom!(bond_vectors, bond_angles, i)
-                has_spliced = true
+function simplify!(points::Vector{Vector{T}}) where T <: Real
+    areas = triangle_areas(points)
+    while !isempty(areas)
+        order = sortperm(areas) # TODO: calculate once, update in `remove_atom!`
+        has_removed = false
+        for triangle_index in order
+            i = triangle_index + 1
+            if !check_intersection(points, i)
+                remove_atom!(points, areas, i)
+                has_removed = true
                 break
             end
         end
-        !has_spliced && break
+        !has_removed && break # halt if the chain couldn't be simplified further
     end
+    return nothing
+end
 
-    return !isempty(bond_angles)
+"""
+    is_knotted(backbone::Backbone)
+
+Check if a backbone is knotted.
+"""
+function is_knotted(backbone::Backbone{T}) where T <: Real
+    points = Vector.(collect(eachcol(backbone.coords)))
+    simplify!(points)
+    return length(points) > 2
 end
