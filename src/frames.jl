@@ -3,6 +3,19 @@ export Frames
 using LinearAlgebra
 using Rotations: QuatRotation, params
 
+#= TODO: implement Frame type
+
+struct Frame{T <: Real}
+    rotation::QuatRotation{T}
+    location::Vector{T}
+
+    function Frame{T}(rotation::QuatRotation{T}, location::Vector{T}) where T <: Real
+        length(location) == 3 || throw(ArgumentError("location must be a 3D vector"))
+        return new{T}(rotation, location)
+    end
+end
+=#
+
 """
     Frames{T <: Real} <: AbstractVector{Tuple{QuatRotation{T}, Vector{T}}}
 
@@ -23,18 +36,15 @@ end
 Frames(rotations::Matrix{T}, locations::Matrix{T}) where T <: Real = Frames{T}(rotations, locations)
 
 function Frames{T}(rotations::AbstractMatrix{<:Real}, locations::AbstractMatrix{<:Real}) where T <: Real
-    rotations_T = convert(Matrix{T}, rotations)
-    locations_T = convert(Matrix{T}, locations)
-    Frames{T}(rotations_T, locations_T)
+    Frames{T}(convert(Matrix{T}, rotations), convert(Matrix{T}, locations))
 end
 
 function Frames{T}(rotmats::AbstractArray{<:Real, 3}, locations::AbstractMatrix{<:Real}) where T <: Real
-    rotations_T = Matrix{T}(undef, 4, size(rotmats, 3))
+    rotations = similar(rotmats, 4, size(rotmats, 3))
     for i in axes(rotmats, 3)
-        rotations_T[:, i] = params(QuatRotation(rotmats[:, :, i]))
+        rotations[:, i] = params(QuatRotation(rotmats[:, :, i]))
     end
-    locations_T = convert(Matrix{T}, locations)
-    Frames{T}(rotations_T, locations_T)
+    Frames{T}(rotations, locations)
 end
 
 function Frames(rotations::AbstractArray{<:Real}, locations::AbstractMatrix{<:Real})
@@ -47,7 +57,6 @@ Base.size(frames::Frames) = Tuple(length(frames))
 Base.getindex(frames::Frames, i::Integer) = QuatRotation(frames.rotations[:, i]), frames.locations[:, i]
 
 Base.:(==)(frames1::Frames, frames2::Frames) = all(r1 == r2 && l1 == l2 for ((r1, l1), (r2, l2)) in zip(frames1, frames2))
-Base.:(≈)(frames1::Frames, frames2::Frames) = all(isapprox(r1, r2; atol=1e-10) && isapprox(l1, l2; atol=1e-10) for ((r1, l1), (r2, l2)) in zip(frames1, frames2))
 
 centroid(P::AbstractMatrix{<:Real}) = sum(P, dims=2) ./ size(P, 2)
 

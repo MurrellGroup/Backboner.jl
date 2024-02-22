@@ -30,7 +30,7 @@ import Rotations: QuatRotation, params
 
     @test frames == frames
     @test Frames(backbone, standard_coords) != frames # due to numerical error
-    @test Frames(backbone, standard_coords) ≈ frames
+    @test all(isapprox(r1, r2; atol=1e-10) && isapprox(l1, l2; atol=1e-10) for ((r1, l1), (r2, l2)) in zip(Frames(backbone, standard_coords), frames))
 
     @testset "constructor with rotmats" begin
         rotations = frames.rotations
