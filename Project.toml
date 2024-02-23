@@ -1,7 +1,7 @@
 name = "Backboner"
 uuid = "9ac9c2a2-1cfe-46d3-b3fd-6fa470ea56a7"
-authors = ["Anton Oresten"]
-version = "0.7.1"
+authors = ["Anton Oresten <anton.oresten42@gmail.com>"]
+version = "0.8.0"
 
 [deps]
 BioStructures = "de9282ab-8554-53be-b2d6-f6c222edabfc"
@@ -9,13 +9,15 @@ Distances = "b4f34e82-e78d-54a5-968a-f98e89d6e8f7"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 PDBTools = "e29189f1-7114-4dbd-93d0-c5673a921a58"
 Rotations = "6038ab10-8711-5258-84ad-4b1120ba62dc"
+StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
 
 [compat]
 BioStructures = "3"
-Distances = "0.10"
+Distances = "0"
 LinearAlgebra = "1"
-PDBTools = "0.15"
+PDBTools = "1"
 Rotations = "1"
+StaticArrays = "1"
 julia = "1"
 
 [extras]
