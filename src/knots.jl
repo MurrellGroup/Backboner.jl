@@ -43,14 +43,14 @@ end
 function check_intersection(points::Vector{V}, i::Int) where {T <: Real, V <: AbstractVector{T}}
     a, b, c = points[i-1], points[i], points[i+1] 
     for j in 1:length(points)-1
-        i-1 <= j < i+1 && continue
+        i-2 < j < i+1 && continue
         p1, p2 = points[j], points[j+1]
         line_segment_intersects_triangle(p1, p2, a, b, c) && return true
     end
     return false
 end
 
-# for removing an atom from a backbone, making sure to update the surrounding points
+# for removing an atom from a backbone, and updating adjacent triangles
 function remove_atom!(points::Vector{V}, areas::Vector{T}, i::Int) where {T <: Real, V <: AbstractVector{T}}
     triangle_index = i - 1
     triangle_index > 1 && (areas[triangle_index-1] = triangle_area(points[i-2], points[i-1], points[i+1]))
@@ -73,7 +73,7 @@ function simplify!(points::Vector{V}) where {T <: Real, V <: AbstractVector{T}}
                 break
             end
         end
-        !has_removed && break # terminate if the chain couldn't be simplified further
+        !has_removed && break # terminate if the chain can't be simplified further
     end
     return nothing
 end
@@ -84,7 +84,7 @@ end
 Check if a backbone is knotted.
 """
 function is_knotted(backbone::Backbone{T}) where T <: Real
-    points = SVector{3}.(eachcol(backbone))
+    points = SVector{3}.(eachcol(backbone)) # convert to StaticArrays for 50x performance lmao
     simplify!(points)
     return length(points) > 2
 end
