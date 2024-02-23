@@ -1,5 +1,7 @@
 export is_knotted
 
+using StaticArrays
+
 #=
 This file contains an implementation of the KnotFind algorithm, described by Khatib, Weirauch,
 and Rohl in 2006, in the paper "Rapid knot detection and application to protein structure prediction"
@@ -16,18 +18,17 @@ This is repeated until the last triple is reached and simplified, if possible.
 
 @inline triangle_area(u::V, v::V) where {T <: Real, V <: AbstractVector{T}} = T(0.5) * norm(cross(u, v))
 @inline triangle_area(a::V, b::V, c::V) where V <: AbstractVector{<:Real} = triangle_area(b - a, c - a)
-triangle_areas(points::Vector{Vector{T}}) where T <: Real = [triangle_area(points[i:i+2]...) for i in 1:length(points)-2]
+triangle_areas(points::Vector{V}) where {T <: Real, V <: AbstractVector{T}} = T[triangle_area(points[i:i+2]...) for i in 1:length(points)-2]
 
 function line_segment_intersects_triangle(
-    segment_start::AbstractVector{T}, segment_end::AbstractVector{T},
-    a::AbstractVector{T}, b::AbstractVector{T}, c::AbstractVector{T},
-) where T <: Real
-    epsilon = eps(T)
+    segment_start::V, segment_end::V,
+    a::V, b::V, c::V,
+) where {T <: Real, V <: AbstractVector{T}}
     segment_vector = segment_end - segment_start
     edge1, edge2 = b - a, c - a
     segment_cross_e2 = cross(segment_vector, edge2)
     det = dot(edge1, segment_cross_e2)
-    abs(det) < epsilon && return false # segment is parallel to this triangle.
+    abs(det) < eps(T) && return false # segment is parallel to triangle
     inv_det = 1.0 / det
     s = segment_start - a
     u = inv_det * dot(s, segment_cross_e2)
@@ -36,20 +37,10 @@ function line_segment_intersects_triangle(
     v = inv_det * dot(segment_vector, s_cross_e1)
     (v < 0 || u + v > 1) && return false
     t = inv_det * dot(edge2, s_cross_e1)
-    return epsilon < t <= 1 # segment intersection
+    return eps(T) < t <= 1 # segment intersection
 end
 
-# for removing an atom from a backbone, making sure to update the surrounding points
-function remove_atom!(points::Vector{Vector{T}}, areas::Vector{T}, i::Int) where T <: Real
-    triangle_index = i - 1
-    triangle_index > 1 && (areas[triangle_index-1] = triangle_area(points[i-2], points[i-1], points[i+1]))
-    triangle_index < length(areas) && (areas[triangle_index+1] = triangle_area(points[i-1], points[i+1], points[i+2]))
-    deleteat!(points, i)
-    deleteat!(areas, triangle_index)
-    return nothing
-end
-
-function check_intersection(points::Vector{Vector{T}}, i::Int) where T <: Real
+function check_intersection(points::Vector{V}, i::Int) where {T <: Real, V <: AbstractVector{T}}
     a, b, c = points[i-1], points[i], points[i+1] 
     for j in 1:length(points)-1
         i-1 <= j < i+1 && continue
@@ -59,7 +50,17 @@ function check_intersection(points::Vector{Vector{T}}, i::Int) where T <: Real
     return false
 end
 
-function simplify!(points::Vector{Vector{T}}) where T <: Real
+# for removing an atom from a backbone, making sure to update the surrounding points
+function remove_atom!(points::Vector{V}, areas::Vector{T}, i::Int) where {T <: Real, V <: AbstractVector{T}}
+    triangle_index = i - 1
+    triangle_index > 1 && (areas[triangle_index-1] = triangle_area(points[i-2], points[i-1], points[i+1]))
+    triangle_index < length(areas) && (areas[triangle_index+1] = triangle_area(points[i-1], points[i+1], points[i+2]))
+    deleteat!(points, i)
+    deleteat!(areas, triangle_index)
+    return nothing
+end
+
+function simplify!(points::Vector{V}) where {T <: Real, V <: AbstractVector{T}}
     areas = triangle_areas(points)
     while !isempty(areas)
         order = sortperm(areas) # TODO: calculate once, update in `remove_atom!`
@@ -83,7 +84,7 @@ end
 Check if a backbone is knotted.
 """
 function is_knotted(backbone::Backbone{T}) where T <: Real
-    points = Vector.(collect(eachcol(backbone.coords)))
+    points = SVector{3}.(eachcol(backbone))
     simplify!(points)
     return length(points) > 2
 end
