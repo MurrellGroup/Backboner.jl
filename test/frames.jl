@@ -28,16 +28,15 @@ import Rotations: QuatRotation, params
         1.0  -1.0   0.0   3.0  1.0  -4.0    0.0    0.0   0.0
     ]
 
-    @test frames == frames
     @test Frames(backbone, standard_coords) != frames # due to numerical error
     @test all(isapprox(r1, r2; atol=1e-10) && isapprox(l1, l2; atol=1e-10) for ((r1, l1), (r2, l2)) in zip(Frames(backbone, standard_coords), frames))
+    @test Frames(frames.rotations, frames.locations) == frames
 
     @testset "constructor with rotmats" begin
         rotations = frames.rotations
         rotmats = stack(collect(QuatRotation(rot)) for rot in eachcol(rotations))
         locations = frames.locations
-        frames2 = Frames(rotmats, locations)
-        @test frames2 == frames
+        @test Frames(rotmats, locations) == frames
     end
 
 end
