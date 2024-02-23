@@ -63,7 +63,7 @@ end
 function simplify!(points::Vector{V}) where {T <: Real, V <: AbstractVector{T}}
     areas = triangle_areas(points)
     while !isempty(areas)
-        order = sortperm(areas) # TODO: calculate once, update in `remove_atom!`
+        order = sortperm(areas) # TODO: calculate once outside while loop, update in `remove_atom!`
         has_removed = false
         for triangle_index in order
             i = triangle_index + 1
@@ -73,7 +73,7 @@ function simplify!(points::Vector{V}) where {T <: Real, V <: AbstractVector{T}}
                 break
             end
         end
-        !has_removed && break # halt if the chain couldn't be simplified further
+        !has_removed && break # terminate if the chain couldn't be simplified further
     end
     return nothing
 end
