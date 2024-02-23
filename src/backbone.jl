@@ -65,5 +65,17 @@ Backbone{T}() where T = Backbone{T}(undef, 0)
 @inline Base.setindex!(backbone::Backbone, v, i, j) = (backbone.coords[i, j] .= v)
 
 @inline Base.length(backbone::Backbone) = size(backbone, 2)
-@inline Base.getindex(backbone::Backbone, indices::AbstractVector{Int}) = Backbone(backbone.coords[:, indices])
-@inline Base.view(backbone::Backbone, indices::AbstractVector{Int}) = Backbone(view(backbone.coords, :, indices))
+@inline Base.getindex(backbone::Backbone, i) = Backbone(backbone.coords[:, i])
+@inline Base.view(backbone::Backbone, i) = Backbone(view(backbone.coords, :, i))
+@inline Base.setindex!(backbone::Backbone, v, i) = (backbone.coords[:, i] .= v)
+
+@inline Base.getindex(backbone::Backbone, i::Integer) = backbone.coords[:, i]
+@inline Base.view(backbone::Backbone, i::Integer) = view(backbone.coords, :, i)
+
+Base.copy(backbone::Backbone) = copy(backbone.coords)
+
+Base.:(==)(backbone1::Backbone, backbone2::Backbone) = backbone1.coords == backbone2.coords
+Base.:(==)(backbone::Backbone, coords::AbstractMatrix) = backbone.coords == coords
+Base.:(==)(coords::AbstractMatrix, backbone::Backbone) = coords == backbone.coords
+
+Base.hash(backbone::Backbone, h::UInt) = hash(backbone.coords, h)
