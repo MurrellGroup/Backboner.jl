@@ -53,6 +53,7 @@ end
 Backbone{T}(coords::M) where {T <: Real, M <: AbstractMatrix{T}} = Backbone{T, M}(coords)
 Backbone{T}(coords::AbstractArray{T}) where T <: Real = Backbone{T}(reshape(coords, size(coords, 1), :))
 Backbone{T}(coords::AbstractArray{<:Real}) where T <: Real = Backbone{T}(convert.(T, coords))
+Backbone{T}(backbone::Backbone) where T <: Real = Backbone{T}(backbone.coords)
 Backbone(coords::AbstractArray{T}) where T <: Real = Backbone{T}(coords)
 
 Backbone{T, M}(::UndefInitializer, n::Integer) where {T <: Real, M <: AbstractMatrix{T}} = Backbone{T, M}(M(undef, 3, n))
