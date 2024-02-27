@@ -1,6 +1,6 @@
 export is_knotted
 
-using StaticArrays
+import StaticArrays: SVector
 
 #=
 This file contains an implementation of the KnotFind algorithm, described by Khatib, Weirauch,
@@ -16,9 +16,12 @@ This is repeated until the last triple is reached and simplified, if possible.
  5. When it terminates, the protein contains no knots if there's only one segment left.
 =#
 
-@inline triangle_area(u::V, v::V) where {T <: Real, V <: AbstractVector{T}} = T(0.5) * norm(cross(u, v))
-@inline triangle_area(a::V, b::V, c::V) where V <: AbstractVector{<:Real} = triangle_area(b - a, c - a)
+triangle_area(u::V, v::V) where {T <: Real, V <: AbstractVector{T}} = T(0.5) * norm(cross(u, v))
+triangle_area(a::V, b::V, c::V) where V <: AbstractVector{<:Real} = triangle_area(b - a, c - a)
 triangle_areas(points::Vector{V}) where {T <: Real, V <: AbstractVector{T}} = T[triangle_area(points[i:i+2]...) for i in 1:length(points)-2]
+
+triangle_distance(a::V, b::V, c::V) where V <: AbstractVector{<:Real} = norm(c - a)
+triangle_distances(points::Vector{V}) where {T <: Real, V <: AbstractVector{T}} = T[triangle_distance(points[i:i+2]...) for i in 1:length(points)-2]
 
 function line_segment_intersects_triangle(
     segment_start::V, segment_end::V,
@@ -51,31 +54,32 @@ function check_intersection(points::Vector{V}, i::Int) where {T <: Real, V <: Ab
 end
 
 # for removing an atom from a backbone, and updating adjacent triangles
-function remove_atom!(points::Vector{V}, areas::Vector{T}, i::Int) where {T <: Real, V <: AbstractVector{T}}
+function remove_atom!(points::Vector{V}, triangle_values::Vector{T}, i::Int, sort_strategy) where {T <: Real, V <: AbstractVector{T}}
+    triangle_value_func = sort_strategy == :area ? triangle_area : triangle_distance
     triangle_index = i - 1
-    triangle_index > 1 && (areas[triangle_index-1] = triangle_area(points[i-2], points[i-1], points[i+1]))
-    triangle_index < length(areas) && (areas[triangle_index+1] = triangle_area(points[i-1], points[i+1], points[i+2]))
+    triangle_index > 1 && (triangle_values[triangle_index-1] = triangle_value_func(points[i-2], points[i-1], points[i+1]))
+    triangle_index < length(triangle_values) && (triangle_values[triangle_index+1] = triangle_value_func(points[i-1], points[i+1], points[i+2]))
     deleteat!(points, i)
-    deleteat!(areas, triangle_index)
+    deleteat!(triangle_values, triangle_index)
     return nothing
 end
 
-function simplify!(points::Vector{V}) where {T <: Real, V <: AbstractVector{T}}
-    areas = triangle_areas(points)
-    while !isempty(areas)
-        order = sortperm(areas) # TODO: calculate once outside while loop, update in `remove_atom!`
+function simplify!(points::Vector{V}, sort_strategy) where {T <: Real, V <: AbstractVector{T}}
+    triangle_values = sort_strategy == :area ? triangle_areas(points) : triangle_distances(points)
+    while !isempty(triangle_values)
+        order = sortperm(triangle_values) # TODO: calculate once outside while loop, update in `remove_atom!`
         has_removed = false
         for triangle_index in order
             i = triangle_index + 1
             if !check_intersection(points, i)
-                remove_atom!(points, areas, i)
+                remove_atom!(points, triangle_values, i, sort_strategy)
                 has_removed = true
                 break
             end
         end
         !has_removed && break # terminate if the chain can't be simplified further
     end
-    return nothing
+    return points
 end
 
 """
@@ -84,7 +88,9 @@ end
 Check if a backbone is knotted.
 """
 function is_knotted(backbone::Backbone{T}) where T <: Real
-    points = SVector{3}.(eachcol(backbone)) # convert to StaticArrays for 50x performance lmao
-    simplify!(points)
-    return length(points) > 2
+    points = SVector{3}.(eachcol(backbone)) # convert to StaticArrays for 40x performance lmao
+    for sort_strategy in [:distance, :area]
+        length(simplify!(deepcopy(points), sort_strategy)) > 2 || return false
+    end
+    return true
 end
