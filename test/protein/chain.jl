@@ -27,6 +27,14 @@
 
     end
 
+    @testset "is_knotted" begin
+
+        protein = readpdb("data/1ZAK.pdb")
+        chain = protein["A"]
+        @test !is_knotted(chain)
+
+    end
+
     @testset "atom coords" begin
 
         protein = readpdb("data/1ASS.pdb")

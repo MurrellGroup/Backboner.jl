@@ -60,6 +60,8 @@ has_assigned_ss(ssvector::Vector{Char}) = all(!=(' '), ssvector)
 has_assigned_ss(chain::Chain) = has_assigned_ss(chain.ssvector)
 has_assigned_ss(protein::AbstractVector{Chain}) = all(has_assigned_ss, protein)
 
+Backboner.is_knotted(chain::Chain) = is_knotted(chain.backbone[2:3:end])
+
 # oxygen_coords function in src/protein/oxygen.jl
 # TODO: hydrogen_coords
 
