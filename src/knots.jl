@@ -12,7 +12,7 @@ and Rohl in 2006, in the paper "Rapid knot detection and application to protein 
 cross through the triangle, then Cα i is removed from the chain.
  4. If any line segment intersects the triangle, then no atom is removed
 and the algorithm proceeds to the triangle with the next smallest metric value.
- 4. After any Cα is removed, the algorithm returns to the triple with the shortest distance, just in case no segment intersects,
+ 4. After any Cα is removed, the algorithm returns to the triple with the shortest distance, just in case some segment no longer intersects,
 This is repeated until the last triple is reached and simplified, if possible.
  5. When it terminates, the protein contains no knots if there's only one segment left.
  6. Run again with a different metric if the chain is not simplified to make sure it wasn't a false positive.
@@ -23,13 +23,10 @@ abstract type TriangleMetric end
 struct TriangleDistance <: TriangleMetric end
 struct TriangleArea <: TriangleMetric end
 
-const TRIANGLE_DISTANCE = TriangleDistance()
-const TRIANGLE_AREA = TriangleArea()
+(metric::Type{TriangleDistance})(a::V, ::V, c::V) where V <: AbstractVector{<:Real} = norm(c - a)
+(metric::Type{TriangleArea})(a::V, b::V, c::V) where V <: AbstractVector{<:Real} = norm(cross(b - a, c - a)) / 2
 
-(metric::TriangleDistance)(a::V, ::V, c::V) where V <: AbstractVector{<:Real} = norm(c - a)
-(metric::TriangleArea)(a::V, b::V, c::V) where V <: AbstractVector{<:Real} = norm(cross(b - a, c - a)) / 2
-
-(metric::TriangleMetric)(points::Vector{V}) where {T <: Real, V <: AbstractVector{T}} = T[metric(points[i:i+2]...) for i in 1:length(points)-2]
+(metric::Type{<:TriangleMetric})(points::Vector{V}) where {T <: Real, V <: AbstractVector{T}} = T[metric(points[i:i+2]...) for i in 1:length(points)-2]
 
 function line_segment_intersects_triangle(
     segment_start::V, segment_end::V,
@@ -62,7 +59,7 @@ function check_intersection(points::Vector{V}, i::Int) where {T <: Real, V <: Ab
 end
 
 # for removing an atom from a backbone, and updating adjacent triangles
-function remove_atom!(points::Vector{V}, i::Int, metric_values::Vector{T}, metric::TriangleMetric) where {T <: Real, V <: AbstractVector{T}}
+function remove_atom!(points::Vector{V}, i::Int, metric_values::Vector{T}, metric::Type{<:TriangleMetric}) where {T <: Real, V <: AbstractVector{T}}
     m = length(metric_values)
     triangle_index = i - 1
     triangle_index > 1 && (metric_values[triangle_index-1] = metric(points[i-2], points[i-1], points[i+1]))
@@ -72,7 +69,7 @@ function remove_atom!(points::Vector{V}, i::Int, metric_values::Vector{T}, metri
     return nothing
 end
 
-function simplify!(points::Vector{V}, metric::TriangleMetric) where {T <: Real, V <: AbstractVector{T}}
+function simplify!(points::Vector{V}, metric::Type{<:TriangleMetric}) where {T <: Real, V <: AbstractVector{T}}
     metric_values = metric(points) # Vector{T} of length n-2
     while !isempty(metric_values)
         order = sortperm(metric_values) # TODO: calculate once outside while loop, update in `remove_atom!`
@@ -90,7 +87,7 @@ function simplify!(points::Vector{V}, metric::TriangleMetric) where {T <: Real, 
     return points
 end
 
-simplify(points::Vector{V}, metric::TriangleMetric) where {T <: Real, V <: AbstractVector{T}} = simplify!(deepcopy(points), metric)
+simplify(points::Vector{V}, metric::Type{<:TriangleMetric}) where {T <: Real, V <: AbstractVector{T}} = simplify!(deepcopy(points), metric)
 
 """
     is_knotted(backbone::Backbone)
@@ -99,7 +96,7 @@ Check if a backbone is knotted.
 """
 function is_knotted(
     backbone::Backbone,
-    metrics::Vector{<:TriangleMetric}=[TRIANGLE_DISTANCE, TRIANGLE_AREA],
+    metrics = [TriangleDistance, TriangleArea],
 )
     points = SVector{3}.(eachcol(backbone)) # convert to StaticArrays for 40x performance lmao
     for metric in metrics

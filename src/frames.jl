@@ -60,12 +60,12 @@ struct Frames{T <: Real, M <: AbstractMatrix{T}} <: AbstractVector{Frame{T}}
     end
 end
 
-function Frames{T}(rotmats::AbstractArray{<:Real, 3}, locations::AbstractMatrix{<:Real}) where T
+function Frames{T}(rotmats::AbstractArray{T, 3}, locations::AbstractMatrix{T}) where T <: Real
     rotations = stack(params(QuatRotation(rotmat)) for rotmat in eachslice(rotmats, dims=3))
     return Frames{T}(rotations, locations)
 end
 
-function Frames{T}(rotations::AbstractArray{<:Real}, locations::AbstractMatrix{<:Real}) where T
+function Frames{T}(rotations::AbstractArray{<:Real}, locations::AbstractMatrix{<:Real}) where T <: Real
     return Frames{T}(T.(rotations), T.(locations))
 end
 
