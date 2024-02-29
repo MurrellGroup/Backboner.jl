@@ -20,8 +20,8 @@ This is repeated until the last triple is reached and simplified, if possible.
 
 abstract type TriangleMetric end
 
-struct TriangleDistance <: TriangleMetric end
-struct TriangleArea <: TriangleMetric end
+abstract type TriangleDistance <: TriangleMetric end
+abstract type TriangleArea <: TriangleMetric end
 
 (metric::Type{TriangleDistance})(a::V, ::V, c::V) where V <: AbstractVector{<:Real} = norm(c - a)
 (metric::Type{TriangleArea})(a::V, b::V, c::V) where V <: AbstractVector{<:Real} = norm(cross(b - a, c - a)) / 2
