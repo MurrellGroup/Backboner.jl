@@ -1,64 +1,9 @@
-export Frames
+export Frame, Frames
 
 using LinearAlgebra
 using Rotations: QuatRotation, params
 
-#= TODO: implement Frame type
-
-struct Frame{T <: Real}
-    rotation::QuatRotation{T}
-    location::Vector{T}
-
-    function Frame{T}(rotation::QuatRotation{T}, location::Vector{T}) where T <: Real
-        length(location) == 3 || throw(ArgumentError("location must be a 3D vector"))
-        return new{T}(rotation, location)
-    end
-end
-=#
-
-"""
-    Frames{T <: Real} <: AbstractVector{Tuple{QuatRotation{T}, Vector{T}}}
-
-The `Frames` type is designed to efficiently store and manipulate the rotation and translation of a set of frames.
-"""
-struct Frames{T <: Real} <: AbstractVector{Tuple{QuatRotation{T}, Vector{T}}}
-    rotations::Matrix{T}
-    locations::Matrix{T}
-
-    function Frames{T}(rotations::Matrix{T}, locations::Matrix{T}) where T <: Real
-        size(rotations, 2) == size(locations, 2) || throw(ArgumentError("rotations and locations must have the same number of columns"))
-        size(rotations, 1) == 4 || throw(ArgumentError("rotations must be a 4xN quaternion matrix"))
-        size(locations, 1) == 3 || throw(ArgumentError("locations must be a 3xN 3D coordinates matrix"))
-        new{T}(rotations, locations)
-    end
-end
-
-Frames(rotations::Matrix{T}, locations::Matrix{T}) where T <: Real = Frames{T}(rotations, locations)
-
-function Frames{T}(rotations::AbstractMatrix{<:Real}, locations::AbstractMatrix{<:Real}) where T <: Real
-    Frames{T}(convert(Matrix{T}, rotations), convert(Matrix{T}, locations))
-end
-
-function Frames{T}(rotmats::AbstractArray{<:Real, 3}, locations::AbstractMatrix{<:Real}) where T <: Real
-    rotations = similar(rotmats, 4, size(rotmats, 3))
-    for i in axes(rotmats, 3)
-        rotations[:, i] = params(QuatRotation(rotmats[:, :, i]))
-    end
-    Frames{T}(rotations, locations)
-end
-
-function Frames(rotations::AbstractArray{<:Real}, locations::AbstractMatrix{<:Real})
-    T = promote_type(eltype(rotations), eltype(locations))
-    Frames{T}(rotations, locations)
-end
-
-Base.length(frames::Frames) = size(frames.rotations, 2)
-Base.size(frames::Frames) = Tuple(length(frames))
-Base.getindex(frames::Frames, i::Integer) = QuatRotation(frames.rotations[:, i]), frames.locations[:, i]
-
-Base.:(==)(frames1::Frames, frames2::Frames) = all(r1 == r2 && l1 == l2 for ((r1, l1), (r2, l2)) in zip(frames1, frames2))
-
-centroid(P::AbstractMatrix{<:Real}) = sum(P, dims=2) ./ size(P, 2)
+centroid(P::AbstractMatrix{<:Real}) = vec(sum(P, dims=2)) ./ size(P, 2)
 
 function kabsch_algorithm(P::AbstractMatrix{T}, Q::AbstractMatrix{T}) where T <: Real
     size(P) == size(Q) || throw(ArgumentError("P and Q must have the same size"))
@@ -75,31 +20,83 @@ function kabsch_algorithm(P::AbstractMatrix{T}, Q::AbstractMatrix{T}) where T <:
     return R, P_centroid, Q_centroid
 end
 
-function Frames(backbone::Backbone{T}, ideal_coords::AbstractMatrix{<:Real}) where T <: Real
-    ideal_coords = convert(Matrix{T}, ideal_coords)
-    num_frame_points = size(ideal_coords, 2)
-    L, r = divrem(length(backbone), num_frame_points)
-    iszero(r) || throw(ArgumentError("Backbone length must be a multiple of the number of points in a frame ($num_frame_points)"))
-    rotmats = Array{T, 3}(undef, 3, 3, L)
-    locations = Matrix{T}(undef, 3, L)
-    all_raw_coords = reshape(backbone.coords, 3, num_frame_points, L)
-    for (i, raw_coords) in enumerate(eachslice(all_raw_coords, dims=3))
-        rotmat, _, raw_centroid = kabsch_algorithm(ideal_coords, raw_coords)
-        rotmats[:, :, i] = rotmat
-        locations[:, i] = raw_centroid
+"""
+    Frame{T <: Real}
+"""
+struct Frame{T <: Real}
+    rotation::QuatRotation{T}
+    location::AbstractVector{T}
+
+    function Frame{T}(rotation::QuatRotation{T}, location::AbstractVector{T}) where T <: Real
+        length(location) == 3 || throw(ArgumentError("location must be a 3-vector"))
+        return new{T}(rotation, location)
+    end
+end
+
+Frame{T}(rotation::AbstractVecOrMat{T}, location::AbstractVector{T}) where T <: Real = Frame{T}(QuatRotation(rotation), location)
+Frame{T}(rotation::AbstractVecOrMat{<:Real}, location::AbstractVector{<:Real}) where T <: Real = Frame{T}(T.(rotation), T.(location))
+Frame(rotation::AbstractVecOrMat, location::AbstractVector) = Frame{promote_type(eltype(rotation), eltype(location))}(rotation, location)
+
+Base.:(==)(frame1::Frame, frame2::Frame) = frame1.rotation == frame2.rotation && frame1.location == frame2.location
+
+function (frame::Frame{T})(ideal_coords::AbstractMatrix{T}, ideal_centroid::AbstractVector{T}=centroid(ideal_coords)) where T 
+    return frame.rotation * (ideal_coords .- ideal_centroid) .+ frame.location
+end
+
+"""
+    Frames{T <: Real} <: AbstractVector{Tuple{QuatRotation{T}, Vector{T}}}
+
+The `Frames` type is designed to efficiently store and manipulate the rotation and translation of a set of frames.
+"""
+struct Frames{T <: Real, M <: AbstractMatrix{T}} <: AbstractVector{Frame{T}}
+    rotations::M
+    locations::M
+
+    function Frames{T}(rotations::M, locations::M) where {T <: Real, M <: AbstractMatrix{T}}
+        size(rotations, 1) == 4 || throw(ArgumentError("rotations must be a 4xN quaternion matrix"))
+        size(locations, 1) == 3 || throw(ArgumentError("locations must be a 3xN 3D coordinates matrix"))
+        size(rotations, 2) == size(locations, 2) || throw(ArgumentError("rotations and locations must have the same number of columns"))
+        return new{T, M}(rotations, locations)
+    end
+end
+
+function Frames{T}(rotmats::AbstractArray{<:Real, 3}, locations::AbstractMatrix{<:Real}) where T
+    rotations = stack(params(QuatRotation(rotmat)) for rotmat in eachslice(rotmats, dims=3))
+    return Frames{T}(rotations, locations)
+end
+
+function Frames{T}(rotations::AbstractArray{<:Real}, locations::AbstractMatrix{<:Real}) where T
+    return Frames{T}(T.(rotations), T.(locations))
+end
+
+function Frames(rotations::AbstractArray{<:Real}, locations::AbstractMatrix{<:Real})
+    T = promote_type(eltype(rotations), eltype(locations))
+    return Frames{T}(rotations, locations)
+end
+
+Base.size(frames::Frames) = Tuple(size(frames.rotations, 2))
+Base.getindex(frames::Frames{T}, i::Integer) where T = Frame{T}(QuatRotation(frames.rotations[:, i]), frames.locations[:, i])
+
+Base.:(==)(frames1::Frames, frames2::Frames) = all(f1 == f2 for (f1, f2) in zip(frames1, frames2))
+
+function Frames(backbone::Backbone{<:Real}, ideal_coords::AbstractMatrix{<:Real})
+    T = promote_type(eltype(backbone.coords), eltype(ideal_coords))
+    backbone = Backbone{T}(backbone.coords)
+    ideal_coords = T.(ideal_coords)
+    L, r = divrem(length(backbone), size(ideal_coords, 2))
+    iszero(r) || throw(ArgumentError("backbone length ($(length(backbone))) must be divisible of the number of frame points ($(size(ideal_coords, 2)))"))
+    rotmats = similar(backbone.coords, 3, 3, L)
+    locations = similar(backbone.coords, 3, L)
+    for (i, noisy_coords) in enumerate(eachslice(reshape(backbone.coords, 3, size(ideal_coords, 2), :), dims=3))
+        rotmats[:, :, i], _, locations[:, i] = kabsch_algorithm(ideal_coords, noisy_coords)
     end
     return Frames(rotmats, locations)
 end
 
-function Backbone(frames::Frames{T}, ideal_coords::AbstractMatrix{<:Real}) where T <: Real
-    ideal_coords = convert(Matrix{T}, ideal_coords)
-    num_frame_points = size(ideal_coords, 2)
-    L = length(frames)
-    approx_raw_coords = Array{T}(undef, 3, num_frame_points, L)
+function (frames::Frames{T})(ideal_coords::AbstractMatrix{<:Real}) where T
+    ideal_coords = T.(ideal_coords)
     ideal_centroid = centroid(ideal_coords)
-    for (i, (rot, raw_centroid)) in enumerate(zip(eachcol(frames.rotations), eachcol(frames.locations)))
-        quatrot = QuatRotation(rot)
-        approx_raw_coords[:, :, i] = quatrot * (ideal_coords .- ideal_centroid) .+ raw_centroid
-    end
-    return Backbone(approx_raw_coords)
+    return stack((f -> f(ideal_coords, ideal_centroid)).(frames))
 end
+
+Backbone(frames::Frames, ideal_coords::AbstractMatrix{<:Real}) = Backbone(frames(ideal_coords))

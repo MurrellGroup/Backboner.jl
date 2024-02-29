@@ -17,7 +17,7 @@ import Rotations: QuatRotation, params
 
     @test length(frames) == 3
     @test size(frames) == (3,)
-    @test frames[1] == (QuatRotation([0 0 1; 1 0 0; 0 1 0]), [0.0, 0.0, 0.0])
+    @test frames[1] == Frame{Float64}(QuatRotation([0 0 1; 1 0 0; 0 1 0]), [0.0, 0.0, 0.0])
 
     standard_coords = [3 1 -4; 1 -1 0; 0 0 0]
     backbone = Backbone(frames, standard_coords)
@@ -29,7 +29,7 @@ import Rotations: QuatRotation, params
     ]
 
     @test Frames(backbone, standard_coords) != frames # due to numerical error
-    @test all(isapprox(r1, r2; atol=1e-10) && isapprox(l1, l2; atol=1e-10) for ((r1, l1), (r2, l2)) in zip(Frames(backbone, standard_coords), frames))
+    @test all(isapprox(f1.rotation, f2.rotation; atol=1e-10) && isapprox(f1.location, f2.location; atol=1e-10) for (f1, f2) in zip(Frames(backbone, standard_coords), frames))
     @test Frames(frames.rotations, frames.locations) == frames
 
     @testset "constructor with rotmats" begin
