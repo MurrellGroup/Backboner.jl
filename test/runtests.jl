@@ -10,5 +10,6 @@ using LinearAlgebra
     include("frames.jl")
     include("knots.jl")
     include("protein/protein.jl")
+    include("ext/ZygoteIdealizationExt.jl")
 
 end

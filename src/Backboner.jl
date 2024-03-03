@@ -5,7 +5,7 @@ include("bonds.jl")
 include("frames.jl")
 include("knots.jl")
 include("protein/protein.jl")
-include("idealize.jl")
+include("idealization.jl")
 
 export Protein
 
