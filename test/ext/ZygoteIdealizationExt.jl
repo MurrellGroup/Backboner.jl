@@ -1,6 +1,7 @@
 import Zygote
 
 @testset "ZygoteIdealizationExt" begin
+
     @testset "idealize" begin
         backbone = Protein.readpdb("data/1ZAK.pdb")["A"].backbone
 
@@ -10,4 +11,5 @@ import Zygote
 
         @test backbone == idealize(backbone, Float32[0], Float32[0], mask_tolerance=0.5)
     end
+
 end
