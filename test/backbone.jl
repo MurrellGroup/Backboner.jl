@@ -23,12 +23,15 @@
     @test length(backbone) == 15
     @test backbone[1] == coords[:, 1]
     @test backbone[1:2] == coords[:, 1:2]
+    @test view(backbone, 1) == coords[:, 1]
     @test view(backbone, 1:2) == coords[:, 1:2]
     backbone[2] = ones(3)
     @test backbone[2] == ones(3)
 
     @test backbone == coords
     @test coords == backbone
+
+    @test copy(backbone) == coords
 
     @test hash(backbone) != hash(Backbone{Float64, Matrix{Float64}}(coords .+ 1))
 

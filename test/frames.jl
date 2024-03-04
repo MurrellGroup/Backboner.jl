@@ -15,6 +15,10 @@ import Rotations: QuatRotation, params
         ]
     )
 
+    @test frames[1] == Frame{Float64}(params(QuatRotation([0 0 1; 1 0 0; 0 1 0])), [0.0, 0.0, 0.0])
+    @test frames[1] == Frame{Float64}(params(QuatRotation([0 0 1; 1 0 0; 0 1 0])), [0, 0, 0])
+    @test frames[1] == Frame(params(QuatRotation([0 0 1; 1 0 0; 0 1 0])), [0, 0, 0])
+
     @test length(frames) == 3
     @test size(frames) == (3,)
     @test frames[1] == Frame{Float64}(QuatRotation([0 0 1; 1 0 0; 0 1 0]), [0.0, 0.0, 0.0])
