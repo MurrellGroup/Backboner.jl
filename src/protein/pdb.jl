@@ -25,7 +25,7 @@ protein_backbone(residues::Vector{<:BioStructures.AbstractResidue}) = Backboner.
 protein_backbone(chain::BioStructures.Chain, res_selector) = Backboner.Backbone(getresidues(chain, res_selector))
 
 aminoacid_sequence(residues::Vector{<:BioStructures.AbstractResidue}) = map(oneletter_resname, residues)
-aminoacid_sequence(chain::BioStructures.Chain, res_selector) = aminoacid_sequence(getresidues(chain, res_elector))
+aminoacid_sequence(chain::BioStructures.Chain, res_selector) = aminoacid_sequence(getresidues(chain, res_selector))
 
 function Protein.Chain(residues::Vector{<:BioStructures.AbstractResidue})
     id = only(unique(BioStructures.chainid.(residues)))
