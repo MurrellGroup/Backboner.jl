@@ -19,7 +19,7 @@ getresidues(chain::BioStructures.Chain, res_selector) = BioStructures.collectres
 
 atomcoords(res, atom_name)::Vector = BioStructures.collectatoms(res, atom -> BioStructures.atomnameselector(atom, [atom_name])) |> only |> BioStructures.coords
 
-backbone_coords(res::BioStructures.AbstractResidue)::Matrix = stack(AT -> atomcoords(res, AT), BACKBONE_ATOM_NAMES)
+backbonecoords(res::BioStructures.AbstractResidue)::Matrix = stack(AT -> atomcoords(res, AT), BACKBONE_ATOM_NAMES)
 
 protein_backbone(residues::Vector{<:BioStructures.AbstractResidue}) = Backboner.Backbone(convert(Matrix{Float32}, mapreduce(backbonecoords, hcat, residues; init=Matrix{Float32}(undef, 3, 0))))
 protein_backbone(chain::BioStructures.Chain, res_selector) = Backboner.Backbone(getresidues(chain, res_selector))
