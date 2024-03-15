@@ -1,6 +1,6 @@
 #=--- Frame idealization ---=#
 
-const STANDARD_RESIDUE_ANGSTROM = [
+const STANDARD_TRIANGLE_ANGSTROM = [
     -1.066  -0.200   1.266;
      0.645  -0.527  -0.118;
      0.000   0.000   0.000;
