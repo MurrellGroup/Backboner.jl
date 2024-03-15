@@ -22,6 +22,8 @@ end
 
 """
     Frame{T <: Real}
+
+A `Frame` is a combination of a rotation and a translation, which can be applied to a set of coordinates.
 """
 struct Frame{T <: Real}
     rotation::QuatRotation{T}
@@ -39,14 +41,14 @@ Frame(rotation::AbstractVecOrMat, location::AbstractVector) = Frame{promote_type
 
 Base.:(==)(frame1::Frame, frame2::Frame) = frame1.rotation == frame2.rotation && frame1.location == frame2.location
 
-function (frame::Frame{T})(ideal_coords::AbstractMatrix{T}, ideal_centroid::AbstractVector{T}=centroid(ideal_coords)) where T 
-    return frame.rotation * (ideal_coords .- ideal_centroid) .+ frame.location
+function (frame::Frame{T})(coords::AbstractMatrix{T}, coords_centroid::AbstractVector{T}=centroid(coords)) where T 
+    return frame.rotation * (coords .- coords_centroid) .+ frame.location
 end
 
 """
     Frames{T <: Real, M <: AbstractMatrix{T}} <: AbstractVector{Frame{T}}
 
-The `Frames` type is designed to efficiently store and manipulate the rotation and translation of a set of frames.
+The `Frames` type is designed to efficiently store and manipulate the rotation and translation of a set of `Frame`s.
 """
 struct Frames{T <: Real, M <: AbstractMatrix{T}} <: AbstractVector{Frame{T}}
     rotations::M
@@ -79,6 +81,12 @@ Base.getindex(frames::Frames{T}, i::Integer) where T = Frame{T}(QuatRotation(fra
 
 Base.:(==)(frames1::Frames, frames2::Frames) = all(f1 == f2 for (f1, f2) in zip(frames1, frames2))
 
+function (frames::Frames{T})(coords::AbstractMatrix{T}) where T <: Real
+    coords = T.(coords)
+    coords_centroid = centroid(coords)
+    return stack((f -> f(coords, coords_centroid)).(frames))
+end
+
 function Frames(backbone::Backbone{<:Real}, ideal_coords::AbstractMatrix{<:Real})
     T = promote_type(eltype(backbone.coords), eltype(ideal_coords))
     backbone = Backbone{T}(backbone.coords)
@@ -91,12 +99,6 @@ function Frames(backbone::Backbone{<:Real}, ideal_coords::AbstractMatrix{<:Real}
         rotmats[:, :, i], _, locations[:, i] = kabsch_algorithm(ideal_coords, noisy_coords)
     end
     return Frames(rotmats, locations)
-end
-
-function (frames::Frames{T})(ideal_coords::AbstractMatrix{<:Real}) where T
-    ideal_coords = T.(ideal_coords)
-    ideal_centroid = centroid(ideal_coords)
-    return stack((f -> f(ideal_coords, ideal_centroid)).(frames))
 end
 
 Backbone(frames::Frames, ideal_coords::AbstractMatrix{<:Real}) = Backbone(frames(ideal_coords))
