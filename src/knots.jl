@@ -18,15 +18,10 @@ This is repeated until the last triple is reached and simplified, if possible.
  6. Run again with a different metric if the chain is not simplified to make sure it wasn't a false positive.
 =#
 
-abstract type TriangleMetric end
+triangle_distance(a::V, b::V, c::V) where V <: AbstractVector{<:Real} = norm(c - a)
+triangle_area(a::V, b::V, c::V) where V <: AbstractVector{<:Real} = norm(cross(b - a, c - a)) / 2
 
-abstract type TriangleDistance <: TriangleMetric end
-abstract type TriangleArea <: TriangleMetric end
-
-(metric::Type{TriangleDistance})(a::V, ::V, c::V) where V <: AbstractVector{<:Real} = norm(c - a)
-(metric::Type{TriangleArea})(a::V, b::V, c::V) where V <: AbstractVector{<:Real} = norm(cross(b - a, c - a)) / 2
-
-(metric::Type{<:TriangleMetric})(points::Vector{V}) where {T <: Real, V <: AbstractVector{T}} = T[metric(points[i:i+2]...) for i in 1:length(points)-2]
+triangle_values(metric::Function, points::Vector{V}) where {T <: Real, V <: AbstractVector{T}} = T[metric(points[i:i+2]...) for i in 1:length(points)-2]
 
 function line_segment_intersects_triangle(
     segment_start::V, segment_end::V,
@@ -59,7 +54,7 @@ function check_intersection(points::Vector{V}, i::Int) where {T <: Real, V <: Ab
 end
 
 # for removing an atom from a backbone, and updating adjacent triangles
-function remove_atom!(points::Vector{V}, i::Int, metric_values::Vector{T}, metric::Type{<:TriangleMetric}) where {T <: Real, V <: AbstractVector{T}}
+function remove_atom!(points::Vector{V}, i::Int, metric_values::Vector{T}, metric::Function) where {T <: Real, V <: AbstractVector{T}}
     m = length(metric_values)
     triangle_index = i - 1
     triangle_index > 1 && (metric_values[triangle_index-1] = metric(points[i-2], points[i-1], points[i+1]))
@@ -69,8 +64,8 @@ function remove_atom!(points::Vector{V}, i::Int, metric_values::Vector{T}, metri
     return nothing
 end
 
-function simplify!(points::Vector{V}, metric::Type{<:TriangleMetric}) where {T <: Real, V <: AbstractVector{T}}
-    metric_values = metric(points) # Vector{T} of length n-2
+function simplify!(points::Vector{V}, metric::Function) where {T <: Real, V <: AbstractVector{T}}
+    metric_values = triangle_values(metric, points) # Vector{T} of length n-2
     while !isempty(metric_values)
         order = sortperm(metric_values) # TODO: calculate once outside while loop, update in `remove_atom!`
         has_removed = false
@@ -87,7 +82,7 @@ function simplify!(points::Vector{V}, metric::Type{<:TriangleMetric}) where {T <
     return points
 end
 
-simplify(points::Vector{V}, metric::Type{<:TriangleMetric}) where {T <: Real, V <: AbstractVector{T}} = simplify!(deepcopy(points), metric)
+simplify(points::Vector{V}, metric::Function) where {T <: Real, V <: AbstractVector{T}} = simplify!(deepcopy(points), metric)
 
 """
     is_knotted(backbone::Backbone)
@@ -96,7 +91,7 @@ Check if a backbone is knotted.
 """
 function is_knotted(
     backbone::Backbone,
-    metrics = [TriangleDistance, TriangleArea],
+    metrics::Vector{Function} = [triangle_distance, triangle_area],
 )
     points = SVector{3}.(eachcol(backbone)) # convert to StaticArrays for 40x performance lmao
     for metric in metrics
