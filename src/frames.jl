@@ -44,7 +44,7 @@ function (frame::Frame{T})(ideal_coords::AbstractMatrix{T}, ideal_centroid::Abst
 end
 
 """
-    Frames{T <: Real} <: AbstractVector{Tuple{QuatRotation{T}, Vector{T}}}
+    Frames{T <: Real, M <: AbstractMatrix{T}} <: AbstractVector{Frame{T}}
 
 The `Frames` type is designed to efficiently store and manipulate the rotation and translation of a set of frames.
 """
