@@ -81,7 +81,7 @@ Base.getindex(frames::Frames{T}, i::Integer) where T = Frame{T}(QuatRotation(fra
 
 Base.:(==)(frames1::Frames, frames2::Frames) = all(f1 == f2 for (f1, f2) in zip(frames1, frames2))
 
-function (frames::Frames{T})(coords::AbstractMatrix{T}) where T <: Real
+function (frames::Frames{T})(coords::AbstractMatrix{<:Real}) where T <: Real
     coords = T.(coords)
     coords_centroid = centroid(coords)
     return stack((f -> f(coords, coords_centroid)).(frames))

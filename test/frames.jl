@@ -8,7 +8,7 @@ import Rotations: QuatRotation, params
             params(QuatRotation([0 0 1; 1 0 0; 0 1 0])^2);;
             params(QuatRotation([0 0 1; 1 0 0; 0 1 0])^3);;
         ],
-        Float64[
+        [
             0 10 100;
             0 0 0;
             0 0 0;
@@ -23,7 +23,7 @@ import Rotations: QuatRotation, params
     @test size(frames) == (3,)
     @test frames[1] == Frame{Float64}(QuatRotation([0 0 1; 1 0 0; 0 1 0]), [0.0, 0.0, 0.0])
 
-    standard_coords = Float64[3 1 -4; 1 -1 0; 0 0 0]
+    standard_coords = [3 1 -4; 1 -1 0; 0 0 0]
     backbone = Backbone(frames, standard_coords)
 
     @test backbone.coords == [
