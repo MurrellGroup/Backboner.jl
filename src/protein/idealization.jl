@@ -6,6 +6,9 @@ const STANDARD_TRIANGLE_ANGSTROM = [
      0.000   0.000   0.000;
 ] #  N       Ca      C
 
+# alias for backwards compatibility
+const STANDARD_RESIDUE_ANGSTROM = STANDARD_TRIANGLE_ANGSTROM
+
 #=--- Bond idealization ---=#
 
 const BACKBONE_BOND_LENGTHS = Float32[1.45775, 1.52307, 1.33208]
