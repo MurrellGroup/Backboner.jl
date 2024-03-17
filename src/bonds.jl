@@ -208,5 +208,3 @@ function append_bonds(
     new_backbone = Backbone(cat(backbone.coords, backbone_end[4:end].coords, dims=2))
     return new_backbone
 end
-
-# TODO: a "popat!" function that removes a single atom by popping one element from each vector and updating the surrounding elements of each vector
