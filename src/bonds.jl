@@ -45,7 +45,7 @@ function get_dihedrals(bond_vectors::AbstractMatrix{<:Real})
     normalized_crosses = crosses ./ column_norms(crosses)'
     cross_crosses = batched_cross_product(@view(normalized_crosses[:, begin:end-1]), @view(normalized_crosses[:, begin+1:end]))
     normalized_bond_vectors = bond_vectors ./ column_norms(bond_vectors)'
-    sin_values = column_sums(cross_crosses .* @view(normalized_bond_vectors[:, begin+1:end-1]))
+    sin_values = column_dots(cross_crosses, @view(normalized_bond_vectors[:, begin+1:end-1]))
     cos_values = column_dots(@view(normalized_crosses[:, begin:end-1]), @view(normalized_crosses[:, begin+1:end]))
     dihedrals = atan.(sin_values, cos_values)
     return dihedrals
