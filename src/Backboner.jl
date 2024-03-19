@@ -12,7 +12,7 @@ export Protein
 using PrecompileTools
 
 @compile_workload begin
-    backbone = Backbone{Float64}(reshape(1:18, 3, :))
+    backbone = Backbone(randn(3, 6))
 
     bonds = ChainedBonds(backbone)
     Backbone(bonds)

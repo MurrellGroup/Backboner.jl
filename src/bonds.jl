@@ -15,6 +15,7 @@ import Rotations: AngleAxis
 column_sums(columns::AbstractMatrix{<:Real}) = vec(sum(columns, dims=1))
 column_norms(columns::AbstractMatrix{<:Real}) = sqrt.(column_sums(abs2.(columns)))
 column_dots(columns1::M, columns2::M) where M <: AbstractMatrix{<:Real} = column_sums(columns1 .* columns2)
+normalize_columns(columns::AbstractMatrix{<:Real}) = columns ./ column_norms(columns)'
 
 function get_atom_displacements(backbone::Backbone, start::Integer, step::Integer, stride::Integer)
     return @view(backbone.coords[:, start+step:stride:end]) .- @view(backbone.coords[:, start:stride:end-step])
@@ -26,35 +27,28 @@ end
 
 get_bond_lengths(bond_vectors::AbstractMatrix{<:Real}) = column_norms(bond_vectors)
 
-calculate_bond_angle(u::V, v::V) where {T <: Real, V <: AbstractVector{T}} = π - acos(clamp(dot(u, v) / (norm(u) * norm(v)), -one(T), one(T)))
-
-function get_bond_angles(bond_vectors::AbstractMatrix{T}) where T <: Real
-    us = @view(bond_vectors[:, 1:end-1])
-    vs = @view(bond_vectors[:, 2:end])
+function get_bond_angles(bond_vectors::AbstractMatrix{T}) where T
+    us = @view(bond_vectors[:, begin:end-1])
+    vs = @view(bond_vectors[:, begin+1:end])
     return π .- acos.(clamp.(column_dots(us, vs) ./ (column_norms(us) .* column_norms(vs)), -one(T), one(T)))
 end
 
-# source: https://en.wikipedia.org/w/index.php?title=Dihedral_angle&oldid=1182848974#In_polymer_physics
-calculate_dihedral_angle(u1::V, u2::V, u3::V) where V <: AbstractVector{<:Real} = let c12 = cross(u1, u2), c23 = cross(u2, u3)
-    atan(dot(u2, cross(c12, c23)), norm(u2) * dot(c12, c23))
+function batched_cross_product(A::M, B::M) where {T <: Real, M <: AbstractMatrix{T}}
+    C1 = selectdim(A, 1, 2) .* selectdim(B, 1, 3) .- selectdim(A, 1, 3) .* selectdim(B, 1, 2)
+    C2 = selectdim(A, 1, 3) .* selectdim(B, 1, 1) .- selectdim(A, 1, 1) .* selectdim(B, 1, 3)
+    C3 = selectdim(A, 1, 1) .* selectdim(B, 1, 2) .- selectdim(A, 1, 2) .* selectdim(B, 1, 1)
+    return [C1 C2 C3]'
 end
 
 function get_dihedrals(bond_vectors::AbstractMatrix{<:Real})
-    len_prot = size(bond_vectors, 2) + 1
-    lengths = sqrt.(bond_vectors[1,:].^2 .+ bond_vectors[2,:].^2 .+ bond_vectors[3,:].^2)
-
-    crosses  = stack(cross.(eachcol(bond_vectors[:,1:len_prot-2]), eachcol(bond_vectors[:,2:len_prot-1])),dims=2)
-    lengths_cross = reshape(sqrt.(crosses[1,:].^2 .+ crosses[2,:].^2 .+ crosses[3,:].^2),1,:)
-    normalized_crosses = crosses ./ lengths_cross
-    cos_theta = dot.(eachcol(normalized_crosses[:,1:len_prot-3]), eachcol(normalized_crosses[:,2:len_prot-2]))
-
-    cross_crosses = stack(cross.(eachcol(normalized_crosses[:,1:len_prot-3]), eachcol(normalized_crosses[:,2:len_prot-2])),dims=2)
-    normalized_bond_vectors = (bond_vectors ./ reshape(lengths,1,:))[:,2:len_prot-2]
-
-    sin_theta = dot.(eachcol(cross_crosses), eachcol(normalized_bond_vectors))
-
-    thetas = atan.(sin_theta, cos_theta)
-    return thetas
+    crosses = batched_cross_product(@view(bond_vectors[:, begin:end-1]), @view(bond_vectors[:, begin+1:end]))
+    normalized_crosses = crosses ./ column_norms(crosses)'
+    cross_crosses = batched_cross_product(@view(normalized_crosses[:, begin:end-1]), @view(normalized_crosses[:, begin+1:end]))
+    normalized_bond_vectors = bond_vectors ./ column_norms(bond_vectors)'
+    sin_values = column_sums(cross_crosses .* @view(normalized_bond_vectors[:, begin+1:end-1]))
+    cos_values = column_dots(@view(normalized_crosses[:, begin:end-1]), @view(normalized_crosses[:, begin+1:end]))
+    dihedrals = atan.(sin_values, cos_values)
+    return dihedrals
 end
 
 get_bond_vectors(backbone::Backbone) = get_atom_displacements(backbone, 1, 1, 1)
@@ -62,13 +56,10 @@ get_bond_lengths(backbone::Backbone) = get_atom_distances(backbone, 1, 1, 1)
 get_bond_angles(backbone::Backbone) = get_bond_angles(get_bond_vectors(backbone))
 get_dihedrals(backbone::Backbone) = get_dihedrals(get_bond_vectors(backbone))
 
-
 """
     ChainedBonds{T <: Real, V <: AbstractVector{T}}
 
 A lazy way to store a backbone as a series of bond lengths, angles, and dihedrals.
-It can be instantiated from a Backbone or a matrix of bond vectors.
-It can also be used to instantiate a Backbone using the `Backbone(bonds::ChainedBonds)` constructor.
 
 # Examples
 
