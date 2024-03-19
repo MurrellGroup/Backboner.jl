@@ -103,11 +103,10 @@ function Base.show(io::IO, bonds::ChainedBonds)
 end
 
 
-function get_first_points(bonds::ChainedBonds{T}) where T
+function get_backbone_start(bonds::ChainedBonds{T}) where T
     L = length(bonds) + 1
     l = min(3, L)
     coords = Matrix{T}(undef, 3, l)
-
     coords[:, 1] = [0, 0, 0]
     if l >= 2
         coords[:, 2] = [bonds.lengths[1], 0, 0]
@@ -117,23 +116,19 @@ function get_first_points(bonds::ChainedBonds{T}) where T
             coords[:, 3] = coords[:, 2] + bond_angle_rotation * [bonds.lengths[2], 0, 0]
         end
     end
-
-    return coords
+    return Backbone(coords)
 end
 
-# first_points don't get adjusted to fit the bonds
-# first_points needs to have at least 3 columns
+# backbone_start don't get adjusted to fit the bonds
 function Backbone(
     bonds::ChainedBonds{T};
-    first_points::AbstractMatrix{<:Real} = get_first_points(bonds),
+    backbone_start::Backbone{T} = get_backbone_start(bonds),
 ) where T
     L = length(bonds) + 1
-    coords = fill(T(NaN), 3, L)
-
-    l = size(first_points, 2)
+    coords = Matrix{T}(undef, 3, L)
+    l = size(backbone_start.coords, 2)
     @assert 3 <= l <= L
-    coords[:, 1:l] = first_points
-
+    coords[:, 1:l] = backbone_start.coords
     for i in l+1:L
         A, B, C = eachcol(coords[:, i-3:i-1])
         AB, BC = B - A, C - B
@@ -150,9 +145,7 @@ function Backbone(
         D = C + CD_rot2
         coords[:, i] = D
     end
-
-    backbone = Backbone(coords)
-    return backbone
+    return Backbone(coords)
 end
 
 
@@ -195,7 +188,7 @@ function append_bonds(
     last_three_atoms_backbone = backbone[end-2:end]
     bonds_end = ChainedBonds(last_three_atoms_backbone)
     append_bonds!(bonds_end, lengths, angles, dihedrals)
-    backbone_end = Backbone(bonds_end, first_points = last_three_atoms_backbone)
+    backbone_end = Backbone(bonds_end, backbone_start=last_three_atoms_backbone)
     new_backbone = Backbone(cat(backbone.coords, backbone_end[4:end].coords, dims=2))
     return new_backbone
 end

@@ -53,7 +53,6 @@
     end
 
     @testset "ChainedBonds" begin
-
         protein = Backboner.Protein.readpdb("data/1ASS.pdb")
         chain = protein["A"]
         backbone = chain.backbone
@@ -68,7 +67,18 @@
         io = IOBuffer()
         show(io, bonds)
         @test String(take!(io)) == "ChainedBonds{Float32, Vector{Float32}} with 455 bonds, 454 angles, and 453 dihedrals"
+    end
 
+    @testset "append_bonds" begin
+        coords = [
+            0.0 1.0 1.0 1.0 1.0 2.0 2.0;
+            0.0 0.0 1.0 1.0 2.0 2.0 1.0;
+            0.0 0.0 0.0 1.0 1.0 1.0 0.0;
+        ]
+
+        subbackbone = Backbone(coords[:, 1:end-2])
+        backbone = append_bonds(subbackbone, [1.0, sqrt(2)], [π/2, π/2], [-π/2, π/4])
+        @test backbone.coords ≈ coords
     end
 
 end
