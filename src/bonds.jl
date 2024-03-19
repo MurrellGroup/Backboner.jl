@@ -14,7 +14,7 @@ import Rotations: AngleAxis
 
 column_sums(columns::AbstractMatrix{<:Real}) = vec(sum(columns, dims=1))
 column_norms(columns::AbstractMatrix{<:Real}) = sqrt.(column_sums(abs2.(columns)))
-column_dots(columns1::M, columns2::M) where M <: AbstractMatrix{<:Real} = column_sums(columns1 .* columns2)
+column_dots(columns1::AbstractMatrix{T}, columns2::AbstractMatrix{T}) where T = column_sums(columns1 .* columns2)
 normalize_columns(columns::AbstractMatrix{<:Real}) = columns ./ column_norms(columns)'
 
 function get_atom_displacements(backbone::Backbone, start::Integer, step::Integer, stride::Integer)
@@ -33,7 +33,7 @@ function get_bond_angles(bond_vectors::AbstractMatrix{T}) where T
     return π .- acos.(clamp.(column_dots(us, vs) ./ (column_norms(us) .* column_norms(vs)), -one(T), one(T)))
 end
 
-function batched_cross_product(A::M, B::M) where {T <: Real, M <: AbstractMatrix{T}}
+function batched_cross_product(A::AbstractMatrix{T}, B::AbstractMatrix{T}) where T <: Real
     C1 = selectdim(A, 1, 2) .* selectdim(B, 1, 3) .- selectdim(A, 1, 3) .* selectdim(B, 1, 2)
     C2 = selectdim(A, 1, 3) .* selectdim(B, 1, 1) .- selectdim(A, 1, 1) .* selectdim(B, 1, 3)
     C3 = selectdim(A, 1, 1) .* selectdim(B, 1, 2) .- selectdim(A, 1, 2) .* selectdim(B, 1, 1)
