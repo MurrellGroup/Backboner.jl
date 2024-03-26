@@ -7,7 +7,9 @@ export
     get_dihedrals,
     ChainedBonds,
     append_bonds!,
-    append_bonds
+    append_bonds,
+    prepend_bonds!,
+    prepend_bonds
 
 using LinearAlgebra
 import Rotations: AngleAxis
@@ -88,6 +90,15 @@ end
 @inline ChainedBonds{T}(lengths::V, angles::V, dihedrals::V) where {T <: Real, V <: AbstractVector{T}} = ChainedBonds{T, V}(lengths, angles, dihedrals)
 @inline ChainedBonds(lengths::V, angles::V, dihedrals::V) where {T <: Real, V <: AbstractVector{T}} = ChainedBonds{T, V}(lengths, angles, dihedrals)
 
+function Base.reverse!(bonds::ChainedBonds)
+    reverse!(bonds.lengths)
+    reverse!(bonds.angles)
+    reverse!(bonds.dihedrals)
+    return bonds
+end
+
+Base.reverse(bonds::ChainedBonds) = reverse!(deepcopy(bonds))
+
 function ChainedBonds(backbone::Backbone)
     bond_vectors = get_bond_vectors(backbone)
     lengths = get_bond_lengths(bond_vectors)
@@ -149,26 +160,16 @@ function Backbone(
 end
 
 
-function append_bonds!(
-    bonds::ChainedBonds,
-    lengths::AbstractVector{<:Real},
-    angles::AbstractVector{<:Real},
-    dihedrals::AbstractVector{<:Real},
-)
-    @assert length(bonds) >= 2
-    @assert length(lengths) == length(angles) == length(dihedrals)
+function append_bonds!(bonds::ChainedBonds, lengths::AbstractVector{<:Real}, angles::AbstractVector{<:Real}, dihedrals::AbstractVector{<:Real})
+    length(bonds) >= 2 || throw(ArgumentError("bonds must have at least 2 bonds"))
+    length(lengths) == length(angles) == length(dihedrals) || throw(ArgumentError("lengths, angles, and dihedrals must have the same length"))
     append!(bonds.lengths, lengths)
     append!(bonds.angles, angles)
     append!(bonds.dihedrals, dihedrals)
     return bonds
 end
 
-function append_bonds(
-    bonds::ChainedBonds,
-    lengths::AbstractVector{<:Real},
-    angles::AbstractVector{<:Real},
-    dihedrals::AbstractVector{<:Real},
-)
+function append_bonds(bonds::ChainedBonds, lengths::AbstractVector{<:Real}, angles::AbstractVector{<:Real}, dihedrals::AbstractVector{<:Real})
     deepcopy(bonds)
     append_bonds!(bonds, lengths, angles, dihedrals)
     return bonds
@@ -177,18 +178,42 @@ end
 """
     append_bonds(backbone, lengths, angles, dihedrals)
 """
-function append_bonds(
-    backbone::Backbone,
-    lengths::AbstractVector{<:Real},
-    angles::AbstractVector{<:Real},
-    dihedrals::AbstractVector{<:Real},
-)
-    @assert length(backbone) >= 3
-    @assert length(lengths) == length(angles) == length(dihedrals)
+function append_bonds(backbone::Backbone, lengths::AbstractVector{<:Real}, angles::AbstractVector{<:Real}, dihedrals::AbstractVector{<:Real})
+    length(backbone) >= 3 || throw(ArgumentError("backbone must have at least 3 atoms"))
+    length(lengths) == length(angles) == length(dihedrals) || throw(ArgumentError("lengths, angles, and dihedrals must have the same length"))
     last_three_atoms_backbone = backbone[end-2:end]
     bonds_end = ChainedBonds(last_three_atoms_backbone)
     append_bonds!(bonds_end, lengths, angles, dihedrals)
     backbone_end = Backbone(bonds_end, backbone_start=last_three_atoms_backbone)
     new_backbone = Backbone(cat(backbone.coords, backbone_end[4:end].coords, dims=2))
+    return new_backbone
+end
+
+function prepend_bonds!(bonds::ChainedBonds, lengths::AbstractVector{<:Real}, angles::AbstractVector{<:Real}, dihedrals::AbstractVector{<:Real})
+    length(bonds) >= 2 || throw(ArgumentError("bonds must have at least 2 bonds"))
+    length(lengths) == length(angles) == length(dihedrals) || throw(ArgumentError("lengths, angles, and dihedrals must have the same length"))
+    prepend!(bonds.lengths, lengths)
+    prepend!(bonds.angles, angles)
+    prepend!(bonds.dihedrals, dihedrals)
+    return bonds
+end
+
+function prepend_bonds(bonds::ChainedBonds, lengths::AbstractVector{<:Real}, angles::AbstractVector{<:Real}, dihedrals::AbstractVector{<:Real})
+    deepcopy(bonds)
+    prepend_bonds!(bonds, lengths, angles, dihedrals)
+    return bonds
+end
+
+"""
+    prepend_bonds(backbone, lengths, angles, dihedrals)
+"""
+function prepend_bonds(backbone::Backbone, lengths::AbstractVector{<:Real}, angles::AbstractVector{<:Real}, dihedrals::AbstractVector{<:Real})
+    length(backbone) >= 3 || throw(ArgumentError("backbone must have at least 3 atoms"))
+    first_three_atoms_backbone = backbone[1:3]
+    bonds_start = ChainedBonds(first_three_atoms_backbone)
+    prepend_bonds!(bonds_start, lengths, angles, dihedrals)
+    reverse!(bonds_start)
+    backbone_start = Backbone(bonds_start, backbone_start=first_three_atoms_backbone[3:-1:1])
+    new_backbone = Backbone(cat(backbone_start[end:-1:4].coords, backbone.coords, dims=2))
     return new_backbone
 end

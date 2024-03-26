@@ -3,9 +3,9 @@
     @testset "vectors and lengths" begin
 
         backbone = Backbone([
-            0.0 1.0 2.0 5.0;
-            0.0 2.0 4.0 8.0;
-            0.0 2.0 4.0 4.0;
+            0.0 1.0 2.0 5.0
+            0.0 2.0 4.0 8.0
+            0.0 2.0 4.0 4.0
         ])
 
         @testset "get_atom_displacements" begin
@@ -20,8 +20,8 @@
 
         @testset "get_bond_vectors" begin
             @test get_bond_vectors(backbone) == [
-                1.0 1.0 3.0;
-                2.0 2.0 4.0;
+                1.0 1.0 3.0
+                2.0 2.0 4.0
                 2.0 2.0 0.0
             ]
         end
@@ -34,10 +34,10 @@
 
     @testset "angles" begin
 
-        coords = [                      # naturally improbable edge case with two consecutive parallel vectors. might result in a NaN depending on the implementation
-            0.0 1.0 1.0 1.0 1.0 2.0 2.0;#  2.0;
-            0.0 0.0 1.0 1.0 2.0 2.0 1.0;#  0.0;
-            0.0 0.0 0.0 1.0 1.0 1.0 0.0;# -1.0
+        coords = [                     # naturally improbable edge case with two consecutive parallel vectors. might result in a NaN depending on the implementation
+            0.0 1.0 1.0 1.0 1.0 2.0 2.0#  2.0;
+            0.0 0.0 1.0 1.0 2.0 2.0 1.0#  0.0;
+            0.0 0.0 0.0 1.0 1.0 1.0 0.0# -1.0
         ]
 
         backbone = Backbone(coords)
@@ -70,15 +70,35 @@
     end
 
     @testset "append_bonds" begin
-        coords = [
-            0.0 1.0 1.0 1.0 1.0 2.0 2.0;
-            0.0 0.0 1.0 1.0 2.0 2.0 1.0;
-            0.0 0.0 0.0 1.0 1.0 1.0 0.0;
-        ]
+        backbone = Backbone([
+            0.0 1.0 1.0 1.0 1.0 2.0 2.0
+            0.0 0.0 1.0 1.0 2.0 2.0 1.0
+            0.0 0.0 0.0 1.0 1.0 1.0 0.0
+        ])
 
-        subbackbone = Backbone(coords[:, 1:end-2])
-        backbone = append_bonds(subbackbone, [1.0, sqrt(2)], [π/2, π/2], [-π/2, π/4])
-        @test backbone.coords ≈ coords
+        n = length(backbone)
+        k = 3
+
+        subbackbone = backbone[1:n-k]
+        bonds = ChainedBonds(backbone)
+        new_backbone = append_bonds(subbackbone, bonds.lengths[end-k+1:end], bonds.angles[end-k+1:end], bonds.dihedrals[end-k+1:end])
+        @test new_backbone.coords ≈ backbone.coords
+    end
+
+    @testset "prepend_bonds" begin
+        backbone = Backbone([
+            0.0 1.0 1.0 1.0 1.0 2.0 2.0
+            0.0 0.0 1.0 1.0 2.0 2.0 1.0
+            0.0 0.0 0.0 1.0 1.0 1.0 0.0
+        ])
+
+        n = length(backbone)
+        k = 3
+
+        subbackbone = backbone[end-k+1:end]
+        bonds = ChainedBonds(backbone)
+        new_backbone = prepend_bonds(subbackbone, bonds.lengths[1:n-k], bonds.angles[1:n-k], bonds.dihedrals[1:n-k])
+        @test new_backbone.coords ≈ backbone.coords
     end
 
 end
