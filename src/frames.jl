@@ -87,8 +87,7 @@ function (frames::Frames{T})(coords::AbstractMatrix{<:Real}) where T <: Real
     return stack((f -> f(coords, coords_centroid)).(frames))
 end
 
-function Frames(backbone::Backbone{<:Real}, ideal_coords::AbstractMatrix{<:Real})
-    T = promote_type(eltype(backbone.coords), eltype(ideal_coords))
+function Frames(backbone::Backbone{T}, ideal_coords::AbstractMatrix{<:Real}) where T <: Real
     backbone = Backbone{T}(backbone.coords)
     ideal_coords = T.(ideal_coords)
     L, r = divrem(length(backbone), size(ideal_coords, 2))
