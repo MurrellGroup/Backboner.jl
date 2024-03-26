@@ -18,7 +18,7 @@ A `Chain` represents a chain of a protein, and is a vector of `Residue`s, which 
 - `ssvector::Vector{Char}`: storing the secondary structure.
 """
 struct Chain <: AbstractVector{Residue}
-    id::AbstractString
+    id::String
     backbone::Backbone
     modelnum::Int
     resnums::Vector{Int}
@@ -26,8 +26,8 @@ struct Chain <: AbstractVector{Residue}
     ssvector::Vector{Char}
 
     function Chain(
-        id::AbstractString,
         backbone::Backbone;
+        id::AbstractString = "A",
         modelnum::Int = 1,
         resnums::Vector{Int} = collect(1:length(backbone) ÷ 3),
         aavector::Vector{Char} = fill('G', length(backbone) ÷ 3),
@@ -42,7 +42,7 @@ struct Chain <: AbstractVector{Residue}
         return new(id, backbone, modelnum, resnums, aavector, ssvector)
     end
 
-    Chain(backbone::Backbone; kwargs...) = Chain("_", backbone; kwargs...) 
+    Chain(id::AbstractString, backbone::Backbone; kwargs...) = Chain(backbone; id=id, kwargs...)
 end
 
 @inline Base.:(==)(chain1::Chain, chain2::Chain) = chain1.id == chain2.id && chain1.backbone == chain2.backbone && chain1.ssvector == chain2.ssvector

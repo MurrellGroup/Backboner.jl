@@ -12,7 +12,6 @@
         @test !has_assigned_ss(chain)
         @test length(chain) == 5
         @test size(chain) == (5,)
-        @test Chain(backbone).id == "_"
 
         protein = [chain]
         @test protein["A"] == protein[:A] == protein[1]
