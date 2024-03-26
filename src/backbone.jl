@@ -60,6 +60,8 @@ Backbone{T, M}(::UndefInitializer, n::Integer) where {T <: Real, M <: AbstractMa
 Backbone{T}(::UndefInitializer, n::Integer) where T = Backbone{T, Matrix{T}}(undef, n)
 Backbone{T}() where T = Backbone{T}(undef, 0)
 
+Base.values(backbone::Backbone) = backbone.coords
+
 @inline Base.size(backbone::Backbone) = size(backbone.coords)
 @inline Base.getindex(backbone::Backbone, i, j) = backbone.coords[i, j]
 @inline Base.view(backbone::Backbone, i, j) = view(backbone.coords, i, j)
