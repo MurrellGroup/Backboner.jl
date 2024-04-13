@@ -16,7 +16,7 @@
         protein = [chain]
         @test protein["A"] == protein[:A] == protein[1]
         
-        @test chain[1] == Residue(1, 'G', ' ')
+        @test chain[1] == Residue(1, chain.residue_atoms_dict[1], 'G', ' ')
 
         @test summary(chain) == "Chain A with 5 residues"
 

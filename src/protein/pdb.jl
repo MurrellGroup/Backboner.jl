@@ -17,7 +17,7 @@ backboneselector(res::BioStructures.AbstractResidue) =
 
 getresidues(chain::BioStructures.Chain, res_selector) = BioStructures.collectresidues(chain, res_selector)
 
-atomcoords(res, atom_name)::Vector = BioStructures.collectatoms(res, atom -> BioStructures.atomnameselector(atom, [atom_name])) |> only |> BioStructures.coords
+atomcoords(res, atom_name) = BioStructures.collectatoms(res, atom -> BioStructures.atomnameselector(atom, [atom_name])) |> only |> BioStructures.coords
 
 backbonecoords(res::BioStructures.AbstractResidue)::Matrix = stack(AT -> atomcoords(res, AT), BACKBONE_ATOM_NAMES)
 
@@ -27,13 +27,22 @@ protein_backbone(chain::BioStructures.Chain, res_selector) = Backboner.Backbone(
 aminoacid_sequence(residues::Vector{<:BioStructures.AbstractResidue}) = map(oneletter_resname, residues)
 aminoacid_sequence(chain::BioStructures.Chain, res_selector) = aminoacid_sequence(getresidues(chain, res_selector))
 
+function get_residue_atoms_dict(residues::Vector{<:BioStructures.AbstractResidue})
+    atoms = Dict{Int, Vector{Atom}}()
+    for res in residues
+        append!(get!(atoms, res.number, Atom[]), Atom.(BioStructures.collectatoms(res, BioStructures.standardselector)))
+    end
+    return atoms
+end
+
 function Protein.Chain(residues::Vector{<:BioStructures.AbstractResidue})
     id = only(unique(BioStructures.chainid.(residues)))
     backbone = protein_backbone(residues)
     aavector = aminoacid_sequence(residues)
     resnums = BioStructures.resnumber.(residues)
     modelnum = only(unique(BioStructures.modelnumber.(residues)))
-    return Protein.Chain(id, backbone; resnums, aavector, modelnum)
+    residue_atoms_dict = get_residue_atoms_dict(residues)
+    return Protein.Chain(id, backbone; resnums, aavector, modelnum, residue_atoms_dict)
 end
 
 function Protein.Chain(chain::BioStructures.Chain; res_selector=backboneselector)
@@ -62,7 +71,6 @@ function readpdb(pdbfile::String)
     return chains(struc)
 end
 
-
 import PDBTools
 
 """
@@ -71,30 +79,34 @@ import PDBTools
 Write a protein (represented as a `Vector{Protein.Chain}`s) to a PDB file.
 """
 function writepdb(protein::Vector{Chain}, filename, header=:auto, footer=:auto)
-    atoms = PDBTools.Atom[]
+    all_atoms = PDBTools.Atom[]
     index = 0
     residue_index = 0
     for chain in protein
-        coords = ncaco_coords(chain)
-        for (residue, res_coords) in zip(chain, eachslice(coords, dims=3))
+        residue_backbone_coords = reshape(chain.backbone.coords, 3, 3, :)
+        assign_missing_oxygens!(chain)
+        for (i, residue) in enumerate(chain)
             resname = get(threeletter_aa_names, residue.aa, "XXX")
             residue_index += 1
-            for (name, atomcoords) in zip(["N", "CA", "C", "O"], eachcol(res_coords))
+            residue_atoms = [
+                [Atom(name, coords) for (name, coords) in zip(BACKBONE_ATOM_NAMES, eachcol(view(residue_backbone_coords, :, :, i)))];
+                filter(a -> !(a.name in BACKBONE_ATOM_NAMES), residue.atoms)
+            ]
+            for atom in residue_atoms
                 index += 1
-                atom = PDBTools.Atom(
+                push!(all_atoms, PDBTools.Atom(
                     index = index,
-                    name = name,
+                    name = atom.name,
                     resname = resname,
                     chain = chain.id,
                     resnum = residue.num,
                     residue = residue_index,
-                    x = atomcoords[1],
-                    y = atomcoords[2],
-                    z = atomcoords[3],
-                )
-                push!(atoms, atom)
+                    x = atom.coords[1],
+                    y = atom.coords[2],
+                    z = atom.coords[3],
+                ))
             end
         end
     end
-    PDBTools.writePDB(atoms, filename, header=header, footer=footer)
+    PDBTools.writePDB(all_atoms, filename, header=header, footer=footer)
 end

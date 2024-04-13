@@ -19,17 +19,17 @@ end
 
 const IDEALIZED_OXYGEN_VECTOR = [-0.672, -1.034, 0.003]
 
-function estimate_oxygen_position(
+function _estimate_oxygen_position(
     CA::AbstractVector{T}, C::AbstractVector{T}, next_N::AbstractVector{T},
 ) where T <: Real
     R = get_rotation_matrix(CA, C, next_N)
-    return R' \ IDEALIZED_OXYGEN_VECTOR + C # inverse of R' * (oxygen_pos - C)
+    return R * IDEALIZED_OXYGEN_VECTOR + C # inverse of R' * (oxygen_pos - C)
 end
 
 # last oxygen is put on the same plane as the last residue triangle
 # 1.2 angstroms away from the C atom
 # with a 120 degree angle between the C-Ca and C-O bonds
-function get_last_oxygen(
+function _estimate_oxygen_position_last(
     N_pos::V, Ca_pos::V, C_pos::V,
 ) where V <: AbstractVector{T} where T <: Real
     angle = 2π/3
@@ -38,29 +38,34 @@ function get_last_oxygen(
     w = cross(v, Ca_pos - N_pos)
     u = cross(w, v)
     O_pos = C_pos + normalize(u)*bond_length*cos(angle - 0.5π) - normalize(v)*bond_length*sin(angle - 0.5π)
-
     return O_pos
 end
 
-function oxygen_coords(backbone::Backbone)
-    T = eltype(eltype(backbone))
-    L = length(backbone) ÷ 3
-
-    CAs = eachcol(alphacarbon_coords(backbone))
-    Cs = eachcol(carbonyl_coords(backbone))
-    next_Ns = eachcol(@view nitrogen_coords(backbone)[:, 2:end])
-    oxygen_coords = zeros(T, 3, L)
-    for (i, (CA, C, next_N)) in enumerate(zip(CAs, Cs, next_Ns))
-        oxygen_coords[:, i] = estimate_oxygen_position(CA, C, next_N)
+function estimate_oxygen_position(chain::Chain, i::Int)
+    1 <= i <= length(chain) || throw(ArgumentError("Index $i out of bounds for chain of length $(length(chain))"))
+    chain[i].atoms
+    if i == length(chain)
+        N = chain.backbone[3*(i-1)+1]
+        CA = chain.backbone[3*(i-1)+2]
+        C = chain.backbone[3*(i-1)+3]
+        return _estimate_oxygen_position_last(N, CA, C)
+    else
+        CA = chain.backbone[3*(i-1)+2]
+        C = chain.backbone[3*(i-1)+3]
+        next_N = chain.backbone[3*(i-1)+4]
+        return _estimate_oxygen_position(CA, C, next_N)
     end
-    oxygen_coords[:, end] = get_last_oxygen(eachcol(backbone[end-2:end])...)
+end
 
-    return oxygen_coords
+function get_oxygen(chain::Chain, i::Int)
+    residue = chain[i]
+    k = findfirst(==("O") ∘ (atom -> atom.name), residue.atoms)
+    isnothing(k) && return estimate_oxygen_position(chain, i)
+    return residue.atoms[k].coords
 end
 
 """
     oxygen_coords(chain::Chain)
-    oxygen_coords(backbone::Backbone)
 
 Add oxygen atoms to the backbone of a protein, turning the coordinate array from size 3x3xL to 3x4xL-1,
 where L is the length of the backbone.
@@ -83,6 +88,14 @@ julia> oxygen_coords(chains["A"]) # returns the estimated position of oxygen ato
     The `oxygen_coords` function finds the oxygen atoms to the backbone using idealized geometry, and oxygens atom will on average deviate [0.05 Å](https://github.com/MurrellGroup/Backboner.jl/blob/main/test/protein/oxygen.jl) from original PDB positions.
     Moreover, the last oxygen atom is essentially given a random (although deterministic) orientation, as that information is lost when the backbone is reduced to 3 atoms, and there's no next nitrogen atom to compare with.
 """
-oxygen_coords(chain::Chain) = oxygen_coords(chain.backbone)
+function oxygen_coords(chain::Chain)
+    return stack(get_oxygen(chain, i) for i in 1:length(chain))
+end
+
+function assign_missing_oxygens!(chain::Chain)
+    for (i, residue) in enumerate(chain)
+        !any(==("O") ∘ (atom -> atom.name), residue.atoms) && insert!(residue.atoms, 4, Atom("O", estimate_oxygen_position(chain, i)))
+    end
+end
 
 ncaco_coords(chain::Chain) = cat(reshape(chain.backbone.coords, 3, 3, :), reshape(oxygen_coords(chain), 3, 1, :), dims=2)

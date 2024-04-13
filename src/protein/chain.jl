@@ -10,7 +10,7 @@ export phi_angles, psi_angles, omega_angles
 A `Chain` represents a chain of a protein, and is a vector of `Residue`s, which are instantiated from indexing the chain.
 
 ## Fields
-- `id::AbstractString`: A string identifier (usually a single letter).
+- `id::String`: A string identifier (usually a single letter).
 - `backbone::Backbone`: A backbone with a length divisible by 3, to ensure 3 atoms per residue (N, Ca, C).
 - `modelnum::Int`: The model number of the chain.
 - `resnums::Vector{Int}`: storing the residue numbers.
@@ -22,8 +22,9 @@ struct Chain <: AbstractVector{Residue}
     backbone::Backbone
     modelnum::Int
     resnums::Vector{Int}
-    aavector::Vector{Char} # TODO: switch to BioStructures.LongAA (from BioSequences)
+    aavector::Vector{Char}
     ssvector::Vector{Char}
+    residue_atoms_dict::Dict{Int, Vector{Atom}}
 
     function Chain(
         backbone::Backbone;
@@ -32,6 +33,7 @@ struct Chain <: AbstractVector{Residue}
         resnums::Vector{Int} = collect(1:length(backbone) ÷ 3),
         aavector::Vector{Char} = fill('G', length(backbone) ÷ 3),
         ssvector::Union{Vector{Char}, Vector{<:Integer}} = fill(' ', length(backbone) ÷ 3),
+        residue_atoms_dict::Dict{Int, Vector{Atom}} = Dict{Int, Vector{Atom}}(i => Atom[] for i in resnums),
     )
         L, r = divrem(length(backbone), 3)
         iszero(r) || throw(ArgumentError("backbone must have a length divisible by 3"))
@@ -39,7 +41,9 @@ struct Chain <: AbstractVector{Residue}
         length(aavector) == L || throw(ArgumentError("length of aavector must be equal to length of backbone divided by 3"))
         length(ssvector) == L || throw(ArgumentError("length of ssvector must be equal to length of backbone divided by 3"))
         ssvector isa Vector{<:Integer} && (ssvector = get.(('-', 'H', 'E'), ssvector, ' '))
-        return new(id, backbone, modelnum, resnums, aavector, ssvector)
+        chain = new(id, backbone, modelnum, resnums, aavector, ssvector, residue_atoms_dict)
+        assign_missing_backbone_atoms!(chain)
+        return chain
     end
 
     Chain(id::AbstractString, backbone::Backbone; kwargs...) = Chain(backbone; id=id, kwargs...)
@@ -48,7 +52,7 @@ end
 @inline Base.:(==)(chain1::Chain, chain2::Chain) = chain1.id == chain2.id && chain1.backbone == chain2.backbone && chain1.ssvector == chain2.ssvector
 @inline Base.length(chain::Chain) = length(chain.backbone) ÷ 3
 @inline Base.size(chain::Chain) = Tuple(length(chain))
-@inline Base.getindex(chain::Chain, i::Integer) = Residue(chain.resnums[i], chain.aavector[i], chain.ssvector[i])
+@inline Base.getindex(chain::Chain, i::Integer) = Residue(chain.resnums[i], chain.residue_atoms_dict[chain.resnums[i]], chain.aavector[i], chain.ssvector[i])
 
 Base.summary(chain::Chain) = "Chain $(chain.id) with $(length(chain)) residue$(length(chain) == 1 ? "" : "s")"
 Base.show(io::IO, chain::Chain) = print(io, summary(chain))
@@ -60,7 +64,17 @@ has_assigned_ss(ssvector::Vector{Char}) = all(!=(' '), ssvector)
 has_assigned_ss(chain::Chain) = has_assigned_ss(chain.ssvector)
 has_assigned_ss(protein::AbstractVector{Chain}) = all(has_assigned_ss, protein)
 
-Backboner.is_knotted(chain::Chain) = is_knotted(chain.backbone[2:3:end])
+Backboner.is_knotted(chain::Chain) = is_knotted(@view(chain.backbone[2:3:end]))
+
+function assign_missing_backbone_atoms!(chain::Chain)
+    reshaped_backbone = reshape(chain.backbone.coords, 3, 3, :)
+    for (residue_backbone_coords, residue) in zip(eachslice(reshaped_backbone, dims=3), chain)
+        atom_names = map(atom -> atom.name, residue.atoms)
+        for (name, coords) in Iterators.reverse(zip(BACKBONE_ATOM_NAMES, eachcol(residue_backbone_coords)))
+            !any(==(name), atom_names) && insert!(residue.atoms, 1, Atom(name, coords))
+        end
+    end
+end
 
 # oxygen_coords function in src/protein/oxygen.jl
 # TODO: hydrogen_coords
