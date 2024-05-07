@@ -30,7 +30,7 @@ aminoacid_sequence(chain::BioStructures.Chain, res_selector) = aminoacid_sequenc
 function get_residue_atoms_dict(residues::Vector{<:BioStructures.AbstractResidue})
     atoms = Dict{Int, Vector{Atom}}()
     for res in residues
-        append!(get!(atoms, res.number, Atom[]), Atom.(BioStructures.collectatoms(res, BioStructures.standardselector)))
+        append!(get!(atoms, res.number, Atom[]), Atom.(BioStructures.collectatoms(res, a -> BioStructures.standardselector(a) && !BioStructures.disorderselector(a))))
     end
     return atoms
 end
