@@ -1,7 +1,7 @@
 export Backbone
 
 """
-    Backbone{T <: Real} <: AbstractMatrix{T}
+    Backbone{T <: Real, M <: AbstractMatrix{T}} <: AbstractMatrix{T}
 
 The `Backbone` type is designed to efficiently store and manipulate the three-dimensional coordinates of backbone atoms.
 

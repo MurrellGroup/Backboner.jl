@@ -92,6 +92,14 @@ function oxygen_coords(chain::Chain)
     return stack(get_oxygen(chain, i) for i in 1:length(chain))
 end
 
+function assign_oxygens!(chain::Chain)
+    for (i, residue) in enumerate(chain)
+        deleteat!(residue.atoms, findfirst(==("O") ∘ (atom -> atom.name), residue.atoms))
+        insert!(residue.atoms, 4, Atom("O", estimate_oxygen_position(chain, i)))
+    end
+    return chain
+end
+
 function assign_missing_oxygens!(chain::Chain)
     for (i, residue) in enumerate(chain)
         !any(==("O") ∘ (atom -> atom.name), residue.atoms) && insert!(residue.atoms, 4, Atom("O", estimate_oxygen_position(chain, i)))
