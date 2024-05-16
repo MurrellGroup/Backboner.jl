@@ -54,6 +54,11 @@ end
 @inline Base.size(chain::Chain) = Tuple(length(chain))
 @inline Base.getindex(chain::Chain, i::Integer) = Residue(chain.resnums[i], chain.residue_atoms_dict[chain.resnums[i]], chain.aavector[i], chain.ssvector[i])
 
+function Base.getindex(chain::Protein.Chain, I::AbstractVector{<:Integer})
+    backbone = Backbone(reshape(chain.backbone.coords, 3, 3, :)[:, :, I])
+    Protein.Chain(backbone; id=chain.id, modelnum=chain.modelnum, resnums=chain.resnums[I], aavector=chain.aavector[I], ssvector=chain.ssvector[I])
+end
+
 Base.summary(chain::Chain) = "Chain $(chain.id) with $(length(chain)) residue$(length(chain) == 1 ? "" : "s")"
 Base.show(io::IO, chain::Chain) = print(io, summary(chain))
 
