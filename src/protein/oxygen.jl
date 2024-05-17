@@ -94,7 +94,8 @@ end
 
 function assign_oxygens!(chain::Chain)
     for (i, residue) in enumerate(chain)
-        deleteat!(residue.atoms, findfirst(==("O") ∘ (atom -> atom.name), residue.atoms))
+        j = findfirst(==("O") ∘ (atom -> atom.name), residue.atoms)
+        isnothing(j) || deleteat!(residue.atoms, j)
         insert!(residue.atoms, 4, Atom("O", estimate_oxygen_position(chain, i)))
     end
     return chain
