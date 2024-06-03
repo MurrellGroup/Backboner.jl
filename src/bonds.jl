@@ -1,15 +1,8 @@
-export
-    get_atom_displacements,
-    get_atom_distances,
-    get_bond_vectors,
-    get_bond_lengths,
-    get_bond_angles,
-    get_dihedrals,
-    ChainedBonds,
-    append_bonds!,
-    append_bonds,
-    prepend_bonds!,
-    prepend_bonds
+export get_atom_displacements, get_atom_distances
+export get_bond_vectors, get_bond_lengths, get_bond_angles, get_dihedrals
+export ChainedBonds
+export append_bonds!, append_bonds
+export prepend_bonds!, prepend_bonds
 
 using LinearAlgebra
 import Rotations: AngleAxis
@@ -27,9 +20,9 @@ function get_atom_distances(backbone::Backbone, start::Integer, step::Integer, s
     return column_norms(get_atom_displacements(backbone, start, step, stride))
 end
 
-get_bond_lengths(bond_vectors::AbstractMatrix{<:Real}) = column_norms(bond_vectors)
+_get_bond_lengths(bond_vectors::AbstractMatrix{<:Real}) = column_norms(bond_vectors)
 
-function get_bond_angles(bond_vectors::AbstractMatrix{T}) where T
+function _get_bond_angles(bond_vectors::AbstractMatrix{T}) where T
     us = @view(bond_vectors[:, begin:end-1])
     vs = @view(bond_vectors[:, begin+1:end])
     return π .- acos.(clamp.(column_dots(us, vs) ./ (column_norms(us) .* column_norms(vs)), -one(T), one(T)))
@@ -42,7 +35,7 @@ function batched_cross_product(A::AbstractMatrix{T}, B::AbstractMatrix{T}) where
     return [C1 C2 C3]'
 end
 
-function get_dihedrals(bond_vectors::AbstractMatrix{<:Real})
+function _get_dihedrals(bond_vectors::AbstractMatrix{<:Real})
     crosses = batched_cross_product(@view(bond_vectors[:, begin:end-1]), @view(bond_vectors[:, begin+1:end]))
     normalized_crosses = normalize_columns(crosses)
     cross_crosses = batched_cross_product(@view(normalized_crosses[:, begin:end-1]), @view(normalized_crosses[:, begin+1:end]))
@@ -54,9 +47,9 @@ function get_dihedrals(bond_vectors::AbstractMatrix{<:Real})
 end
 
 get_bond_vectors(backbone::Backbone) = get_atom_displacements(backbone, 1, 1, 1)
-get_bond_lengths(backbone::Backbone) = get_atom_distances(backbone, 1, 1, 1)
-get_bond_angles(backbone::Backbone) = get_bond_angles(get_bond_vectors(backbone))
-get_dihedrals(backbone::Backbone) = get_dihedrals(get_bond_vectors(backbone))
+get_bond_lengths(backbone::Backbone) = _get_bond_lengths(get_bond_vectors(backbone))
+get_bond_angles(backbone::Backbone) = _get_bond_angles(get_bond_vectors(backbone))
+get_dihedrals(backbone::Backbone) = _get_dihedrals(get_bond_vectors(backbone))
 
 """
     ChainedBonds{T <: Real, V <: AbstractVector{T}}
@@ -101,9 +94,9 @@ Base.reverse(bonds::ChainedBonds) = reverse!(deepcopy(bonds))
 
 function ChainedBonds(backbone::Backbone)
     bond_vectors = get_bond_vectors(backbone)
-    lengths = get_bond_lengths(bond_vectors)
-    angles = get_bond_angles(bond_vectors)
-    dihedrals = get_dihedrals(bond_vectors)
+    lengths = _get_bond_lengths(bond_vectors)
+    angles = _get_bond_angles(bond_vectors)
+    dihedrals = _get_dihedrals(bond_vectors)
     return ChainedBonds(lengths, angles, dihedrals)
 end
 

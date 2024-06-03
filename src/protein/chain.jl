@@ -22,26 +22,29 @@ struct Chain <: AbstractVector{Residue}
     backbone::Backbone
     modelnum::Int
     resnums::Vector{Int}
+    ins_codes::Vector{Char}
     aavector::Vector{Char}
     ssvector::Vector{Char}
-    residue_atoms_dict::Dict{Int, Vector{Atom}}
+    residue_atoms::Vector{Vector{Atom}}
 
     function Chain(
         backbone::Backbone;
         id::AbstractString = "A",
         modelnum::Int = 1,
         resnums::Vector{Int} = collect(1:length(backbone) ÷ 3),
+        ins_codes::Vector{Char} = fill(' ', length(backbone) ÷ 3),
         aavector::Vector{Char} = fill('G', length(backbone) ÷ 3),
         ssvector::Union{Vector{Char}, Vector{<:Integer}} = fill(' ', length(backbone) ÷ 3),
-        residue_atoms_dict::Dict{Int, Vector{Atom}} = Dict{Int, Vector{Atom}}(i => Atom[] for i in resnums),
+        residue_atoms::Vector{Vector{Atom}} = [Atom[] for i in resnums],
     )
         L, r = divrem(length(backbone), 3)
         iszero(r) || throw(ArgumentError("backbone must have a length divisible by 3"))
         length(resnums) == L || throw(ArgumentError("length of resnums must be equal to length of backbone divided by 3"))
+        length(ins_codes) == L || throw(ArgumentError("length of ins_codes must be equal to length of backbone divided by 3"))
         length(aavector) == L || throw(ArgumentError("length of aavector must be equal to length of backbone divided by 3"))
         length(ssvector) == L || throw(ArgumentError("length of ssvector must be equal to length of backbone divided by 3"))
         ssvector isa Vector{<:Integer} && (ssvector = get.(('-', 'H', 'E'), ssvector, ' '))
-        chain = new(id, backbone, modelnum, resnums, aavector, ssvector, residue_atoms_dict)
+        chain = new(id, backbone, modelnum, resnums, ins_codes, aavector, ssvector, residue_atoms)
         assign_missing_backbone_atoms!(chain)
         return chain
     end
@@ -52,11 +55,11 @@ end
 @inline Base.:(==)(chain1::Chain, chain2::Chain) = chain1.id == chain2.id && chain1.backbone == chain2.backbone && chain1.ssvector == chain2.ssvector
 @inline Base.length(chain::Chain) = length(chain.backbone) ÷ 3
 @inline Base.size(chain::Chain) = Tuple(length(chain))
-@inline Base.getindex(chain::Chain, i::Integer) = Residue(chain.resnums[i], chain.residue_atoms_dict[chain.resnums[i]], chain.aavector[i], chain.ssvector[i])
+@inline Base.getindex(chain::Chain, i::Integer) = Residue(chain.resnums[i], chain.residue_atoms[i], chain.aavector[i], chain.ssvector[i], chain.ins_codes[i])
 
 function Base.getindex(chain::Protein.Chain, I::AbstractVector{<:Integer})
     backbone = Backbone(reshape(chain.backbone.coords, 3, 3, :)[:, :, I])
-    Protein.Chain(backbone; id=chain.id, modelnum=chain.modelnum, resnums=chain.resnums[I], aavector=chain.aavector[I], ssvector=chain.ssvector[I])
+    Protein.Chain(backbone; id=chain.id, modelnum=chain.modelnum, resnums=chain.resnums[I], ins_codes=chain.ins_codes[I], aavector=chain.aavector[I], ssvector=chain.ssvector[I], residue_atoms=chain.residue_atoms[I])
 end
 
 Base.summary(chain::Chain) = "Chain $(chain.id) with $(length(chain)) residue$(length(chain) == 1 ? "" : "s")"
@@ -80,9 +83,6 @@ function assign_missing_backbone_atoms!(chain::Chain)
         end
     end
 end
-
-# oxygen_coords function in src/protein/oxygen.jl
-# TODO: hydrogen_coords
 
 """
     nitrogen_coords(chain::Chain)

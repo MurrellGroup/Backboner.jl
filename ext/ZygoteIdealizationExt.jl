@@ -74,7 +74,7 @@ function Backboner.idealize(
     ideal_angles = [ideal for (_, ideal) in zip(bonds.angles, Iterators.cycle(ideal_angles))]
     length_mask = Vector(abs.(bonds.lengths .- ideal_lengths) .< mask_tolerance)
 
-    offsets = zeros(T, size(backbone))
+    offsets = zeros(T, size(backbone.coords))
 
     function total_loss(coords, offsets, w1, w2, w3)
         offset_loss, l_loss, a_loss = ideal_loss(coords, offsets, ideal_lengths, ideal_angles, length_mask)
