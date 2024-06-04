@@ -32,10 +32,18 @@ julia> chains = readpdb("test/data/1ZAK.pdb")
  Chain B with 220 residues
 
 julia> backbone = chains[1].backbone
-3×660 Backbone{Float32, Matrix{Float32}}:
- 22.346  22.901  23.227  24.115  24.478  …  21.48   22.041  21.808  22.263  21.085
- 17.547  18.031  16.793  16.923  15.779     14.668  14.866  13.861  13.862  14.233
- 23.294  21.993  21.163  20.175  19.336      4.974   3.569   2.734   1.355   0.446
+660-element Backbone{Float32, Matrix{Float32}}:
+ [22.346, 17.547, 23.294]
+ [22.901, 18.031, 21.993]
+ [23.227, 16.793, 21.163]
+ [24.115, 16.923, 20.175]
+ [24.478, 15.779, 19.336]
+ ⋮
+ [21.48, 14.668, 4.974]
+ [22.041, 14.866, 3.569]
+ [21.808, 13.861, 2.734]
+ [22.263, 13.862, 1.355]
+ [21.085, 14.233, 0.446]
 
 julia> ChainedBonds(backbone)
 ChainedBonds{Float32, Vector{Float32}} with 659 bonds, 658 angles, and 657 dihedrals
@@ -46,10 +54,18 @@ false
 julia> import Zygote # unlock the `idealize` method for backbones
 
 julia> idealize(backbone, Float32[1.46, 1.52, 1.33], Float32[1.94, 2.04, 2.13])
-3×660 Backbone{Float32, Matrix{Float32}}:
- 22.3486  22.9058  23.2161  24.2046  24.5295  …  23.7832   24.2534   23.9791   24.3124   23.1496
- 17.5824  17.9775  16.7622  16.8852  15.827      14.3215   14.1375   12.9715   12.7012   13.0422
- 23.2899  21.9995  21.1408  20.2595  19.3075      9.99834   8.56466   7.98674   6.59122   5.67358
+660-element Backbone{Float32, Matrix{Float32}}:
+ [22.348574, 17.582397, 23.289886]
+ [22.90583, 17.977451, 21.999538]
+ [23.216103, 16.762234, 21.140835]
+ [24.204561, 16.88515, 20.259508]
+ [24.52946, 15.827013, 19.307465]
+ ⋮
+ [21.501173, 14.705252, 4.9825864]
+ [22.007494, 14.864742, 3.5582967]
+ [21.822643, 13.836198, 2.7356021]
+ [22.24875, 13.874594, 1.3396943]
+ [21.091076, 14.233609, 0.42247167]
 ```
 
 [^1]: In some contexts, the term *backbone* may be used more loosely, and allow for atoms that are not part of the main continuous chain of atoms. This package does not support storing e.g. oxygen and beta-carbon atoms in the matrix of coordinates, as they are not part of the continuous chain of atoms.

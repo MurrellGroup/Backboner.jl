@@ -60,10 +60,18 @@ A lazy way to store a backbone as a series of bond lengths, angles, and dihedral
 
 ```jldoctest
 julia> backbone = Protein.readpdb("test/data/1ZAK.pdb")["A"].backbone
-3×660 Backbone{Float32, Matrix{Float32}}:
- 22.346  22.901  23.227  24.115  24.478  25.289  26.091  26.814  …  23.137  22.572  21.48   22.041  21.808  22.263  21.085
- 17.547  18.031  16.793  16.923  15.779  14.65   14.958  13.827     13.041  14.235  14.668  14.866  13.861  13.862  14.233
- 23.294  21.993  21.163  20.175  19.336  20.009  21.056  21.652      5.676   5.844   4.974   3.569   2.734   1.355   0.446
+660-element Backbone{Float32, Matrix{Float32}}:
+ [22.346, 17.547, 23.294]
+ [22.901, 18.031, 21.993]
+ [23.227, 16.793, 21.163]
+ [24.115, 16.923, 20.175]
+ [24.478, 15.779, 19.336]
+ ⋮
+ [21.48, 14.668, 4.974]
+ [22.041, 14.866, 3.569]
+ [21.808, 13.861, 2.734]
+ [22.263, 13.862, 1.355]
+ [21.085, 14.233, 0.446]
 
 julia> bonds = ChainedBonds(backbone)
 ChainedBonds{Float32, Vector{Float32}} with 659 bonds, 658 angles, and 657 dihedrals

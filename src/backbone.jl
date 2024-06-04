@@ -1,4 +1,4 @@
-export Backbone
+export Backbone, coords
 
 """
     Backbone{T<:Real,M<:AbstractMatrix{T}} <: AbstractVector{AbstractVector{T}}
@@ -18,7 +18,7 @@ Backbone{T}(coords::M) where {T <: Real, M <: AbstractMatrix{T}} = Backbone{T, M
 Backbone{T}(coords::AbstractArray{T}) where T <: Real = Backbone{T}(reshape(coords, size(coords, 1), :))
 Backbone(coords::AbstractArray{T}) where T <: Real = Backbone{T}(coords)
 
-Base.values(backbone::Backbone) = backbone.coords
+coords(backbone::Backbone) = backbone.coords
 
 @inline Base.size(backbone::Backbone) = Tuple(size(backbone.coords, 2))
 @inline Base.getindex(backbone::Backbone, i) = Backbone(backbone.coords[:, i])
