@@ -5,37 +5,6 @@ using Rotations: QuatRotation, params
 
 centroid(P::AbstractMatrix{<:Real}) = vec(sum(P, dims=2)) ./ size(P, 2)
 
-function rotmats_to_quats(rotmats::AbstractArray{T, 3}) where T
-    trace = rotmats[1, 1, :] .+ rotmats[2, 2, :] .+ rotmats[3, 3, :]
-    qw = sqrt.(max.(0, 1 .+ trace)) / 2
-    qx = sqrt.(max.(0, 1 .+ rotmats[1, 1, :] .- rotmats[2, 2, :] .- rotmats[3, 3, :])) / 2
-    qy = sqrt.(max.(0, 1 .- rotmats[1, 1, :] .+ rotmats[2, 2, :] .- rotmats[3, 3, :])) / 2
-    qz = sqrt.(max.(0, 1 .- rotmats[1, 1, :] .- rotmats[2, 2, :] .+ rotmats[3, 3, :])) / 2
-
-    qx .= copysign.(qx, rotmats[3, 2, :] .- rotmats[2, 3, :])
-    qy .= copysign.(qy, rotmats[1, 3, :] .- rotmats[3, 1, :])
-    qz .= copysign.(qz, rotmats[2, 1, :] .- rotmats[1, 2, :])
-
-    quats = vcat(qw', qx', qy', qz')
-    return quats
-end
-
-
-function quats_to_rotmats(quats::AbstractMatrix{T}) where T
-    w = reshape(quats[1, :], 1, 1, :)
-    x = reshape(quats[2, :], 1, 1, :)
-    y = reshape(quats[3, :], 1, 1, :)
-    z = reshape(quats[4, :], 1, 1, :)
-    
-    R1 = hcat(1 .- 2 .* (y .* y .+ z .* z), 2 .* (x .* y .- z .* w), 2 .* (x .* z .+ y .* w))
-    R2 = hcat(2 .* (x .* y .+ z .* w), 1 .- 2 .* (x .* x .+ z .* z), 2 .* (y .* z .- x .* w))
-    R3 = hcat(2 .* (x .* z .- y .* w), 2 .* (y .* z .+ x .* w), 1 .- 2 .* (x .* x .+ y .* y))
-    
-    R = vcat(R1, R2, R3)
-    return reshape(R, 3, 3, size(quats, 2))
-end
-
-
 function kabsch_algorithm(P::AbstractMatrix{T}, Q::AbstractMatrix{T}) where T <: Real
     size(P) == size(Q) || throw(ArgumentError("P and Q must have the same size"))
     P_centroid = centroid(P)
