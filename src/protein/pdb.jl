@@ -53,7 +53,7 @@ function Protein.Chain(chain::BioStructures.Chain; res_selector=backboneselector
     return Protein.Chain(residues)
 end
 
-function chains(struc::BioStructures.ProteinStructure; res_selector=backboneselector)
+function chains(struc::BioStructures.MolecularStructure; res_selector=backboneselector)
     chains = Protein.Chain[]
     for model in struc, chain in model
         isempty(chain) || push!(chains, Protein.Chain(chain, res_selector=res_selector))
@@ -68,7 +68,7 @@ Loads a protein (represented as a `Vector{Protein.Chain}`) from a PDB file.
 Assumes that each residue starts with three atoms: N, CA, C.
 """
 function readpdb(pdbfile::String)
-    struc = read(pdbfile, BioStructures.PDB)
+    struc = read(pdbfile, BioStructures.PDBFormat)
     return chains(struc)
 end
 
