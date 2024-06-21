@@ -17,7 +17,7 @@ Zygote = "e88e6eb3-aa80-5325-afca-941959d7151f"
 ZygoteIdealizationExt = ["Zygote"]
 
 [compat]
-BioStructures = "3"
+BioStructures = "3, 4"
 LinearAlgebra = "1"
 PrecompileTools = "1"
 Rotations = "1"
