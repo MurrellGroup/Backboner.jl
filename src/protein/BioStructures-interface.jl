@@ -1,4 +1,11 @@
-export readpdb, writepdb
+export readcif, readpdb, writepdb
+
+using BioStructures: PDBFormat, PDBXMLFormat, MMCIFFormat, MMTFFormat
+const ProteinFileFormat = Union{PDBFormat, PDBXMLFormat, MMCIFFormat, MMTFFormat}
+export PDBFormat, PDBXMLFormat, MMCIFFormat, MMTFFormat
+
+# TODO: Vector{Chain} to MolecularStructure conversion to allow for writing to other formats than PDB
+# temporary solution could be to write pdb, read+delete pdb, write e.g. cif
 
 import BioStructures
 
@@ -53,7 +60,7 @@ function Protein.Chain(chain::BioStructures.Chain; res_selector=backboneselector
     return Protein.Chain(residues)
 end
 
-function chains(struc::BioStructures.MolecularStructure; res_selector=backboneselector)
+function collectchains(struc::BioStructures.MolecularStructure; res_selector=backboneselector)
     chains = Protein.Chain[]
     for model in struc, chain in model
         isempty(chain) || push!(chains, Protein.Chain(chain, res_selector=res_selector))
@@ -62,20 +69,20 @@ function chains(struc::BioStructures.MolecularStructure; res_selector=backbonese
 end
 
 """
-    readpdb(pdbfile::String)
+    readchains(filename::String)
 
-Loads a protein (represented as a `Vector{Protein.Chain}`) from a PDB file.
-Assumes that each residue starts with three atoms: N, CA, C.
+Loads a protein structure (represented as a `Vector{Protein.Chain}`) from a PDB file.
+Assumes that each residue has N, CA, and C atoms.
 """
-function readpdb(pdbfile::String)
-    struc = read(pdbfile, BioStructures.PDBFormat)
-    return chains(struc)
-end
+readchains(filename::AbstractString, format::Type{<:ProteinFileFormat}) = collectchains(read(filename, format))
+
+readpdb(filename::String) = readchains(filename, PDBFormat)
+readcif(filename::String) = readchains(filename, MMCIFFormat)
 
 """
     writepdb(protein::Vector{Protein.Chain}, filename)
 
-Write a protein (represented as a `Vector{Protein.Chain}`s) to a PDB file.
+Write a protein structure (represented as a `Vector{Protein.Chain}`s) to a PDB file.
 """
 function writepdb(protein::Vector{Chain}, filename)
     atom_records = BioStructures.AtomRecord[]
@@ -117,4 +124,5 @@ function writepdb(protein::Vector{Chain}, filename)
         println(io, line)
     end
     close(io)
+    return nothing
 end

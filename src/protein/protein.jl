@@ -7,7 +7,7 @@ include("atom.jl")
 include("residue.jl")
 include("chain.jl")
 include("oxygen.jl")
-include("pdb.jl")
+include("BioStructures-interface.jl")
 include("idealization.jl")
 
 end
