@@ -4,6 +4,8 @@ export nitrogen_coords, alphacarbon_coords, carbonyl_coords
 export nitrogen_alphacarbon_distances, alphacarbon_carbonyl_distances, carbonyl_nitrogen_distances
 export phi_angles, psi_angles, omega_angles
 
+using Backboner: get_atom_distances
+
 """
     Chain <: AbstractVector{Residue}
 
@@ -91,7 +93,7 @@ end
 Returns the coordinates of all nitrogen atoms in a chain, as a 3xN matrix.
 """
 nitrogen_coords(chain::Chain) = nitrogen_coords(chain.backbone)
-nitrogen_coords(backbone::Backbone) = (@view backbone[1:3:end]).coords
+nitrogen_coords(backbone::Backbone) = @views backbone[1:3:end].coords
 
 """
     alphacarbon_coords(chain::Chain)
@@ -100,7 +102,7 @@ nitrogen_coords(backbone::Backbone) = (@view backbone[1:3:end]).coords
 Returns the coordinates of all alphacarbon atoms in a chain, as a 3xN matrix.
 """
 alphacarbon_coords(chain::Chain) = alphacarbon_coords(chain.backbone)
-alphacarbon_coords(backbone::Backbone) = (@view backbone[2:3:end]).coords
+alphacarbon_coords(backbone::Backbone) = @views backbone[2:3:end].coords
 
 """
     carbonyl_coords(chain::Chain)
@@ -109,7 +111,7 @@ alphacarbon_coords(backbone::Backbone) = (@view backbone[2:3:end]).coords
 Returns the coordinates of all carbonyl atoms in a chain, as a 3xN matrix.
 """
 carbonyl_coords(chain::Chain) = carbonyl_coords(chain.backbone)
-carbonyl_coords(backbone::Backbone) = (@view backbone[3:3:end]).coords
+carbonyl_coords(backbone::Backbone) = @views backbone[3:3:end].coords
 
 
 """
@@ -121,7 +123,7 @@ Calculate the distances between all pairs of contiguous nitrogen and alpha-carbo
 Returns a vector of distances of length `length(chain)`.
 """
 nitrogen_alphacarbon_distances(chain::Chain) = nitrogen_alphacarbon_distances(chain.backbone)
-nitrogen_alphacarbon_distances(backbone::Backbone) = get_atom_distances(backbone, 1, 1, 3)
+nitrogen_alphacarbon_distances(backbone::Backbone) = get_atom_distances(backbone, 1, 1, 3) |> vec
 nitrogen_alphacarbon_distances(bonds::ChainedBonds) = bonds.lengths[1:3:end]
 
 """
@@ -133,7 +135,7 @@ Calculate the distances between all pairs of contiguous alpha-carbon and carbony
 Returns a vector of distances of length `length(chain)`.
 """
 alphacarbon_carbonyl_distances(chain::Chain) = alphacarbon_carbonyl_distances(chain.backbone)
-alphacarbon_carbonyl_distances(backbone::Backbone) = get_atom_distances(backbone, 2, 1, 3)
+alphacarbon_carbonyl_distances(backbone::Backbone) = get_atom_distances(backbone, 2, 1, 3) |> vec
 alphacarbon_carbonyl_distances(bonds::ChainedBonds) = bonds.lengths[2:3:end]
 
 """
@@ -145,7 +147,7 @@ Calculate the distances between all pairs of contiguous carbonyl and nitrogen at
 Returns a vector of distances of length `length(chain) - 1`.
 """
 carbonyl_nitrogen_distances(chain::Chain) = carbonyl_nitrogen_distances(chain.backbone)
-carbonyl_nitrogen_distances(backbone::Backbone) = get_atom_distances(backbone, 3, 1, 3)
+carbonyl_nitrogen_distances(backbone::Backbone) = get_atom_distances(backbone, 3, 1, 3) |> vec
 carbonyl_nitrogen_distances(bonds::ChainedBonds) = bonds.lengths[3:3:end]
 
 

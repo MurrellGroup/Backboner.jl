@@ -8,15 +8,14 @@ The `Backbone` type is designed to efficiently store and manipulate the three-di
 struct Backbone{T<:Real,M<:AbstractMatrix{T}} <: AbstractVector{AbstractVector{T}}
     coords::M
 
-    function Backbone{T,M}(coords::M) where {T<:Real,M<:AbstractMatrix{T}}
+    function Backbone{T,M}(coords::M) where {T,M}
         size(coords, 1) == 3 || throw(ArgumentError("Expected the first dimension of coords to have a size of 3"))
         return new(coords)
     end
 end
 
-Backbone{T}(coords::M) where {T <: Real, M <: AbstractMatrix{T}} = Backbone{T, M}(coords)
-Backbone{T}(coords::AbstractArray{T}) where T <: Real = Backbone{T}(reshape(coords, size(coords, 1), :))
-Backbone(coords::AbstractArray{T}) where T <: Real = Backbone{T}(coords)
+Backbone(coords::M) where {T<:Real,M<:AbstractMatrix{T}} = Backbone{T,M}(coords)
+Backbone(coords::A) where {T<:Real,A<:AbstractArray{T}} = Backbone(reshape(coords, size(coords, 1), :))
 
 coords(backbone::Backbone) = backbone.coords
 

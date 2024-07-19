@@ -41,7 +41,7 @@ julia> chains = readpdb("test/data/1ZAK.pdb")
  Chain B with 220 residues
 
 julia> backbone = chains[1].backbone
-660-element Backbone{Float32, Matrix{Float32}}:
+660-element Backbone{Float64, Matrix{Float64}}:
  [22.346, 17.547, 23.294]
  [22.901, 18.031, 21.993]
  [23.227, 16.793, 21.163]
@@ -55,15 +55,15 @@ julia> backbone = chains[1].backbone
  [21.085, 14.233, 0.446]
 
 julia> ChainedBonds(backbone)
-ChainedBonds{Float32, Vector{Float32}} with 659 bonds, 658 angles, and 657 dihedrals
+ChainedBonds{Float64, Vector{Float64}} with 659 bonds, 658 angles, and 657 dihedrals
 
 julia> is_knotted(backbone)
 false
 
 julia> import Zygote # unlock the `idealize` method for backbones
 
-julia> idealize(backbone, Float32[1.46, 1.52, 1.33], Float32[1.94, 2.04, 2.13])
-660-element Backbone{Float32, Matrix{Float32}}:
+julia> idealize(backbone, Float64[1.46, 1.52, 1.33], Float64[1.94, 2.04, 2.13])
+660-element Backbone{Float64, Matrix{Float64}}:
  [22.348574, 17.582397, 23.289886]
  [22.90583, 17.977451, 21.999538]
  [23.216103, 16.762234, 21.140835]

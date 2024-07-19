@@ -2,5 +2,5 @@ using Backboner.Protein
 
 include("residue.jl")
 include("chain.jl")
-include("pdb.jl")
+include("BioStructures-interface.jl")
 include("idealization.jl")

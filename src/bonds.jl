@@ -1,34 +1,36 @@
-export get_atom_displacements, get_atom_distances
 export get_bond_vectors, get_bond_lengths, get_bond_angles, get_dihedrals
 export ChainedBonds
 export append_bonds!, append_bonds
 export prepend_bonds!, prepend_bonds
 
+#= TODO:
+lengths -> bond_lengths
+angles -> bond_angles
+dihedrals -> torsional_angles
+=#
+
 using LinearAlgebra
 import Rotations: AngleAxis
 
-column_sums(columns::AbstractMatrix{<:Real}) = vec(sum(columns, dims=1))
-column_norms(columns::AbstractMatrix{<:Real}) = sqrt.(column_sums(abs2.(columns)))
-column_dots(columns1::AbstractMatrix{T}, columns2::AbstractMatrix{T}) where T = column_sums(columns1 .* columns2)
-normalize_columns(columns::AbstractMatrix{<:Real}) = columns ./ column_norms(columns)'
+norms(A::AbstractArray{<:Real}; dims=1) = sqrt.(sum(abs2, A; dims))
+dots(A1::AbstractArray{T}, A2::AbstractMatrix{T}; dims=1) where T <: Real = sum(A1 .* A2; dims)
+normalize_slices(A::AbstractArray{<:Real}; dims=1) = A ./ norms(A; dims)
 
-function get_atom_displacements(backbone::Backbone, start::Integer, step::Integer, stride::Integer)
-    return @view(backbone.coords[:, start+step:stride:end]) .- @view(backbone.coords[:, start:stride:end-step])
-end
+get_atom_displacements(backbone::Backbone, start::Integer, step::Integer, stride::Integer) =
+    backbone.coords[:, start+step:stride:end] .- backbone.coords[:, start:stride:end-step]
 
-function get_atom_distances(backbone::Backbone, start::Integer, step::Integer, stride::Integer)
-    return column_norms(get_atom_displacements(backbone, start, step, stride))
-end
+get_atom_distances(backbone::Backbone, start::Integer, step::Integer, stride::Integer) =
+    norms(get_atom_displacements(backbone, start, step, stride))
 
-_get_bond_lengths(bond_vectors::AbstractMatrix{<:Real}) = column_norms(bond_vectors)
+_get_bond_lengths(bond_vectors::AbstractMatrix{<:Real}) = norms(bond_vectors)
 
 function _get_bond_angles(bond_vectors::AbstractMatrix{T}) where T
-    us = @view(bond_vectors[:, begin:end-1])
-    vs = @view(bond_vectors[:, begin+1:end])
-    return π .- acos.(clamp.(column_dots(us, vs) ./ (column_norms(us) .* column_norms(vs)), -one(T), one(T)))
+    us = bond_vectors[:, begin:end-1]
+    vs = bond_vectors[:, begin+1:end]
+    return π .- acos.(clamp.(dots(us, vs) ./ (norms(us) .* norms(vs)), -one(T), one(T)))
 end
 
-function batched_cross_product(A::AbstractMatrix{T}, B::AbstractMatrix{T}) where T <: Real
+function batched_cross(A::AbstractMatrix{T}, B::AbstractMatrix{T}) where T <: Real
     C1 = selectdim(A, 1, 2) .* selectdim(B, 1, 3) .- selectdim(A, 1, 3) .* selectdim(B, 1, 2)
     C2 = selectdim(A, 1, 3) .* selectdim(B, 1, 1) .- selectdim(A, 1, 1) .* selectdim(B, 1, 3)
     C3 = selectdim(A, 1, 1) .* selectdim(B, 1, 2) .- selectdim(A, 1, 2) .* selectdim(B, 1, 1)
@@ -36,20 +38,20 @@ function batched_cross_product(A::AbstractMatrix{T}, B::AbstractMatrix{T}) where
 end
 
 function _get_dihedrals(bond_vectors::AbstractMatrix{<:Real})
-    crosses = batched_cross_product(@view(bond_vectors[:, begin:end-1]), @view(bond_vectors[:, begin+1:end]))
-    normalized_crosses = normalize_columns(crosses)
-    cross_crosses = batched_cross_product(@view(normalized_crosses[:, begin:end-1]), @view(normalized_crosses[:, begin+1:end]))
-    normalized_bond_vectors = normalize_columns(bond_vectors)
-    sin_values = column_dots(cross_crosses, @view(normalized_bond_vectors[:, begin+1:end-1]))
-    cos_values = column_dots(@view(normalized_crosses[:, begin:end-1]), @view(normalized_crosses[:, begin+1:end]))
+    crosses = batched_cross(bond_vectors[:, begin:end-1], bond_vectors[:, begin+1:end])
+    normalized_crosses = normalize_slices(crosses)
+    cross_crosses = batched_cross(normalized_crosses[:, begin:end-1], normalized_crosses[:, begin+1:end])
+    normalized_bond_vectors = normalize_slices(bond_vectors)
+    sin_values = dots(cross_crosses, normalized_bond_vectors[:, begin+1:end-1])
+    cos_values = dots(normalized_crosses[:, begin:end-1], normalized_crosses[:, begin+1:end])
     dihedrals = atan.(sin_values, cos_values)
     return dihedrals
 end
 
 get_bond_vectors(backbone::Backbone) = get_atom_displacements(backbone, 1, 1, 1)
-get_bond_lengths(backbone::Backbone) = _get_bond_lengths(get_bond_vectors(backbone))
-get_bond_angles(backbone::Backbone) = _get_bond_angles(get_bond_vectors(backbone))
-get_dihedrals(backbone::Backbone) = _get_dihedrals(get_bond_vectors(backbone))
+get_bond_lengths(backbone::Backbone) = _get_bond_lengths(get_bond_vectors(backbone)) |> vec
+get_bond_angles(backbone::Backbone) = _get_bond_angles(get_bond_vectors(backbone)) |> vec
+get_dihedrals(backbone::Backbone) = _get_dihedrals(get_bond_vectors(backbone)) |> vec
 
 """
     ChainedBonds{T <: Real, V <: AbstractVector{T}}
@@ -60,21 +62,21 @@ A lazy way to store a backbone as a series of bond lengths, angles, and dihedral
 
 ```jldoctest
 julia> backbone = Protein.readpdb("test/data/1ZAK.pdb")["A"].backbone
-660-element Backbone{Float32, Matrix{Float32}}:
+660-element Backbone{Float64, Matrix{Float64}}:
  [22.346, 17.547, 23.294]
  [22.901, 18.031, 21.993]
  [23.227, 16.793, 21.163]
  [24.115, 16.923, 20.175]
  [24.478, 15.779, 19.336]
  ⋮
- [21.48, 14.668, 4.974]
+ [21.480, 14.668, 4.974]
  [22.041, 14.866, 3.569]
  [21.808, 13.861, 2.734]
  [22.263, 13.862, 1.355]
  [21.085, 14.233, 0.446]
 
 julia> bonds = ChainedBonds(backbone)
-ChainedBonds{Float32, Vector{Float32}} with 659 bonds, 658 angles, and 657 dihedrals
+ChainedBonds{Float64, Vector{Float64}} with 659 bonds, 658 angles, and 657 dihedrals
 ```
 """
 struct ChainedBonds{T <: Real, V <: AbstractVector{T}}
@@ -102,9 +104,9 @@ Base.reverse(bonds::ChainedBonds) = reverse!(deepcopy(bonds))
 
 function ChainedBonds(backbone::Backbone)
     bond_vectors = get_bond_vectors(backbone)
-    lengths = _get_bond_lengths(bond_vectors)
-    angles = _get_bond_angles(bond_vectors)
-    dihedrals = _get_dihedrals(bond_vectors)
+    lengths = _get_bond_lengths(bond_vectors) |> vec
+    angles = _get_bond_angles(bond_vectors) |> vec
+    dihedrals = _get_dihedrals(bond_vectors) |> vec
     return ChainedBonds(lengths, angles, dihedrals)
 end
 

@@ -6,12 +6,14 @@
 [![Build Status](https://github.com/MurrellGroup/Backboner.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/MurrellGroup/Backboner.jl/actions/workflows/CI.yml?query=branch%3Amain)
 [![Coverage](https://codecov.io/gh/MurrellGroup/Backboner.jl/branch/main/graph/badge.svg)](https://codecov.io/gh/MurrellGroup/Backboner.jl)
 
-Backboner is a Julia package that offers a set of types and functions for working with molecular *backbones*: defined here as continuous chains of bonded atoms.[^1] The package provides a few different types for representing backbones:
+This package offers types and functions for working with molecular *backbones*, defined here as continuous chains of bonded atoms.[^1]
+
+Backbones can be represented with different types:
 - `Backbone`: a type containing a 3xN matrix of coordinates
 - `ChainedBonds`: a type that holds vectors of bond lengths, bond angles, and dihedral angles
 - `Frames`: a collection of rotations and translations (e.g. for representing orientations and locations of protein residues)
 
-The `Protein` submodule contains functions and types for working specifically with proteins. A protein can be loaded from a PDB file using the `Backboner.Protein.readpdb` function, which returns a `Vector{Backboner.Protein.Chain}`. Conversely, a `Vector{Backboner.Protein.Chain}` instance can be written to a PDB file using the `writepdb` function.
+The `Protein` submodule contains utilities for working specifically with proteins. A protein can be loaded from a PDB file using the `Backboner.Protein.readpdb` function, which returns a `Vector{Backboner.Protein.Chain}`. Conversely, a `Vector{Backboner.Protein.Chain}` instance can be written to a PDB file using the `writepdb` function.
 
 ## Installation
 
@@ -32,29 +34,29 @@ julia> chains = readpdb("test/data/1ZAK.pdb")
  Chain B with 220 residues
 
 julia> backbone = chains[1].backbone
-660-element Backbone{Float32, Matrix{Float32}}:
+660-element Backbone{Float64, Matrix{Float64}}:
  [22.346, 17.547, 23.294]
  [22.901, 18.031, 21.993]
  [23.227, 16.793, 21.163]
  [24.115, 16.923, 20.175]
  [24.478, 15.779, 19.336]
  ⋮
- [21.48, 14.668, 4.974]
+ [21.480, 14.668, 4.974]
  [22.041, 14.866, 3.569]
  [21.808, 13.861, 2.734]
  [22.263, 13.862, 1.355]
  [21.085, 14.233, 0.446]
 
 julia> ChainedBonds(backbone)
-ChainedBonds{Float32, Vector{Float32}} with 659 bonds, 658 angles, and 657 dihedrals
+ChainedBonds{Float64, Vector{Float64}} with 659 bonds, 658 angles, and 657 dihedrals
 
 julia> is_knotted(backbone)
 false
 
 julia> import Zygote # unlock the `idealize` method for backbones
 
-julia> idealize(backbone, Float32[1.46, 1.52, 1.33], Float32[1.94, 2.04, 2.13])
-660-element Backbone{Float32, Matrix{Float32}}:
+julia> idealize(backbone, Float64[1.46, 1.52, 1.33], Float64[1.94, 2.04, 2.13])
+660-element Backbone{Float64, Matrix{Float64}}:
  [22.348574, 17.582397, 23.289886]
  [22.90583, 17.977451, 21.999538]
  [23.216103, 16.762234, 21.140835]

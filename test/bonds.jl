@@ -9,13 +9,13 @@
         ])
 
         @testset "get_atom_displacements" begin
-            @test get_atom_displacements(backbone, 1, 1, 2) == [1.0 3.0; 2.0 4.0; 2.0 0.0]
-            @test get_atom_displacements(backbone, 2, 1, 2) == [1.0; 2.0; 2.0;;]
+            @test Backboner.get_atom_displacements(backbone, 1, 1, 2) == [1.0 3.0; 2.0 4.0; 2.0 0.0]
+            @test Backboner.get_atom_displacements(backbone, 2, 1, 2) == [1.0; 2.0; 2.0;;]
         end
 
         @testset "get_atom_distances" begin
-            @test get_atom_distances(backbone, 1, 1, 2) == [3.0, 5.0]
-            @test get_atom_distances(backbone, 2, 1, 2) == [3.0]
+            @test Backboner.get_atom_distances(backbone, 1, 1, 2) == [3.0 5.0]
+            @test Backboner.get_atom_distances(backbone, 2, 1, 2) == [3.0;;]
         end
 
         @testset "get_bond_vectors" begin
@@ -66,7 +66,7 @@
 
         io = IOBuffer()
         show(io, bonds)
-        @test String(take!(io)) == "ChainedBonds{Float32, Vector{Float32}} with 455 bonds, 454 angles, and 453 dihedrals"
+        @test String(take!(io)) == "ChainedBonds{Float64, Vector{Float64}} with 455 bonds, 454 angles, and 453 dihedrals"
     end
 
     @testset "append_bonds" begin

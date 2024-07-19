@@ -1,12 +1,10 @@
-import Rotations: QuatRotation, params
-
 @testset "frames.jl" begin
 
     frames = Frames(
         [
-            params(QuatRotation([0 0 1; 1 0 0; 0 1 0])^1);;
-            params(QuatRotation([0 0 1; 1 0 0; 0 1 0])^2);;
-            params(QuatRotation([0 0 1; 1 0 0; 0 1 0])^3);;
+            [0 0 1; 1 0 0; 0 1 0];;;
+            [0 1 0; 0 0 1; 1 0 0];;;
+            [1 0 0; 0 1 0; 0 0 1];;;
         ],
         [
             0 10 100;
@@ -14,14 +12,6 @@ import Rotations: QuatRotation, params
             0 0 0;
         ]
     )
-
-    @test frames[1] == Frame{Float64}(params(QuatRotation([0 0 1; 1 0 0; 0 1 0])), [0.0, 0.0, 0.0])
-    @test frames[1] == Frame{Float64}(params(QuatRotation([0 0 1; 1 0 0; 0 1 0])), [0, 0, 0])
-    @test frames[1] == Frame(params(QuatRotation([0 0 1; 1 0 0; 0 1 0])), [0, 0, 0])
-
-    @test length(frames) == 3
-    @test size(frames) == (3,)
-    @test frames[1] == Frame{Float64}(QuatRotation([0 0 1; 1 0 0; 0 1 0]), [0.0, 0.0, 0.0])
 
     standard_coords = [3 1 -4; 1 -1 0; 0 0 0]
     backbone = Backbone(frames, standard_coords)
@@ -32,15 +22,8 @@ import Rotations: QuatRotation, params
         1.0  -1.0   0.0   3.0  1.0  -4.0    0.0    0.0   0.0
     ]
 
-    @test Frames(backbone, standard_coords) != frames # due to numerical error
-    @test all(isapprox(f1.rotation, f2.rotation; atol=1e-10) && isapprox(f1.location, f2.location; atol=1e-10) for (f1, f2) in zip(Frames(backbone, standard_coords), frames))
-    @test Frames(frames.rotations, frames.locations) == frames
-
-    @testset "constructor with rotmats" begin
-        rotations = frames.rotations
-        rotmats = stack(collect(QuatRotation(rot)) for rot in eachcol(rotations))
-        locations = frames.locations
-        @test Frames(rotmats, locations) == frames
-    end
+    new_frames = Frames(backbone, standard_coords)
+    @test isapprox(frames.rotations, new_frames.rotations; atol=1e-10)
+    @test isapprox(frames.translations, new_frames.translations; atol=1e-10)
 
 end

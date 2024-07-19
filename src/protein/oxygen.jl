@@ -78,7 +78,7 @@ julia> chains = readpdb("test/data/1ZAK.pdb")
  Chain B with 220 residues
 
 julia> oxygen_coords(chains["A"]) # returns the estimated position of oxygen atoms in chain A (~0.05 Å mean deviation)
-3×220 Matrix{Float32}:
+3×220 Matrix{Float64}:
  22.6697  25.1719  24.7761  25.8559  …  24.7911   22.7649   22.6578   21.24
  15.7257  13.505   13.5151  11.478      15.0888   12.2361   15.8825   14.2933
  21.4295  19.5663  22.8638  25.3283      7.95346   4.81901   3.24164  -0.742424        
