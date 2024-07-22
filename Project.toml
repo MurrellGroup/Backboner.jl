@@ -19,8 +19,8 @@ ZygoteIdealizationExt = ["Zygote"]
 
 [compat]
 BioStructures = "4"
-NNlib = "0.9"
 LinearAlgebra = "1"
+NNlib = "0.9"
 PrecompileTools = "1"
 Rotations = "1"
 StaticArrays = "1"
