@@ -1,3 +1,5 @@
+using Backboner: get_atom_distances
+
 """
     Chain <: AbstractVector{Residue}
 

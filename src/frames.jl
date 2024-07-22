@@ -59,18 +59,18 @@ Backbone(frames::Frames, ideal_coords::AbstractMatrix{<:Real}) = Backbone(frames
 ### Quaternion support
 
 # takes a batch of unit quaternions in a 4xN matrix and returns a batch of rotation matrices in a 3x3xN array
-function quaternions_to_rotation_matrices(q::AbstractArray{<:Real,2})
-    size(q, 1) == 4 || throw(ArgumentError("Quaternion batch must have shape 4xN"))
+function quaternions_to_rotation_matrices(Q::AbstractArray{<:Real,2})
+    size(Q, 1) == 4 || throw(ArgumentError("Quaternion batch must have shape 4xN"))
 
-    sx = 2q[1, :] .* q[2, :]
-    sy = 2q[1, :] .* q[3, :]
-    sz = 2q[1, :] .* q[4, :]
-    xx = 2q[2, :] .^ 2
-    xy = 2q[2, :] .* q[3, :]
-    xz = 2q[2, :] .* q[4, :]
-    yy = 2q[3, :] .^ 2
-    yz = 2q[3, :] .* q[4, :]
-    zz = 2q[4, :] .^ 2  
+    sx = 2Q[1, :] .* Q[2, :]
+    sy = 2Q[1, :] .* Q[3, :]
+    sz = 2Q[1, :] .* Q[4, :]
+    xx = 2Q[2, :] .^ 2
+    xy = 2Q[2, :] .* Q[3, :]
+    xz = 2Q[2, :] .* Q[4, :]
+    yy = 2Q[3, :] .^ 2
+    yz = 2Q[3, :] .* Q[4, :]
+    zz = 2Q[4, :] .^ 2  
 
     r1 = 1 .- (yy + zz)
     r2 = xy - sz
@@ -89,7 +89,7 @@ Frames(rotations::AbstractArray{<:Real,2}, translations::AbstractArray{<:Real,2}
 
 # takes a batch of rotation matrices in a 3x3xN array and returns a batch of unit quaternions in a 4xN matrix
 function rotation_matrices_to_quaternions(R::AbstractArray{<:Real,3})
-    size(q)[1:2] == (3,3) || throw(ArgumentError("Rotation matrix batch must have shape 3x3xN"))
+    size(R)[1:2] == (3,3) || throw(ArgumentError("Rotation matrix batch must have shape 3x3xN"))
     # 1x1xN
     r11, r12, r13 = R[1:1, 1:1, :], R[1:1, 2:2, :], R[1:1, 3:3, :]
     r21, r22, r23 = R[2:2, 1:1, :], R[2:2, 2:2, :], R[2:2, 3:3, :]
