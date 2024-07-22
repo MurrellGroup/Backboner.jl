@@ -85,7 +85,7 @@ function quaternions_to_rotation_matrices(q::AbstractArray{<:Real,2})
     return reshape(vcat(r1', r4', r7', r2', r5', r8', r3', r6', r9'), 3, 3, :)
 end
 
-Frames(rotations::AbstractArray{T,2}, translations::AbstractArray{T,2}) = Frames(quaternions_to_rotation_matrices(rotations), translations)
+Frames(rotations::AbstractArray{<:Real,2}, translations::AbstractArray{<:Real,2}) = Frames(quaternions_to_rotation_matrices(rotations), translations)
 
 # takes a batch of rotation matrices in a 3x3xN array and returns a batch of unit quaternions in a 4xN matrix
 function rotation_matrices_to_quaternions(R::AbstractArray{<:Real,3})
