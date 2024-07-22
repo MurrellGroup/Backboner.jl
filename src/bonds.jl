@@ -1,16 +1,5 @@
-export get_bond_vectors, get_bond_lengths, get_bond_angles, get_dihedrals
-export ChainedBonds
-export append_bonds!, append_bonds
-export prepend_bonds!, prepend_bonds
-
-#= TODO:
-lengths -> bond_lengths
-angles -> bond_angles
-dihedrals -> torsional_angles
-=#
-
 using LinearAlgebra
-import Rotations: AngleAxis
+using Rotations: AngleAxis
 
 norms(A::AbstractArray{<:Real}; dims=1) = sqrt.(sum(abs2, A; dims))
 dots(A1::AbstractArray{T}, A2::AbstractMatrix{T}; dims=1) where T <: Real = sum(A1 .* A2; dims)
@@ -92,6 +81,10 @@ end
 
 @inline ChainedBonds{T}(lengths::V, angles::V, dihedrals::V) where {T <: Real, V <: AbstractVector{T}} = ChainedBonds{T, V}(lengths, angles, dihedrals)
 @inline ChainedBonds(lengths::V, angles::V, dihedrals::V) where {T <: Real, V <: AbstractVector{T}} = ChainedBonds{T, V}(lengths, angles, dihedrals)
+
+get_bond_lengths(bonds::ChainedBonds) = bonds.lengths
+get_bond_angles(bonds::ChainedBonds) = bonds.angles
+get_bond_dihedrals(bonds::ChainedBonds) = bonds.dihedrals
 
 function Base.reverse!(bonds::ChainedBonds)
     reverse!(bonds.lengths)

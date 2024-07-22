@@ -1,5 +1,3 @@
-export Atom
-
 struct Atom
     name::String
     coords::AbstractVector{<:Real}

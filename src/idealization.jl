@@ -1,5 +1,3 @@
-export idealize
-
 """
 !!! note
     Zygote must be imported in order to activate the `ZygoteIdealizationExt` extension,

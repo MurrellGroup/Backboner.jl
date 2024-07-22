@@ -1,5 +1,3 @@
-export Frames
-
 using LinearAlgebra
 using NNlib
 

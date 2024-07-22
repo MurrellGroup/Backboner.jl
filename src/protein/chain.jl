@@ -1,11 +1,3 @@
-export Chain
-export has_assigned_ss
-export nitrogen_coords, alphacarbon_coords, carbonyl_coords
-export nitrogen_alphacarbon_distances, alphacarbon_carbonyl_distances, carbonyl_nitrogen_distances
-export phi_angles, psi_angles, omega_angles
-
-using Backboner: get_atom_distances
-
 """
     Chain <: AbstractVector{Residue}
 

@@ -1,20 +1,8 @@
-export readchains, writechains
-
-export readpdb, writepdb, readcif, writecif
-#@deprecate readpdb(path::AbstractString) readchains(path::AbstractString)
-#@deprecate writepdb(path::AbstractString, chains) writechains(path::AbstractString, chains)
-
 using BioStructures: PDBFormat, MMCIFFormat
-const ProteinFileFormat = Union{PDBFormat, MMCIFFormat}
-export PDBFormat, MMCIFFormat
-
-#= TODO:
-Vector{Chain} to MolecularStructure conversion to allow for writing to other formats than PDB
-temporary solution could be to write pdb, read+delete pdb, write e.g. cif
-=#
 
 import BioStructures
 
+const ProteinFileFormat = Union{PDBFormat, MMCIFFormat}
 const AMINOACIDS = Set("ACDEFGHIKLMNPQRSTVWY")
 const BACKBONE_ATOM_NAMES = ["N", "CA", "C"]
 

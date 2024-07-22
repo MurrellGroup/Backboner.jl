@@ -1,5 +1,3 @@
-export Backbone, coords
-
 """
     Backbone{T<:Real,M<:AbstractMatrix{T}} <: AbstractVector{AbstractVector{T}}
 

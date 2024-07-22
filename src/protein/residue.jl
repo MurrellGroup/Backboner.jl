@@ -1,5 +1,3 @@
-export Residue
-
 const threeletter_aa_names = Dict{Char, String}([Char(v) => k for (k, v) in BioStructures.threeletter_to_aa])
 
 struct Residue

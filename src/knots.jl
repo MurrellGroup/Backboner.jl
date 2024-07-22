@@ -1,8 +1,4 @@
-export is_knotted
-
-import StaticArrays: SVector
-
-#=
+"""
 This file contains an implementation of the KnotFind algorithm, described by Khatib, Weirauch,
 and Rohl in 2006, in the paper "Rapid knot detection and application to protein structure prediction"
 
@@ -16,7 +12,9 @@ and the algorithm proceeds to the triangle with the next smallest metric value.
 This is repeated until the last triple is reached and simplified, if possible.
  5. When it terminates, the protein contains no knots if there's only one segment left.
  6. Run again with a different metric if the chain is not simplified to make sure it wasn't a false positive.
-=#
+"""
+
+using StaticArrays: SVector # leads to an insane speed-up
 
 triangle_distance(a::V, b::V, c::V) where V <: AbstractVector{<:Real} = norm(c - a)
 triangle_area(a::V, b::V, c::V) where V <: AbstractVector{<:Real} = norm(cross(b - a, c - a)) / 2
