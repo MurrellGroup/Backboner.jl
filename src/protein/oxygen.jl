@@ -1,5 +1,3 @@
-export oxygen_coords
-
 ## Warning: wonky code ahead
 
 using LinearAlgebra
