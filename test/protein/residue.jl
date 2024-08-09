@@ -1,5 +1,5 @@
 @testset "residue.jl" begin
-    residue = Residue(1, Atom[], 'A', 'H', 'A')
+    residue = Protein.Residue(1, Protein.Atom[], 'A', 'H', 'A')
 
     io = IOBuffer()
     show(io, residue)

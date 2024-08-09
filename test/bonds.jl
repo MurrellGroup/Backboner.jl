@@ -46,8 +46,8 @@
             @test get_bond_angles(backbone) ≈ [π/2, π/2, π/2, π/2, π/2]
         end
 
-        @testset "dihedrals" begin
-            @test get_dihedrals(backbone) ≈ [π/2, π, -π/2, π/4]
+        @testset "torsional angles" begin
+            @test get_torsional_angles(backbone) ≈ [π/2, π, -π/2, π/4]
         end
     
     end
@@ -61,12 +61,14 @@
         @testset "invertibility" begin
             bonds1 = ChainedBonds(backbone)
             bonds2 = ChainedBonds(Backbone(ChainedBonds(backbone)))
-            @test bonds1.lengths ≈ bonds2.lengths && bonds1.angles ≈ bonds2.angles && bonds1.dihedrals ≈ bonds2.dihedrals
+            @test get_bond_lengths(bonds1) ≈ get_bond_lengths(bonds2)
+            @test get_bond_angles(bonds1) ≈ get_bond_angles(bonds2)
+            @test get_torsional_angles(bonds1) ≈ get_torsional_angles(bonds2)
         end
 
         io = IOBuffer()
         show(io, bonds)
-        @test String(take!(io)) == "ChainedBonds{Float64, Vector{Float64}} with 455 bonds, 454 angles, and 453 dihedrals"
+        @test String(take!(io)) == "ChainedBonds{Float64, Vector{Float64}} with 455 bond lengths, 454 bond angles, and 453 torsional angles"
     end
 
     @testset "append_bonds" begin
@@ -81,8 +83,8 @@
 
         subbackbone = backbone[1:n-k]
         bonds = ChainedBonds(backbone)
-        new_backbone = append_bonds(subbackbone, bonds.lengths[end-k+1:end], bonds.angles[end-k+1:end], bonds.dihedrals[end-k+1:end])
-        @test new_backbone.coords ≈ backbone.coords
+        new_backbone = append_bonds(subbackbone, get_bond_lengths(bonds)[end-k+1:end], get_bond_angles(bonds)[end-k+1:end], get_torsional_angles(bonds)[end-k+1:end])
+        @test coords(new_backbone) ≈ coords(backbone)
     end
 
     @testset "prepend_bonds" begin
@@ -97,7 +99,7 @@
 
         subbackbone = backbone[end-k+1:end]
         bonds = ChainedBonds(backbone)
-        new_backbone = prepend_bonds(subbackbone, bonds.lengths[1:n-k], bonds.angles[1:n-k], bonds.dihedrals[1:n-k])
+        new_backbone = prepend_bonds(subbackbone, get_bond_lengths(bonds)[1:n-k], get_bond_angles(bonds)[1:n-k], get_torsional_angles(bonds)[1:n-k])
         @test new_backbone.coords ≈ backbone.coords
     end
 

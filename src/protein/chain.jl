@@ -13,7 +13,7 @@ A `Chain` represents a chain of a protein, and is a vector of `Residue`s, which 
 - `aavector::Vector{Char}`: storing the amino acid sequence.
 - `ssvector::Vector{Char}`: storing the secondary structure.
 """
-struct Chain <: AbstractVector{Residue}
+mutable struct Chain <: AbstractVector{Residue}
     id::String
     backbone::Backbone
     modelnum::Int
@@ -118,7 +118,7 @@ Returns a vector of distances of length `length(chain)`.
 """
 nitrogen_alphacarbon_distances(chain::Chain) = nitrogen_alphacarbon_distances(chain.backbone)
 nitrogen_alphacarbon_distances(backbone::Backbone) = get_atom_distances(backbone, 1, 1, 3) |> vec
-nitrogen_alphacarbon_distances(bonds::ChainedBonds) = bonds.lengths[1:3:end]
+nitrogen_alphacarbon_distances(bonds::ChainedBonds) = get_bond_lengths(bonds)[1:3:end]
 
 """
     alphacarbon_carbonyl_distances(chain::Chain)
@@ -130,7 +130,7 @@ Returns a vector of distances of length `length(chain)`.
 """
 alphacarbon_carbonyl_distances(chain::Chain) = alphacarbon_carbonyl_distances(chain.backbone)
 alphacarbon_carbonyl_distances(backbone::Backbone) = get_atom_distances(backbone, 2, 1, 3) |> vec
-alphacarbon_carbonyl_distances(bonds::ChainedBonds) = bonds.lengths[2:3:end]
+alphacarbon_carbonyl_distances(bonds::ChainedBonds) = get_bond_lengths(bonds)[2:3:end]
 
 """
     carbonyl_nitrogen_distances(chain::Chain)
@@ -142,7 +142,7 @@ Returns a vector of distances of length `length(chain) - 1`.
 """
 carbonyl_nitrogen_distances(chain::Chain) = carbonyl_nitrogen_distances(chain.backbone)
 carbonyl_nitrogen_distances(backbone::Backbone) = get_atom_distances(backbone, 3, 1, 3) |> vec
-carbonyl_nitrogen_distances(bonds::ChainedBonds) = bonds.lengths[3:3:end]
+carbonyl_nitrogen_distances(bonds::ChainedBonds) = get_bond_lengths(bonds)[3:3:end]
 
 
 """
@@ -154,7 +154,7 @@ Calculate the angles at the nitrogen atoms (C-N-Ca angles) of a chains backbone,
 """
 nitrogen_angles(chain::Chain) = nitrogen_angles(chain.backbone)
 nitrogen_angles(backbone::Backbone) = nitrogen_angles(ChainedBonds(backbone))
-nitrogen_angles(bonds::ChainedBonds) = @view bonds.angles[3:3:end]
+nitrogen_angles(bonds::ChainedBonds) = @view get_bond_angles(bonds)[3:3:end]
 
 """
     alphacarbon_angles(chain::Chain)
@@ -164,7 +164,7 @@ Calculate the angles at the alphacarbon atoms (N-Ca-C angles) of a chains backbo
 """
 alphacarbon_angles(chain::Chain) = alphacarbon_angles(chain.backbone)
 alphacarbon_angles(backbone::Backbone) = alphacarbon_angles(ChainedBonds(backbone))
-alphacarbon_angles(bonds::ChainedBonds) = @view bonds.angles[1:3:end]
+alphacarbon_angles(bonds::ChainedBonds) = @view get_bond_angles(bonds)[1:3:end]
 
 """
     carbonyl_angles(chain::Chain)
@@ -174,7 +174,7 @@ Calculate the angles at the carbonyl atoms (Ca-C-N angles) of a chain's backbone
 """
 carbonyl_angles(chain::Chain) = carbonyl_angles(chain.backbone)
 carbonyl_angles(backbone::Backbone) = carbonyl_angles(ChainedBonds(backbone))
-carbonyl_angles(bonds::ChainedBonds) = @view bonds.angles[2:3:end]
+carbonyl_angles(bonds::ChainedBonds) = @view get_bond_angles(bonds)[2:3:end]
 
 
 """
@@ -186,7 +186,7 @@ Calculate the phi (φ) angles of a chain's backbone, or take directly from a pre
 """
 phi_angles(chain::Chain) = phi_angles(chain.backbone)
 phi_angles(backbone::Backbone) = phi_angles(ChainedBonds(backbone))
-phi_angles(bonds::ChainedBonds) = @view bonds.dihedrals[3:3:end]
+phi_angles(bonds::ChainedBonds) = @view get_torsional_angles(bonds)[3:3:end]
 
 """
     psi_angles(chain::Chain)
@@ -197,7 +197,7 @@ Calculate the psi (ψ) angles of a chain's backbone, or take directly from a pre
 """
 psi_angles(chain::Chain) = psi_angles(chain.backbone)
 psi_angles(backbone::Backbone) = psi_angles(ChainedBonds(backbone))
-psi_angles(bonds::ChainedBonds) = @view bonds.dihedrals[1:3:end]
+psi_angles(bonds::ChainedBonds) = @view get_torsional_angles(bonds)[1:3:end]
 
 """
     omega_angles(chain::Chain)
@@ -208,7 +208,7 @@ Calculate the omega (Ω) angles of a chain's backbone, or take directly from a p
 """
 omega_angles(chain::Chain) = omega_angles(chain.backbone)
 omega_angles(backbone::Backbone) = omega_angles(ChainedBonds(backbone))
-omega_angles(bonds::ChainedBonds) = @view bonds.dihedrals[2:3:end]
+omega_angles(bonds::ChainedBonds) = @view get_torsional_angles(bonds)[2:3:end]
 
 
 # TODO: append_residues! function. also get the Residue type sorted out. user shouldn't need to create it manually.

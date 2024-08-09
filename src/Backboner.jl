@@ -8,7 +8,7 @@ export prepend_bonds!, prepend_bonds
 export get_bond_vectors
 export get_bond_lengths
 export get_bond_angles
-export get_dihedrals
+export get_torsional_angles
 
 export Frames
 

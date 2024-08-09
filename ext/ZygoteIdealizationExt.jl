@@ -70,9 +70,9 @@ function Backboner.idealize(
     n_iterations = 300,
 ) where T <: Real
     bonds = ChainedBonds(backbone)
-    ideal_lengths = [ideal for (_, ideal) in zip(bonds.lengths, Iterators.cycle(ideal_lengths))]
-    ideal_angles = [ideal for (_, ideal) in zip(bonds.angles, Iterators.cycle(ideal_angles))]
-    length_mask = Vector(abs.(bonds.lengths .- ideal_lengths) .< mask_tolerance)
+    ideal_lengths = [ideal for (_, ideal) in zip(get_bond_lengths(bonds), Iterators.cycle(ideal_lengths))]
+    ideal_angles = [ideal for (_, ideal) in zip(get_bond_angles(bonds), Iterators.cycle(ideal_angles))]
+    length_mask = Vector(abs.(get_bond_lengths(bonds) .- ideal_lengths) .< mask_tolerance)
 
     offsets = zeros(T, size(backbone.coords))
 

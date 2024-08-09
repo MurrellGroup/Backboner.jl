@@ -7,10 +7,8 @@ using ..Backboner
 import BioStructures
 
 include("atom.jl")
-export Atom
 
 include("residue.jl")
-export Residue
 
 include("chain.jl")
 export Chain
