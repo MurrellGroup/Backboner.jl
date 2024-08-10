@@ -41,7 +41,7 @@ mutable struct Chain <: AbstractVector{Residue}
         length(ssvector) == L || throw(ArgumentError("length of ssvector must be equal to length of backbone divided by 3"))
         ssvector isa Vector{<:Integer} && (ssvector = get.(('-', 'H', 'E'), ssvector, ' '))
         chain = new(id, backbone, modelnum, resnums, ins_codes, aavector, ssvector, residue_atoms)
-        assign_missing_backbone_atoms!(chain)
+        assign_backbone_atoms!(chain)
         return chain
     end
 
@@ -70,12 +70,23 @@ has_assigned_ss(protein::AbstractVector{Chain}) = all(has_assigned_ss, protein)
 
 Backboner.is_knotted(chain::Chain) = is_knotted(@view(chain.backbone[2:3:end]))
 
-function assign_missing_backbone_atoms!(chain::Chain)
+function offset!(chain::Chain, pos::AbstractVector{<:Real})
+    for i in 1:length(chain)
+        for atom in chain.residue_atoms[i]
+            atom.coords .+= pos
+        end
+    end
+end
+
+function assign_backbone_atoms!(chain::Chain)
     reshaped_backbone = reshape(chain.backbone.coords, 3, 3, :)
     for (residue_backbone_coords, residue) in zip(eachslice(reshaped_backbone, dims=3), chain)
         atom_names = map(atom -> atom.name, residue.atoms)
         for (name, coords) in Iterators.reverse(zip(BACKBONE_ATOM_NAMES, eachcol(residue_backbone_coords)))
-            !any(==(name), atom_names) && insert!(residue.atoms, 1, Atom(name, coords))
+            j = findfirst(==(name), atom_names)
+            !isnothing(j) && deleteat!(residue.atoms, j)
+            isnothing(j) && (j = 1)
+            insert!(residue.atoms, j, Atom(name, coords))
         end
     end
 end

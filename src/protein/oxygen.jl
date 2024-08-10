@@ -41,7 +41,6 @@ end
 
 function estimate_oxygen_position(chain::Chain, i::Int)
     1 <= i <= length(chain) || throw(ArgumentError("Index $i out of bounds for chain of length $(length(chain))"))
-    chain[i].atoms
     if i == length(chain)
         N = chain.backbone[3*(i-1)+1]
         CA = chain.backbone[3*(i-1)+2]
