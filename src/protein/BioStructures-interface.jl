@@ -59,14 +59,17 @@ end
 
 function Protein.Chain(chain::BioStructures.Chain, selector=backbone_residue_selector)
     residues = BioStructures.collectresidues(chain, selector)
-    isempty(residues) && return Protein.Chain(BioStructures.chainid(chain), Backbone(Matrix{Float64}(undef, 3, 0)); modelnum=BioStructures.modelnumber(chain))
+    isempty(residues) && return Protein.Chain(Backbone(Matrix{Float64}(undef, 3, 0)); id=BioStructures.chainid(chain), modelnum=BioStructures.modelnumber(chain))
     return Protein.Chain(residues)
 end
 
 function collectchains(struc::BioStructures.MolecularStructure, selector=backbone_residue_selector)
     chains = Protein.Chain[]
     for model in struc, chain in model
-        isempty(chain) || push!(chains, Protein.Chain(chain, selector))
+        if !isempty(chain)
+            protein_chain = Protein.Chain(chain, selector)
+            !isempty(protein_chain) && push!(chains, protein_chain)
+        end
     end
     return chains
 end
