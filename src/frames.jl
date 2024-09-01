@@ -1,8 +1,10 @@
 using LinearAlgebra
 using NNlib
 
-centroid(A::AbstractArray{<:Real}; dims=2) = sum(A; dims) ./ size(A, 2)
+centroid(A::AbstractArray{<:Real}; dims=2) = sum(A; dims) ./ prod(size(A)[dims])
 
+#= FIXME: P currently gets aligned to Q, should be the other way around?
+Fix in breaking release, and document the change. =#
 # TODO: batched version? possible? batched svd?
 function kabsch_algorithm(P::AbstractMatrix{T}, Q::AbstractMatrix{T}) where T <: Real
     size(P) == size(Q) || throw(ArgumentError("P and Q must have the same size"))

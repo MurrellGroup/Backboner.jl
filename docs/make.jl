@@ -10,8 +10,7 @@ makedocs(;
     doctest = false,
     pages = [
         "Overview" => "index.md",
-        "Backboner API" => "backboner.md",
-        "Protein API" => "protein.md",
+        "API Reference" => "API.md",
     ],
     authors = "Anton Oresten",
     checkdocs = :all,

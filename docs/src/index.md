@@ -13,12 +13,14 @@ end
 [![Build Status](https://github.com/MurrellGroup/Backboner.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/MurrellGroup/Backboner.jl/actions/workflows/CI.yml?query=branch%3Amain)
 [![Coverage](https://codecov.io/gh/MurrellGroup/Backboner.jl/branch/main/graph/badge.svg)](https://codecov.io/gh/MurrellGroup/Backboner.jl)
 
-Backboner is a Julia package that offers a set of types and functions for working with molecular *backbones*: defined here as continuous chains of bonded atoms.[^1] The package provides a few different types for representing backbones:
+This package offers types and functions for working with molecular *backbones*, defined here as continuous chains of bonded atoms.[^1]
+
+Backbones can be represented with different types:
 - `Backbone`: a type containing a 3xN matrix of coordinates
-- `ChainedBonds`: a type that holds vectors of bond lengths, bond angles, and dihedral angles
+- `ChainedBonds`: a type that holds vectors of bond lengths, bond angles, and torsion angles
 - `Frames`: a collection of rotations and translations (e.g. for representing orientations and locations of protein residues)
 
-The `Protein` submodule contains functions and types for working specifically with proteins. A protein can be loaded from a PDB file using the `Backboner.Protein.readpdb` function, which returns a `Vector{Backboner.Protein.Chain}`. Conversely, a `Vector{Backboner.Protein.Chain}` instance can be written to a PDB file using the `writepdb` function.
+Most functions are implemented especially with differentiability in mind, and can be used in combination with automatic differentiation packages like [Zygote.jl](https://github.com/FluxML/Zygote.jl).
 
 [View the source code on GitHub](https://github.com/MurrellGroup/Backboner.jl) (licensed under MIT).
 
@@ -33,48 +35,25 @@ add Backboner
 ## Example usage
 
 ```julia
-julia> using Backboner, Backboner.Protein
+julia> using Backboner
 
-julia> chains = readpdb("test/data/1ZAK.pdb")
-2-element Vector{Chain}:
- Chain A with 220 residues
- Chain B with 220 residues
-
-julia> backbone = chains[1].backbone
-660-element Backbone{Float64, Matrix{Float64}}:
- [22.346, 17.547, 23.294]
- [22.901, 18.031, 21.993]
- [23.227, 16.793, 21.163]
- [24.115, 16.923, 20.175]
- [24.478, 15.779, 19.336]
- ⋮
- [21.48, 14.668, 4.974]
- [22.041, 14.866, 3.569]
- [21.808, 13.861, 2.734]
- [22.263, 13.862, 1.355]
- [21.085, 14.233, 0.446]
+julia> backbone = Backbone(rand(Float32, 3, 9))
+10-element Backbone{Float32, Matrix{Float32}}:
+ [0.48967552, 0.91008425, 0.5339774]
+ [0.2951318, 0.38963223, 0.8952989]
+ [0.83763623, 0.5279301, 0.3407849]
+ [0.88848716, 0.643387, 0.76827604]
+ [0.697279, 0.63588345, 0.0889622]
+ [0.08590478, 0.6086006, 0.6478121]
+ [0.06308746, 0.6704904, 0.55852276]
+ [0.46147835, 0.56259614, 0.7884294]
+ [0.9694153, 0.052023113, 0.08127427]
 
 julia> ChainedBonds(backbone)
-ChainedBonds{Float64, Vector{Float64}} with 659 bonds, 658 angles, and 657 dihedrals
+ChainedBonds{Float32, Vector{Float32}} with 8 bond lengths, 7 bond angles, and 6 torsion angles
 
 julia> is_knotted(backbone)
 false
-
-julia> import Zygote # unlock the `idealize` method for backbones
-
-julia> idealize(backbone, Float64[1.46, 1.52, 1.33], Float64[1.94, 2.04, 2.13])
-660-element Backbone{Float64, Matrix{Float64}}:
- [22.348574, 17.582397, 23.289886]
- [22.90583, 17.977451, 21.999538]
- [23.216103, 16.762234, 21.140835]
- [24.204561, 16.88515, 20.259508]
- [24.52946, 15.827013, 19.307465]
- ⋮
- [21.501173, 14.705252, 4.9825864]
- [22.007494, 14.864742, 3.5582967]
- [21.822643, 13.836198, 2.7356021]
- [22.24875, 13.874594, 1.3396943]
- [21.091076, 14.233609, 0.42247167]
 ```
 
 [^1]: In some contexts, the term *backbone* may be used more loosely, and allow for atoms that are not part of the main continuous chain of atoms. This package does not support storing e.g. oxygen and beta-carbon atoms in the matrix of coordinates, as they are not part of the continuous chain of atoms.

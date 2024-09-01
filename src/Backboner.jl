@@ -8,22 +8,16 @@ export prepend_bonds!, prepend_bonds
 export get_bond_vectors
 export get_bond_lengths
 export get_bond_angles
-export get_torsional_angles
+export get_torsion_angles
 
 export Frames
 
 export is_knotted
 
-export idealize
-
-export Protein
-
 include("backbone.jl")
 include("bonds.jl")
 include("frames.jl")
 include("knots.jl")
-include("idealization.jl")
-include("protein/protein.jl")
 
 using PrecompileTools
 
@@ -33,8 +27,9 @@ using PrecompileTools
     bonds = ChainedBonds(backbone)
     Backbone(bonds)
 
-    frames = Frames(backbone, Protein.STANDARD_TRIANGLE_ANGSTROM)
-    Backbone(frames, Protein.STANDARD_TRIANGLE_ANGSTROM)
+    standard = randn(3,3)
+    frames = Frames(backbone, standard)
+    Backbone(frames, standard)
 
     is_knotted(backbone)
 end
