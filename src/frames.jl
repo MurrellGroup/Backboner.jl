@@ -1,6 +1,3 @@
-using LinearAlgebra
-using NNlib
-
 centroid(A::AbstractArray{<:Real}; dims=2) = sum(A; dims) ./ prod(size(A)[dims])
 
 #= FIXME: P currently gets aligned to Q, should be the other way around?
@@ -53,7 +50,7 @@ function Frames(backbone::Backbone{T}, ideal_coords::AbstractMatrix{<:Real}) whe
     return Frames(rotations, translations)
 end
 
-(frames::Frames{T})(coords::AbstractMatrix{T}) where T<:Real = frames.rotations ⊠ (coords .- centroid(coords)) .+ reshape(frames.translations, 3, 1, :)
+(frames::Frames{T})(coords::AbstractMatrix{T}) where T<:Real = batched_mul(frames.rotations, (coords .- centroid(coords))) .+ reshape(frames.translations, 3, 1, :)
 (frames::Frames{T})(coords::AbstractMatrix{<:Real}) where T<:Real = frames(T.(coords))
 
 Backbone(frames::Frames, ideal_coords::AbstractMatrix{<:Real}) = Backbone(frames(ideal_coords))
@@ -116,18 +113,19 @@ function rotation_matrices_to_quaternions(R::AbstractArray{<:Real,3})
           1 .- r11 - r22 + r33]
 
     # 4x4xN
-    Q = hcat(q0, q1, q2, q3)
+    qs = hcat(q0, q1, q2, q3)
 
     # 1x4xN, norm of each quaternion
-    norms = sqrt.(sum(abs2, Q, dims=1))
+    q_norms = norms(qs, dims=1)
 
-    exp_norms = exp.(norms)
+    exp_norms = exp.(q_norms)
+
     # 1x4xN, norm weights
     weights = exp_norms ./ sum(exp_norms, dims=3)
 
     # batched matmul, 4x1xN
-    q = Q ⊠ reshape(weights, 4, 1, :)
-    q_normalized = q ./ sqrt.(sum(abs2, q, dims=1))
+    Q = batched_mul(qs, reshape(weights, 4, 1, :))
+    Q_normalized = q ./ norms(Q, dims=1)
     
     return reshape(q_normalized, 4, :)
 end

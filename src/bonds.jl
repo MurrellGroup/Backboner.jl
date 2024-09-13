@@ -1,17 +1,24 @@
-using LinearAlgebra
-using Rotations: AngleAxis
-
-norms(A::AbstractArray{<:Real}; dims=1) = sqrt.(sum(abs2, A; dims))
-dots(A1::AbstractArray{T}, A2::AbstractMatrix{T}; dims=1) where T <: Real = sum(A1 .* A2; dims)
-normalize_slices(A::AbstractArray{<:Real}; dims=1) = A ./ norms(A; dims)
-
 # TODO: see if views would be differentiable (GPU?)
 
-get_atom_displacements(backbone::Backbone, start::Integer, step::Integer, stride::Integer) =
+"""
+    get_displacements(backbone, start, step, stride)
+
+Get the displacements between points in `backbone`, where `start` is the index of the first point,
+`step` is the offset of the other points along the backbone (e.g. `1` for bond vectors),
+and `stride` is the number of points to skip after each step.
+"""
+get_displacements(backbone::Backbone, start::Integer, step::Integer, stride::Integer) =
     backbone.coords[:, start+step:stride:end] .- backbone.coords[:, start:stride:end-step]
 
-get_atom_distances(backbone::Backbone, start::Integer, step::Integer, stride::Integer) =
-    norms(get_atom_displacements(backbone, start, step, stride))
+"""
+    get_distances(backbone, start, step, stride)
+
+Get the Euclidean distances between points in `backbone`, where `start` is the index of the first point,
+`step` is the offset of the other points along the backbone (e.g. `1` for bond lengths),
+and `stride` is the number of points to skip after each step.
+"""
+get_distances(backbone::Backbone, start::Integer, step::Integer, stride::Integer) =
+    norms(get_displacements(backbone, start, step, stride))
 
 _get_bond_lengths(bond_vectors::AbstractMatrix{<:Real}) = norms(bond_vectors)
 
@@ -39,32 +46,20 @@ function _get_torsion_angles(bond_vectors::AbstractMatrix{<:Real})
     return torsion_angles
 end
 
-get_bond_vectors(backbone::Backbone) = get_atom_displacements(backbone, 1, 1, 1)
+get_bond_vectors(backbone::Backbone) = get_displacements(backbone, 1, 1, 1)
 get_bond_lengths(backbone::Backbone) = _get_bond_lengths(get_bond_vectors(backbone)) |> vec
 get_bond_angles(backbone::Backbone) = _get_bond_angles(get_bond_vectors(backbone)) |> vec
 get_torsion_angles(backbone::Backbone) = _get_torsion_angles(get_bond_vectors(backbone)) |> vec
 
 """
-    ChainedBonds{T <: Real, V <: AbstractVector{T}}
+    ChainedBonds{T<:Real,V<:AbstractVector{T}}
 
 A lazy way to store a backbone as a series of bond lengths, bond angles, and torsion_angles.
 
 # Examples
 
 ```jldoctest
-julia> backbone = Protein.readpdb("test/data/1ZAK.pdb")["A"].backbone
-660-element Backbone{Float64, Matrix{Float64}}:
- [22.346, 17.547, 23.294]
- [22.901, 18.031, 21.993]
- [23.227, 16.793, 21.163]
- [24.115, 16.923, 20.175]
- [24.478, 15.779, 19.336]
- ⋮
- [21.480, 14.668, 4.974]
- [22.041, 14.866, 3.569]
- [21.808, 13.861, 2.734]
- [22.263, 13.862, 1.355]
- [21.085, 14.233, 0.446]
+julia> backbone = Backbone(randn(Float32, 3, 660));
 
 julia> bonds = ChainedBonds(backbone)
 ChainedBonds{Float64, Vector{Float64}} with 659 bond lengths, 658 bond angles, and 657 torsion angles
@@ -129,7 +124,7 @@ function get_backbone_start(bonds::ChainedBonds{T}) where T
     return Backbone(coords)
 end
 
-function get_next_atom(bonds, i, A, B, C)
+function get_next_point(bonds, i, A, B, C)
     AB, BC = B - A, C - B
     n_AB, n_BC = normalize(AB), normalize(BC)
     CD_init = n_BC * bonds.bond_lengths[i-1]
@@ -156,7 +151,7 @@ function Backbone(
     @assert 3 <= l <= L
     coords[:, 1:l] = backbone_start.coords
     for i in l+1:L
-        coords[:, i] = get_next_atom(bonds, i, eachcol(coords[:, i-3:i-1])...)
+        coords[:, i] = get_next_point(bonds, i, eachcol(coords[:, i-3:i-1])...)
     end
     return Backbone(coords)
 end
@@ -177,12 +172,12 @@ end
     append_bonds(backbone, bond_lengths, bond_angles, torsion_angles)
 """
 function append_bonds(backbone::Backbone, bond_lengths::AbstractVector{<:Real}, bond_angles::AbstractVector{<:Real}, torsion_angles::AbstractVector{<:Real})
-    length(backbone) >= 3 || throw(ArgumentError("backbone must have at least 3 atoms"))
+    length(backbone) >= 3 || throw(ArgumentError("backbone must have at least 3 points"))
     length(bond_lengths) == length(bond_angles) == length(torsion_angles) || throw(ArgumentError("bond_lengths, bond_angles, and torsion_angles must have the same length"))
-    last_three_atoms_backbone = backbone[end-2:end]
-    bonds_end = ChainedBonds(last_three_atoms_backbone)
+    last_three_points_backbone = backbone[end-2:end]
+    bonds_end = ChainedBonds(last_three_points_backbone)
     append_bonds!(bonds_end, bond_lengths, bond_angles, torsion_angles)
-    backbone_end = Backbone(bonds_end, backbone_start=last_three_atoms_backbone)
+    backbone_end = Backbone(bonds_end, backbone_start=last_three_points_backbone)
     new_backbone = Backbone(cat(backbone.coords, backbone_end[4:end].coords, dims=2))
     return new_backbone
 end
@@ -202,12 +197,12 @@ end
     prepend_bonds(backbone, bond_lengths, bond_angles, torsion_angles)
 """
 function prepend_bonds(backbone::Backbone, bond_lengths::AbstractVector{<:Real}, bond_angles::AbstractVector{<:Real}, torsion_angles::AbstractVector{<:Real})
-    length(backbone) >= 3 || throw(ArgumentError("backbone must have at least 3 atoms"))
-    first_three_atoms_backbone = backbone[1:3]
-    bonds_start = ChainedBonds(first_three_atoms_backbone)
+    length(backbone) >= 3 || throw(ArgumentError("backbone must have at least 3 points"))
+    first_three_points_backbone = backbone[1:3]
+    bonds_start = ChainedBonds(first_three_points_backbone)
     prepend_bonds!(bonds_start, bond_lengths, bond_angles, torsion_angles)
     reverse!(bonds_start)
-    backbone_start = Backbone(bonds_start, backbone_start=first_three_atoms_backbone[3:-1:1])
+    backbone_start = Backbone(bonds_start, backbone_start=first_three_points_backbone[3:-1:1])
     new_backbone = Backbone(cat(backbone_start[end:-1:4].coords, backbone.coords, dims=2))
     return new_backbone
 end

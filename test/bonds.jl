@@ -8,14 +8,14 @@
             0.0 2.0 4.0 4.0
         ])
 
-        @testset "get_atom_displacements" begin
-            @test Backboner.get_atom_displacements(backbone, 1, 1, 2) == [1.0 3.0; 2.0 4.0; 2.0 0.0]
-            @test Backboner.get_atom_displacements(backbone, 2, 1, 2) == [1.0; 2.0; 2.0;;]
+        @testset "get_displacements" begin
+            @test Backboner.get_displacements(backbone, 1, 1, 2) == [1.0 3.0; 2.0 4.0; 2.0 0.0]
+            @test Backboner.get_displacements(backbone, 2, 1, 2) == [1.0; 2.0; 2.0;;]
         end
 
-        @testset "get_atom_distances" begin
-            @test Backboner.get_atom_distances(backbone, 1, 1, 2) == [3.0 5.0]
-            @test Backboner.get_atom_distances(backbone, 2, 1, 2) == [3.0;;]
+        @testset "get_distances" begin
+            @test Backboner.get_distances(backbone, 1, 1, 2) == [3.0 5.0]
+            @test Backboner.get_distances(backbone, 2, 1, 2) == [3.0;;]
         end
 
         @testset "get_bond_vectors" begin
