@@ -125,7 +125,7 @@ function rotation_matrices_to_quaternions(R::AbstractArray{<:Real,3})
 
     # batched matmul, 4x1xN
     Q = batched_mul(qs, reshape(weights, 4, 1, :))
-    Q_normalized = q ./ norms(Q, dims=1)
+    Q_normalized = Q ./ norms(Q, dims=1)
     
-    return reshape(q_normalized, 4, :)
+    return reshape(Q_normalized, 4, :)
 end

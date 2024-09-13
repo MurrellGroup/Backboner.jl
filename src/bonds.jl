@@ -20,6 +20,9 @@ and `stride` is the number of points to skip after each step.
 get_distances(backbone::Backbone, start::Integer, step::Integer, stride::Integer) =
     norms(get_displacements(backbone, start, step, stride))
 
+const get_atom_displacements = get_displacements
+const get_atom_distances = get_distances
+
 _get_bond_lengths(bond_vectors::AbstractMatrix{<:Real}) = norms(bond_vectors)
 
 function _get_bond_angles(bond_vectors::AbstractMatrix{T}) where T
