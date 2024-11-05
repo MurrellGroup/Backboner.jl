@@ -91,6 +91,7 @@ function is_knotted(
     backbone::Backbone,
     metrics::Vector{Function} = [triangle_distance, triangle_area],
 )
+    length(backbone) < 2 && return false
     points = SVector{3}.(backbone) # convert to StaticArrays for 40x performance lmao
     for metric in metrics
         length(simplify(points, metric)) == 2 && return false
