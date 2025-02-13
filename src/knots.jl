@@ -16,15 +16,13 @@ This is repeated until the last triple is reached and simplified, if possible.
 
 using StaticArrays: SVector # leads to an insane speed-up
 
-triangle_distance(a::V, b::V, c::V) where V <: AbstractVector{<:Real} = norm(c - a)
-triangle_area(a::V, b::V, c::V) where V <: AbstractVector{<:Real} = norm(cross(b - a, c - a)) / 2
+triangle_distance(a, _, c) = norm(c - a)
+triangle_area(a, b, c) = norm(cross(b - a, c - a)) / 2
 
-triangle_values(metric::Function, points::Vector{V}) where {T <: Real, V <: AbstractVector{T}} = T[metric(points[i:i+2]...) for i in 1:length(points)-2]
+triangle_values(metric::Function, points::Vector{<:AbstractVector{T}}) where T<:Real = T[metric(points[i:i+2]...) for i in 1:length(points)-2]
 
-function line_segment_intersects_triangle(
-    segment_start::V, segment_end::V,
-    a::V, b::V, c::V,
-) where {T <: Real, V <: AbstractVector{T}}
+function line_segment_intersects_triangle(segment_start, segment_end, a, b, c)
+    T = eltype(segment_start)
     segment_vector = segment_end - segment_start
     edge1, edge2 = b - a, c - a
     segment_cross_e2 = cross(segment_vector, edge2)
@@ -41,7 +39,7 @@ function line_segment_intersects_triangle(
     return eps(T) < t <= 1 # segment intersection
 end
 
-function check_intersection(points::Vector{V}, i::Int) where {T <: Real, V <: AbstractVector{T}}
+function check_intersection(points::Vector{<:AbstractVector{T}}, i::Int) where T<:Real
     a, b, c = points[i-1], points[i], points[i+1] 
     for j in 1:length(points)-1
         i-2 <= j <= i+1 && continue
@@ -52,7 +50,7 @@ function check_intersection(points::Vector{V}, i::Int) where {T <: Real, V <: Ab
 end
 
 # for removing an atom from a backbone, and updating adjacent triangles
-function remove_atom!(points::Vector{V}, i::Int, metric_values::Vector{T}, metric::Function) where {T <: Real, V <: AbstractVector{T}}
+function remove_atom!(points::Vector{<:AbstractVector{T}}, i::Int, metric_values::Vector{T}, metric::Function) where T<:Real
     m = length(metric_values)
     triangle_index = i - 1
     triangle_index > 1 && (metric_values[triangle_index-1] = metric(points[i-2], points[i-1], points[i+1]))
@@ -62,7 +60,7 @@ function remove_atom!(points::Vector{V}, i::Int, metric_values::Vector{T}, metri
     return nothing
 end
 
-function simplify!(points::Vector{V}, metric::Function) where {T <: Real, V <: AbstractVector{T}}
+function simplify!(points::Vector{<:AbstractVector{T}}, metric::Function) where T<:Real
     metric_values = triangle_values(metric, points) # Vector{T} of length n-2
     while !isempty(metric_values)
         order = sortperm(metric_values) # TODO: calculate once outside while loop, update in `remove_atom!`
@@ -80,17 +78,14 @@ function simplify!(points::Vector{V}, metric::Function) where {T <: Real, V <: A
     return points
 end
 
-simplify(points::Vector{V}, metric::Function) where {T <: Real, V <: AbstractVector{T}} = simplify!(deepcopy(points), metric)
+simplify(points::Vector{<:AbstractVector{T}}, metric::Function) where T<:Real = simplify!(deepcopy(points), metric)
 
 """
     is_knotted(backbone::Backbone)
 
 Check if a backbone is knotted.
 """
-function is_knotted(
-    backbone::Backbone,
-    metrics::Vector{Function} = [triangle_distance, triangle_area],
-)
+function is_knotted(backbone::Backbone, metrics::Vector{Function} = [triangle_distance, triangle_area])
     length(backbone) < 2 && return false
     points = SVector{3}.(backbone) # convert to StaticArrays for 40x performance lmao
     for metric in metrics

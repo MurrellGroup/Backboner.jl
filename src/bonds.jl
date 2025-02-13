@@ -31,7 +31,7 @@ function _get_bond_angles(bond_vectors::AbstractMatrix{T}) where T
     return π .- acos.(clamp.(dots(us, vs) ./ (norms(us) .* norms(vs)), -one(T), one(T)))
 end
 
-function batched_cross(A::AbstractMatrix{T}, B::AbstractMatrix{T}) where T <: Real
+function batched_cross(A::AbstractMatrix{T}, B::AbstractMatrix{T}) where T<:Real
     C1 = selectdim(A, 1, 2) .* selectdim(B, 1, 3) .- selectdim(A, 1, 3) .* selectdim(B, 1, 2)
     C2 = selectdim(A, 1, 3) .* selectdim(B, 1, 1) .- selectdim(A, 1, 1) .* selectdim(B, 1, 3)
     C3 = selectdim(A, 1, 1) .* selectdim(B, 1, 2) .- selectdim(A, 1, 2) .* selectdim(B, 1, 1)

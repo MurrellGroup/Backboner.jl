@@ -1,9 +1,9 @@
-centroid(A::AbstractArray{<:Real}; dims=2) = sum(A; dims) ./ prod(size(A)[dims])
+centroid(A::AbstractArray{<:Real}; dims=2) = sum(A; dims) / prod(size(A)[dims])
 
 #= FIXME: P currently gets aligned to Q, should be the other way around?
 Fix in breaking release, and document the change. =#
 # TODO: batched version? possible? batched svd?
-function kabsch_algorithm(P::AbstractMatrix{T}, Q::AbstractMatrix{T}) where T <: Real
+function kabsch_algorithm(P::AbstractMatrix{T}, Q::AbstractMatrix{T}) where T<:Real
     size(P) == size(Q) || throw(ArgumentError("P and Q must have the same size"))
     P_centroid = centroid(P)
     Q_centroid = centroid(Q)
@@ -21,23 +21,16 @@ end
 struct Frames{T<:Real,A<:AbstractArray{T,3},B<:AbstractArray{T,2}}
     rotations::A
     translations::B
-
-    function Frames{T,A,B}(rotations::A, translations::B) where {T,A,B}
-        size(rotations)[1:2] == (3,3) || throw(ArgumentError("rotations must be a 3x3xL array"))
-        size(translations, 1) == 3 || throw(ArgumentError("translations must be a 3xN matrix"))
-        size(rotations, 3) == size(translations, 2) || throw(ArgumentError("rotations and translations must have the same number of columns"))
-        return new(rotations, translations)
-    end
 end
 
-Frames(rotations::A, translations::B) where {T<:Real,A<:AbstractArray{T,3},B<:AbstractArray{T,2}} = Frames{T,A,B}(rotations, translations)
-
-function Frames(rotations::AbstractArray{<:Real}, translations::AbstractArray{<:Real})
-    T = promote_type(eltype(rotations), eltype(translations))
-    return Frames(T.(rotations), T.(translations))
+function Frames(rotations::A, translations::B) where {T<:Real,A<:AbstractArray{T,3},B<:AbstractArray{T,2}}
+    size(rotations)[1:2] == (3,3) || throw(ArgumentError("rotations must be a 3x3xL array"))
+    size(translations, 1) == 3 || throw(ArgumentError("translations must be a 3xN matrix"))
+    size(rotations, 3) == size(translations, 2) || throw(ArgumentError("rotations and translations must have the same number of columns"))
+    return Frames{T,A,B}(rotations, translations)
 end
 
-function Frames(backbone::Backbone{T}, ideal_coords::AbstractMatrix{<:Real}) where T <: Real
+function Frames(backbone::Backbone{T}, ideal_coords::AbstractMatrix{<:Real}) where T<:Real
     backbone = Backbone(backbone.coords)
     ideal_coords = T.(ideal_coords)
     L, r = divrem(length(backbone), size(ideal_coords, 2))
