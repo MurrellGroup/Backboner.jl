@@ -21,13 +21,13 @@ end
 struct Frames{T<:Real,A<:AbstractArray{T,3},B<:AbstractArray{T,2}}
     rotations::A
     translations::B
-end
 
-function Frames(rotations::A, translations::B) where {T<:Real,A<:AbstractArray{T,3},B<:AbstractArray{T,2}}
-    size(rotations)[1:2] == (3,3) || throw(ArgumentError("rotations must be a 3x3xL array"))
-    size(translations, 1) == 3 || throw(ArgumentError("translations must be a 3xN matrix"))
-    size(rotations, 3) == size(translations, 2) || throw(ArgumentError("rotations and translations must have the same number of columns"))
-    return Frames{T,A,B}(rotations, translations)
+    function Frames(rotations::A, translations::B) where {T<:Real,A<:AbstractArray{T,3},B<:AbstractArray{T,2}}
+        size(rotations)[1:2] == (3,3) || throw(ArgumentError("rotations must be a 3x3xL array"))
+        size(translations, 1) == 3 || throw(ArgumentError("translations must be a 3xN matrix"))
+        size(rotations, 3) == size(translations, 2) || throw(ArgumentError("rotations and translations must have the same number of columns"))
+        return new{T,A,B}(rotations, translations)
+    end
 end
 
 function Frames(backbone::Backbone{T}, ideal_coords::AbstractMatrix{<:Real}) where T<:Real
