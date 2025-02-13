@@ -16,7 +16,7 @@ Most functions are implemented especially with differentiability in mind, and ca
 
 ## Installation
 
-```
+```julia
 using Pkg
 pkg"add Backboner"
 ```
