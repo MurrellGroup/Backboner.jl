@@ -7,13 +7,12 @@ end
 
 # Backboner
 
-[![Latest Release](https://img.shields.io/github/release/MurrellGroup/Backboner.jl.svg)](https://github.com/MurrellGroup/Backboner.jl/releases/latest)
-[![MIT license](https://img.shields.io/badge/license-MIT-green.svg)](https://opensource.org/license/MIT)
-[![Documentation](https://img.shields.io/badge/docs-latest-blue.svg)](https://MurrellGroup.github.io/Backboner.jl/dev/)
+[![Documentation](https://img.shields.io/badge/docs-stable-blue.svg)](https://MurrellGroup.github.io/Backboner.jl/stable/)
+[![Documentation](https://img.shields.io/badge/docs-dev-blue.svg)](https://MurrellGroup.github.io/Backboner.jl/dev/)
 [![Build Status](https://github.com/MurrellGroup/Backboner.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/MurrellGroup/Backboner.jl/actions/workflows/CI.yml?query=branch%3Amain)
 [![Coverage](https://codecov.io/gh/MurrellGroup/Backboner.jl/branch/main/graph/badge.svg)](https://codecov.io/gh/MurrellGroup/Backboner.jl)
 
-This package offers types and functions for working with molecular *backbones*, defined here as continuous chains of bonded atoms.[^1]
+This package implements types and functions for working with molecular *backbones*, defined here as continuous chains of bonded atoms.[^1]
 
 Backbones can be represented with different types:
 - `Backbone`: a type containing a 3xN matrix of coordinates
@@ -22,14 +21,11 @@ Backbones can be represented with different types:
 
 Most functions are implemented especially with differentiability in mind, and can be used in combination with automatic differentiation packages like [Zygote.jl](https://github.com/FluxML/Zygote.jl).
 
-[View the source code on GitHub](https://github.com/MurrellGroup/Backboner.jl) (licensed under MIT).
-
 ## Installation
 
-Backboner is registered, and can be installed in the Julia REPL. Press `]` to enter pkg mode, and then run:
-
 ```
-add Backboner
+using Pkg
+pkg"add Backboner"
 ```
 
 ## Example usage
